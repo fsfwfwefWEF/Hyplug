@@ -26,19 +26,6 @@ jobs:
     - name: Build plugin
       run: ./gradlew build
 
-    # Временный шаг: если сборка упала, печатает API камеры сервера для сверки имён.
-    - name: Dump camera API on failure
-      if: failure()
-      run: |
-        set +e
-        JAR=$(find "$HOME/.gradle" -name 'Server-*.jar' ! -name '*sources*' ! -name '*javadoc*' | head -1)
-        echo "JAR=$JAR"
-        P=com.hypixel.hytale.protocol
-        for c in ServerCameraSettings ClientCameraView PositionDistanceOffsetType Position packets.camera.SetServerCamera; do
-          echo "######## $P.$c"
-          javap -cp "$JAR" "$P.$c" 2>&1 | grep -v -E 'serialize|deserialize|computeSize|computeBytesConsumed|validateStructure' | head -80
-        done
-
     - name: Show jar contents
       run: unzip -l build/libs/*.jar
 
