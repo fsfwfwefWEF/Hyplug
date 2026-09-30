@@ -1,8 +1,8 @@
 {
     "Group": "HytaleModding",
-    "Name": "SimpleMenu",
-    "Version": "2.0.1",
-    "Description": "Server menu: news, six tabs and four reserved slots",
+    "Name": "bodycam",
+    "Version": "1.0.0",
+    "Description": "First-person camera at eye level with the whole body visible",
     "Authors": [
         {
             "Name": "ayaft1445-eng",
@@ -12,14 +12,13 @@
     ],
     "Website": "https://github.com/ayaft1445-eng/hytaleplug",
     "DisabledByDefault": false,
-    "IncludesAssetPack": true,
+    "IncludesAssetPack": false,
     "Dependencies": {
         "Hytale:AssetModule": "*"
     },
-    "OptionalDependencies": {
-    },
+    "OptionalDependencies": {},
     "ServerVersion": ">=0.6.0 <0.7.0",
-    "Main": "dev.hytalemodding.simplemenu.SimpleMenuPlugin",
+    "Main": "dev.hytalemodding.bodycam.BodyCamPlugin",
     "UpdateChecker": {
         "CurseForge": ""
     }

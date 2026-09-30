@@ -26,13 +26,26 @@ jobs:
     - name: Build plugin
       run: ./gradlew build
 
+    # Временный шаг: если сборка упала, печатает API камеры сервера для сверки имён.
+    - name: Dump camera API on failure
+      if: failure()
+      run: |
+        set +e
+        JAR=$(find "$HOME/.gradle" -name 'Server-*.jar' ! -name '*sources*' ! -name '*javadoc*' | head -1)
+        echo "JAR=$JAR"
+        P=com.hypixel.hytale.protocol
+        for c in ServerCameraSettings ClientCameraView PositionDistanceOffsetType Position packets.camera.SetServerCamera; do
+          echo "######## $P.$c"
+          javap -cp "$JAR" "$P.$c" 2>&1 | grep -v -E 'serialize|deserialize|computeSize|computeBytesConsumed|validateStructure' | head -80
+        done
+
     - name: Show jar contents
       run: unzip -l build/libs/*.jar
 
     - name: Upload plugin jar as artifact
       uses: actions/upload-artifact@v4
       with:
-        name: SimpleMenu-plugin
+        name: BodyCam-plugin
         path: build/libs/*.jar
         if-no-files-found: error
 
@@ -46,14 +59,14 @@ jobs:
         set -euo pipefail
         JARS=$(ls build/libs/*.jar | grep -v -- '-sources.jar' | grep -v -- '-javadoc.jar')
         echo "Публикуем: $JARS"
-        gh release delete simplemenu-latest --yes --cleanup-tag || true
-        gh release create simplemenu-latest $JARS \
+        gh release delete bodycam-latest --yes --cleanup-tag || true
+        gh release create bodycam-latest $JARS \
           --target "$GITHUB_SHA" \
-          --title "SimpleMenu — последняя сборка" \
-          --notes "Плагин меню для сервера Hytale.
+          --title "BodyCam — последняя сборка" \
+          --notes "Камера от первого лица, в которой видно всё своё тело.
 
-        Что делает: команда /menu открывает меню с четырьмя вкладками (Мини-игры, Таблица лидеров, Косметика, Миры), в правом нижнем углу экрана висит плашка-подсказка.
+        Как поставить: скачайте файл .jar ниже и положите его в папку plugins/ (или mods/) сервера, затем перезапустите сервер. Старый SimpleMenu-*.jar удалите.
 
-        Как поставить: скачайте файл .jar ниже и положите его в папку plugins/ вашего сервера, затем перезапустите сервер. Старый файл плагина из папки удалите.
+        Команды: /bodycam — вкл/выкл, /bodycam forward <число>, /bodycam up <число>, /bodycam reset, /bodycam info.
 
         Инструкция целиком: INSTALL-RU.md в репозитории."
