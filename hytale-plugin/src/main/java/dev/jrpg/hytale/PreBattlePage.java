@@ -175,7 +175,7 @@ public final class PreBattlePage extends InteractiveCustomUIPage<BattleMenuPage.
         }
         double r = setup.radius() + 3;
         Vector3d to = new Vector3d(o.x + dx / len * r, p.y, o.z + dz / len * r);
-        Double y = Fx.groundY(store.getExternalData().getWorld(), to.x, to.z);
+        Double y = Fx.groundY(store.getExternalData().getWorld(), to.x, to.z, p.y);
         if (y != null && Math.abs(y - p.y) < 6) to = new Vector3d(to.x, y, to.z);
         Fx.teleportPlayer(store, ref, to, Fx.yawTowards(o, to));
     }

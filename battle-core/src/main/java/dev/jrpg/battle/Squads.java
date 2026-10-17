@@ -20,8 +20,8 @@ public final class Squads {
     public record Zone(String world, double x, double z, double radius) {}
 
     public boolean enabled = true;
-    public double spawnEverySeconds = 40, spawnChance = 0.6;
-    public int maxPerPlayer = 2;
+    public double spawnEverySeconds = 20, spawnChance = 0.8;
+    public int maxPerPlayer = 3;
     public double minDistance = 22, maxDistance = 40, despawnDistance = 90, lifetimeMinutes = 10;
     public double triggerRadius = 7, keepAwayFromEncounters = 40;
     public final List<String> worlds = new ArrayList<>();

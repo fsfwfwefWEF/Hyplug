@@ -145,7 +145,7 @@ public final class BattleSession implements BattleListener {
         for (Combatant c : battle.combatants()) {
             if (c.side != Side.ENEMY) continue;
             Encounter.Spot spot = encounter.enemies().get(n++);
-            Vector3d pos = arena(spot.x(), spot.z());
+            Vector3d pos = onGround(arena(spot.x(), spot.z()));
             homes.put(c.id, pos);
             ex += pos.x;
             ez += pos.z;
@@ -153,7 +153,7 @@ public final class BattleSession implements BattleListener {
         enemyCenter = n == 0 ? arena(0, 6) : new Vector3d(ex / n, center.y, ez / n);
         for (int i = 0; i < party.size(); i++) {
             Combatant c = party.get(i);
-            Vector3d pos = arena(PARTY_X[i % PARTY_X.length], 0);
+            Vector3d pos = onGround(arena(PARTY_X[i % PARTY_X.length], 0));
             homes.put(c.id, pos);
             float yaw = Fx.yawTowards(pos, enemyCenter);
             if (c.id.equals("hero")) {
@@ -200,6 +200,12 @@ public final class BattleSession implements BattleListener {
         // «Вправо» от направления (dirX, dirZ) — (dirZ, -dirX)... подобрано так, чтобы при dir = +Z было x = dx.
         double rx = dirZ, rz = -dirX;
         return new Vector3d(center.x + rx * dx + dirX * dz, center.y, center.z + rz * dx + dirZ * dz);
+    }
+
+    /** Точка арены на земле, если земля рядом с высотой арены (склон, ступенька), иначе как есть. */
+    private Vector3d onGround(Vector3d pos) {
+        Double y = Fx.groundY(world, pos.x, pos.z, center.y);
+        return y == null || Math.abs(y - center.y) > 4 ? pos : new Vector3d(pos.x, y, pos.z);
     }
 
     private float faceParty(String id) {

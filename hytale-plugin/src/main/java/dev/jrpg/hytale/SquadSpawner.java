@@ -27,6 +27,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 final class SquadSpawner {
     static final String ID_PREFIX = "squad:";
+    private static final long RETRY_MS = 5000;
 
     /** Отряд в мире. encounter — готовая встреча для боя (центр — где стоит отряд). */
     static final class Squad {
@@ -77,7 +78,11 @@ final class SquadSpawner {
         Long last = lastAttempt.get(p.getUuid());
         if (last != null && now - last < cfg.spawnEverySeconds * 1000) return null;
         lastAttempt.put(p.getUuid(), now);
-        if (random.nextDouble() < cfg.spawnChance) spawnNear(p, store, world, pos, null, cfg.minDistance, cfg.maxDistance, true);
+        if (random.nextDouble() < cfg.spawnChance
+                && spawnNear(p, store, world, pos, null, cfg.minDistance, cfg.maxDistance, true) == null) {
+            // Не нашлось ровной земли (вода, лес, горы) — попробуем снова через 5 секунд, а не через полный период.
+            lastAttempt.put(p.getUuid(), now - (long) (cfg.spawnEverySeconds * 1000) + RETRY_MS);
+        }
         return null;
     }
 
@@ -92,11 +97,11 @@ final class SquadSpawner {
                 : cfg.templates.stream().filter(x -> x.id().equalsIgnoreCase(templateId)).findFirst().orElse(null);
         if (t == null) return null;
         List<Encounter> manual = plugin.data().encounters();
-        for (int attempt = 0; attempt < 8; attempt++) {
+        for (int attempt = 0; attempt < 16; attempt++) {
             double a = random.nextDouble() * Math.PI * 2, d = minD + random.nextDouble() * (maxD - minD);
             double x = pos.x + Math.cos(a) * d, z = pos.z + Math.sin(a) * d;
             if (checkZones && !cfg.allowedAt(world.getName(), x, z, manual)) continue;
-            Double y = Fx.groundY(world, x, z);
+            Double y = Fx.groundY(world, x, z, pos.y);
             if (y == null || Math.abs(y - pos.y) > 24) continue;
             Squad s = new Squad(ID_PREFIX + (++counter) + ":" + t.id(), t, world.getName(), new Vector3d(x, y, z));
             placeNpcs(s, store, world, pos);
@@ -116,8 +121,8 @@ final class SquadSpawner {
         for (int i = 0; i < n; i++) {
             double side = (i - (n - 1) / 2.0) * 2.6, back = Math.abs(side) * 0.3;
             double x = s.pos.x + rx * side - fx * back, z = s.pos.z + rz * side - fz * back;
-            Double y = Fx.groundY(world, x, z);
-            Vector3d at = new Vector3d(x, y == null ? s.pos.y : y, z);
+            Double y = Fx.groundY(world, x, z, s.pos.y);
+            Vector3d at = new Vector3d(x, y == null || Math.abs(y - s.pos.y) > 4 ? s.pos.y : y, z);
             EnemyTemplate e = plugin.data().enemy(s.template.enemies().get(i));
             Ref<EntityStore> ref = Fx.spawnPuppet(store, e.role(), e.name(), at, Fx.yawTowards(at, playerPos));
             if (ref == null) continue;

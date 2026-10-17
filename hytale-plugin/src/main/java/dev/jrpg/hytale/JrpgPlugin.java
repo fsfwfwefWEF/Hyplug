@@ -33,7 +33,7 @@ public final class JrpgPlugin extends JavaPlugin {
      * Версия встроенных файлов данных. Если копия в папке мода старее, она сохраняется в backup-vN/
      * и заменяется новой (иначе новые враги/настройки не появятся у тех, кто уже запускал мод).
      */
-    private static final int DATA_VERSION = 4;
+    private static final int DATA_VERSION = 5;
     private static JrpgPlugin instance;
 
     private final Content content = Content.demo();

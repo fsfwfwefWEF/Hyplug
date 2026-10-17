@@ -4,10 +4,10 @@
   // Выключить совсем: "enabled": false, затем /jrpg reload. Посмотреть отряды рядом: /jrpg squads.
   "enabled": true,
   // Раз в сколько секунд пробуем поставить отряд рядом с игроком и с каким шансом.
-  "spawnEverySeconds": 40,
-  "spawnChance": 0.6,
+  "spawnEverySeconds": 20,
+  "spawnChance": 0.8,
   // Сколько отрядов одновременно вокруг одного игрока.
-  "maxPerPlayer": 2,
+  "maxPerPlayer": 3,
   // На каком расстоянии от игрока появляется отряд (блоки) и когда исчезает (далеко или по времени).
   "minDistance": 22,
   "maxDistance": 40,

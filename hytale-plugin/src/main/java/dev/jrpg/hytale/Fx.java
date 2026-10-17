@@ -166,11 +166,16 @@ public final class Fx {
         }
     }
 
+    /** Насколько выше и ниже опорной высоты искать землю, блоков. */
+    private static final int GROUND_UP = 24, GROUND_SCAN = 56;
+
     /**
-     * Высота земли (y блока над поверхностью) по карте высот чанка; null — чанк не загружен.
-     * Нужна, чтобы ставить отряды на землю, а не в воздух или под землю.
+     * Высота земли около опорной высоты nearY (обычно высота игрока): y, на котором можно стоять.
+     * Ищется настоящий верхний твёрдый блок в столбце (HeightmapColumn.getFloor, как у NPC движка), а не
+     * getHeight: в 0.6 карта высот отдавала оценку 79 для всех столбцов, и отряды оказывались в горах под
+     * землёй. null — чанк не загружен, столбец сплошной (пещера в горе), под ногами вода, листва или ствол.
      */
-    public static Double groundY(com.hypixel.hytale.server.core.universe.world.World world, double x, double z) {
+    public static Double groundY(com.hypixel.hytale.server.core.universe.world.World world, double x, double z, double nearY) {
         try {
             var chunks = world.getChunkStore();
             Ref<com.hypixel.hytale.server.core.universe.world.storage.ChunkStore> chunk =
@@ -179,12 +184,45 @@ public final class Fx {
             var hm = chunks.getStore().getComponent(chunk,
                     com.hypixel.hytale.server.core.universe.world.chunk.heightmap.HeightmapColumn.getComponentType());
             if (hm == null) return null;
-            int h = hm.getHeight((int) Math.floor(x), (int) Math.floor(z));
-            return h == Integer.MIN_VALUE ? null : (double) (h + 1);
+            int bx = (int) Math.floor(x), bz = (int) Math.floor(z);
+            int lx = com.hypixel.hytale.math.util.ChunkUtil.localCoordinate(bx);
+            int lz = com.hypixel.hytale.math.util.ChunkUtil.localCoordinate(bz);
+            // Сверху вниз: если стартовая точка уже в камне — это гора выше, пробуем повыше ещё раз.
+            for (int from = (int) Math.floor(nearY) + GROUND_UP, pass = 0; pass < 2; pass++, from += GROUND_SCAN - 8) {
+                int floor = hm.getFloor(chunks, lx, from, lz, GROUND_SCAN);
+                if (floor == Integer.MIN_VALUE) return null;
+                if (floor >= from) continue;
+                return standable(chunks, bx, floor, bz) ? (double) (floor + 1) : null;
+            }
+            return null;
         } catch (Throwable t) {
             warnOnce("Не удалось узнать высоту земли", t);
             return null;
         }
+    }
+
+    /** Твёрдый блок, не листва и не ствол, и над ним нет воды. */
+    private static boolean standable(com.hypixel.hytale.server.core.universe.world.storage.ChunkStore chunks,
+                                     int x, int y, int z) {
+        var store = chunks.getStore();
+        var section = chunks.getChunkSectionReferenceAtBlock(x, y, z);
+        if (section == null || !section.isValid()) return false;
+        var blocks = store.getComponent(section,
+                com.hypixel.hytale.server.core.universe.world.chunk.section.BlockSection.getComponentType());
+        if (blocks == null) return false;
+        int lx = com.hypixel.hytale.math.util.ChunkUtil.localCoordinate(x), lz = com.hypixel.hytale.math.util.ChunkUtil.localCoordinate(z);
+        var type = com.hypixel.hytale.server.core.asset.type.blocktype.config.BlockType.getAssetMap()
+                .getAsset(blocks.get(lx, y, lz));
+        if (type == null || type.getMaterial() != com.hypixel.hytale.protocol.BlockMaterial.Solid) return false;
+        String id = type.getId() == null ? "" : type.getId();
+        if (id.contains("Leaves") || id.contains("Trunk") || id.contains("Branch")) return false;
+        var above = chunks.getChunkSectionReferenceAtBlock(x, y + 1, z);
+        if (above != null && above.isValid()) {
+            var fluids = store.getComponent(above,
+                    com.hypixel.hytale.server.core.universe.world.chunk.section.FluidSection.getComponentType());
+            if (fluids != null && fluids.getFluidId(lx, y + 1, lz) != 0) return false;
+        }
+        return true;
     }
 
     /** Какие модели уже записаны в лог со списком анимаций (чтобы подобрать имена в settings.json). */
