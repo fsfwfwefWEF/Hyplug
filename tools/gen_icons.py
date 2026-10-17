@@ -239,6 +239,27 @@ def g_regen(d, S):
     d.arc(P(S, [(0.10, 0.10), (0.90, 0.90)]), 20, 300, fill=(200, 255, 200), width=int(S * 0.05))
 
 
+def g_heart(d, S, c=(240, 80, 100)):
+    d.ellipse(P(S, [(0.18, 0.24), (0.52, 0.56)]), fill=c)
+    d.ellipse(P(S, [(0.48, 0.24), (0.82, 0.56)]), fill=c)
+    d.polygon(P(S, [(0.20, 0.46), (0.80, 0.46), (0.5, 0.84)]), fill=c)
+    d.ellipse(P(S, [(0.28, 0.32), (0.38, 0.42)]), fill=(255, 255, 255, 150))
+
+
+def g_crack(d, S, c=(170, 196, 230)):
+    g_shield(d, S, c)
+    w = int(S * 0.05)
+    d.line(P(S, [(0.46, 0.14), (0.56, 0.36), (0.42, 0.50), (0.58, 0.66), (0.50, 0.88)]), fill=INK, width=w)
+    d.line(P(S, [(0.42, 0.50), (0.28, 0.46)]), fill=INK, width=int(w * 0.7))
+
+
+def g_water(d, S):
+    g_drop(d, S, (90, 170, 255))
+    w = int(S * 0.04)
+    d.arc(P(S, [(0.16, 0.70), (0.50, 0.92)]), 200, 340, fill=(200, 235, 255), width=w)
+    d.arc(P(S, [(0.50, 0.70), (0.84, 0.92)]), 200, 340, fill=(200, 235, 255), width=w)
+
+
 def g_letter(d, S, ch, c=WHITE):
     # Простая «буква» для портретов: рисуем крупный символ встроенным шрифтом с масштабированием
     from PIL import ImageFont
@@ -327,6 +348,15 @@ ICONS = {
     "levelup": ("#c99a2a", "#4a3008", g_up),
     "info": ("#3a5a7a", "#121e2a", g_eye),
     # статусы (круглые)
+    "heart": ("#b0304a", "#3a0c18", g_heart),
+    "star": ("#c9a227", "#4a3008", lambda d, S: g_star(d, S, (255, 236, 150), 0.38, 0.16, 5)),
+    "water": ("#2a6ac8", "#0c2252", g_water),
+    "bleed": ("#a02a2a", "#3a0a0a", lambda d, S: g_drop(d, S, (230, 50, 60))),
+    "crack": ("#5a6a8a", "#1e2436", g_crack),
+    "st_wet": ("#2a6ac8", "#0c2252", lambda d, S: g_drop(d, S, (110, 190, 255))),
+    "st_frozen": ("#6ac0e8", "#14466a", g_snow),
+    "st_armor_break": ("#5a6a8a", "#1e2436", g_crack),
+    "st_bleed": ("#a02a2a", "#3a0a0a", lambda d, S: g_drop(d, S, (240, 60, 70))),
     "st_poison": ("#5f9e2c", "#1e3a0c", lambda d, S: g_skull(d, S)),
     "st_burn": ("#d0602a", "#4a140c", g_flame),
     "st_regen": ("#2f9e6e", "#0c3a28", g_cross),

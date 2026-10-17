@@ -24,6 +24,8 @@ public record StatusDef(String id, String name, Trigger trigger, Kind kind, doub
         /** Множитель входящего урона (Защита 0.5). */
         DAMAGE_TAKEN_MULT,
         /** Множитель урона следующей способности, снимается после неё. */
-        NEXT_ACTION_MULT
+        NEXT_ACTION_MULT,
+        /** Своего действия нет: метка для комбо стихий (Промок — молния бьёт сильнее и т.п.). */
+        MARKER
     }
 }

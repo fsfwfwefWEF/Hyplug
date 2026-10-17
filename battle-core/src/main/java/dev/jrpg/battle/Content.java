@@ -18,11 +18,30 @@ public final class Content {
     private final Map<String, String> flavors = new HashMap<>();
     private final Map<String, String> icons = new HashMap<>();
     private final Map<String, Progression.HeroDef> heroes = new java.util.LinkedHashMap<>();
+    private final Map<String, String> elements = new HashMap<>();
+    private final List<Combo> combos = new java.util.ArrayList<>();
+    private final Map<String, PassiveDef> passives = new java.util.LinkedHashMap<>();
 
     public void add(StatusDef s) { statuses.put(s.id(), s); }
     public void add(Ability a) { abilities.put(a.id(), a); }
     public void add(Item i) { items.put(i.id(), i); }
     public void add(Progression.HeroDef h) { heroes.put(h.id(), h); }
+    public void add(Combo k) {
+        combos.add(k);
+        BattleText.COMBO_NAMES.put(k.id(), k.name());
+    }
+    public void add(PassiveDef p) { passives.put(p.id(), p); }
+
+    /** Стихия способности ({@link Element}); урон без явной стихии считается физическим, поддержка — "". */
+    public String element(Ability a) {
+        String e = elements.get(a.id());
+        if (e != null) return e;
+        return a.damagePower() > 0 && !a.magical() ? Element.PHYSICAL : "";
+    }
+    public void element(String abilityId, String element) { elements.put(abilityId, element); }
+
+    public List<Combo> combos() { return java.util.Collections.unmodifiableList(combos); }
+    public PassiveDef passive(String id) { return require(passives, id, "пассивное умение"); }
 
     /** Художественное описание способности/предмета для окна описаний ("" если нет). */
     public String flavor(String id) { return flavors.getOrDefault(id, ""); }
@@ -68,6 +87,10 @@ public final class Content {
         c.add(new StatusDef("guard", "Защита", StatusDef.Trigger.PASSIVE, StatusDef.Kind.DAMAGE_TAKEN_MULT, 0.5, false, 1));
         c.add(new StatusDef("brood_shield", "Защита выводка", StatusDef.Trigger.PASSIVE, StatusDef.Kind.DAMAGE_TAKEN_MULT, 0.5, false, 1));
         c.add(new StatusDef("charged", "Заряд", StatusDef.Trigger.PASSIVE, StatusDef.Kind.NEXT_ACTION_MULT, 1.5, false, 1));
+        c.add(new StatusDef("wet", "Промок", StatusDef.Trigger.PASSIVE, StatusDef.Kind.MARKER, 0, false, 1));
+        c.add(new StatusDef("frozen", "Заморозка", StatusDef.Trigger.TURN_START, StatusDef.Kind.SKIP_TURN, 0, false, 1));
+        c.add(new StatusDef("armor_break", "Пробитая броня", StatusDef.Trigger.PASSIVE, StatusDef.Kind.DAMAGE_TAKEN_MULT, 1.35, false, 1));
+        c.add(new StatusDef("bleed", "Кровотечение", StatusDef.Trigger.TURN_END, StatusDef.Kind.DOT_FLAT, 5, true, 3));
 
         // Базовые действия: атака даёт +1 AP (как в Expedition 33), защита — тоже.
         c.add(dmg(ATTACK, "Атака", 0, 0, TargetType.SINGLE_ENEMY, 1.0, false, List.of(), 1, 100));
@@ -131,6 +154,33 @@ public final class Content {
         c.add(dmg("earthquake", "Землетрясение", 5, 0, TargetType.ALL_ENEMIES, 1.2, false,
                 List.of(new StatusApply("slow", 0.3, 2)), 0, 130));
 
+        // Новые способности сетки навыков (0.5)
+        c.add(dmg("bleeding_cut", "Кровавый разрез", 2, 0, TargetType.SINGLE_ENEMY, 1.1, false,
+                List.of(new StatusApply("bleed", 0.8, 3)), 0, 100));
+        c.add(dmg("armor_pierce", "Пробивающий удар", 3, 0, TargetType.SINGLE_ENEMY, 1.2, false,
+                List.of(new StatusApply("armor_break", 1.0, 3)), 0, 110));
+        c.add(dmg("storm_blade", "Клинок бури", 4, 10, TargetType.SINGLE_ENEMY, 1.7, false,
+                List.of(new StatusApply("stun", 0.2, 1)), 0, 110));
+        c.add(dmg("water_jet", "Водяной поток", 0, 8, TargetType.SINGLE_ENEMY, 1.0, true,
+                List.of(new StatusApply("wet", 1.0, 3)), 0, 90));
+        c.add(dmg("ice_lance", "Ледяное копьё", 1, 12, TargetType.SINGLE_ENEMY, 1.6, true,
+                List.of(new StatusApply("slow", 0.5, 2)), 0, 100));
+        c.add(dmg("chain_lightning", "Цепная молния", 3, 22, TargetType.ALL_ENEMIES, 1.1, true,
+                List.of(new StatusApply("stun", 0.15, 1)), 0, 120));
+        c.add(support("renew", "Обновление", 0, 10, TargetType.SINGLE_ALLY, 0.15, 0, List.of("bleed", "burn"),
+                List.of(new StatusApply("regen", 1.0, 3))));
+        c.add(dmg("sunder", "Раскол брони", 2, 0, TargetType.ALL_ENEMIES, 0.6, false,
+                List.of(new StatusApply("armor_break", 0.6, 2)), 0, 110));
+        c.add(dmg("ground_slam", "Сотрясающий удар", 3, 0, TargetType.SINGLE_ENEMY, 1.3, false,
+                List.of(new StatusApply("stun", 0.4, 1)), 0, 110));
+        c.add(support("second_wind", "Второе дыхание", 2, 0, TargetType.SELF, 0.3, 0, List.of("poison", "bleed"),
+                List.of(new StatusApply("guard", 1.0, 1))));
+        c.add(dmg("goo_spit", "Слизистый плевок", 0, 0, TargetType.SINGLE_ENEMY, 0.6, false,
+                List.of(new StatusApply("wet", 1.0, 3)), 0, 100));
+
+        demoElements(c);
+        demoCombos(c);
+        demoPassives(c);
         demoFlavor(c);
         demoHeroes(c);
         return c;
@@ -166,7 +216,27 @@ public final class Content {
         c.flavor("antidote", "Выводит яд.");
         c.flavor("bomb", "Взрывается и поджигает всех врагов.");
         c.flavor("queen_fang", "Ядовитый клык поверженной королевы.");
+        c.flavor("bleeding_cut", "Режущий удар, после которого рана кровоточит.");
+        c.flavor("armor_pierce", "Удар в щель доспеха: цель получает больше урона.");
+        c.flavor("storm_blade", "Клинок, заряженный молнией. По промокшей цели бьёт ещё сильнее.");
+        c.flavor("water_jet", "Струя воды сбивает с ног и делает цель мокрой: молния и лёд по ней сильнее.");
+        c.flavor("ice_lance", "Острое ледяное копьё. По мокрой цели — заморозка.");
+        c.flavor("chain_lightning", "Молния перескакивает по всем врагам.");
+        c.flavor("renew", "Мягкий свет лечит, тушит огонь и останавливает кровь.");
+        c.flavor("sunder", "Брам бьёт щитом по земле, раскалывая броню врагов.");
+        c.flavor("ground_slam", "Тяжёлый удар, может оглушить.");
+        c.flavor("second_wind", "Брам переводит дыхание: лечение, снимает яд и кровь, встаёт в защиту.");
+        c.flavor("goo_spit", "Слизень плюётся: цель промокает.");
         c.icon(ATTACK, "sword");
+        c.icon("bleeding_cut", "bleed");
+        c.icon("armor_pierce", "crack");
+        c.icon("sunder", "crack");
+        c.icon("storm_blade", "thunder");
+        c.icon("chain_lightning", "thunder");
+        c.icon("water_jet", "water");
+        c.icon("goo_spit", "water");
+        c.icon("ice_lance", "ice");
+        c.icon("ground_slam", "quake");
         c.icon(DEFEND, "shield");
         c.icon("potion", "potion");
         c.icon("ether", "ether");
@@ -177,21 +247,105 @@ public final class Content {
         c.icon("earthquake", "quake");
     }
 
-    /** Герои партии: базовые характеристики, рост за уровень и дерево навыков. */
+    private static void demoElements(Content c) {
+        for (String id : List.of("fire_slash", "fireball", "item_bomb")) c.element(id, Element.FIRE);
+        for (String id : List.of("blizzard", "ice_lance")) c.element(id, Element.ICE);
+        for (String id : List.of("thunder", "chain_lightning", "storm_blade")) c.element(id, Element.THUNDER);
+        for (String id : List.of("water_jet", "goo_spit")) c.element(id, Element.WATER);
+        c.element("earthquake", Element.EARTH);
+        for (String id : List.of("venom_bite", "acid_rain", "item_queen_fang")) c.element(id, Element.POISON);
+    }
+
+    /**
+     * Комбо стихий. Порядок важен: проверяются сверху вниз, каждое срабатывает один раз за удар.
+     * Логика: вода делает цель уязвимой к молнии и льду, огонь гасится водой и взрывает яд,
+     * лёд + удар раскалывает, огонь растапливает лёд.
+     */
+    private static void demoCombos(Content c) {
+        c.add(new Combo("electrocute", "Электрошок", Element.THUNDER, "wet", 1.5, 0, true, "stun", 1, false,
+                "урон x1.5 и оглушение"));
+        c.add(new Combo("freeze", "Заморозка", Element.ICE, "wet", 1.0, 0, true, "frozen", 1, false,
+                "цель замерзает и пропускает ход"));
+        c.add(new Combo("steam", "Пар", Element.FIRE, "wet", 0.7, 0, true, null, 0, true,
+                "вода гасит огонь: урон x0.7, горения нет"));
+        c.add(new Combo("toxic_blast", "Токсичный взрыв", Element.FIRE, "poison", 1.0, 0.12, true, null, 0, false,
+                "яд взрывается: +12% макс. HP урона, яд снят"));
+        c.add(new Combo("shatter", "Раскол", Element.PHYSICAL, "frozen", 2.0, 0, true, null, 0, false,
+                "удар по замёрзшей цели: урон x2, лёд разбит"));
+        c.add(new Combo("thaw", "Оттепель", Element.FIRE, "frozen", 1.3, 0, true, null, 0, false,
+                "огонь растапливает лёд: урон x1.3"));
+        c.add(new Combo("extinguish", "Тушение", Element.WATER, "burn", 1.0, 0, true, null, 0, false,
+                "вода тушит горение"));
+        c.add(new Combo("overload", "Перегрузка", Element.THUNDER, "armor_break", 1.3, 0, false, null, 0, false,
+                "молния бьёт по пробитой броне: урон x1.3"));
+        c.add(new Combo("open_wound", "Открытая рана", Element.PHYSICAL, "bleed", 1.2, 0, false, null, 0, false,
+                "удар по кровоточащей цели: урон x1.2"));
+        c.add(new Combo("quake_shatter", "Раскол", Element.EARTH, "frozen", 1.8, 0, true, null, 0, false,
+                "землетрясение разбивает лёд: урон x1.8"));
+    }
+
+    private static void demoPassives(Content c) {
+        c.add(new PassiveDef(Passives.KEEN_EYE, "Острый глаз", "+10% шанс критического удара."));
+        c.add(new PassiveDef(Passives.BLOODTHIRST, "Жажда крови", "Лечит 15% от нанесённого урона."));
+        c.add(new PassiveDef(Passives.PYROMANIAC, "Пироман", "+25% урона по горящим целям."));
+        c.add(new PassiveDef(Passives.EXECUTIONER, "Палач", "+40% урона по целям, у которых меньше 30% HP."));
+        c.add(new PassiveDef(Passives.COMBO_MASTER, "Мастер комбо", "Комбо стихий наносят на 30% больше урона."));
+        c.add(new PassiveDef(Passives.ELEMENTALIST, "Стихийник", "+15% к шансу наложить статус."));
+        c.add(new PassiveDef(Passives.MANA_FLOW, "Поток маны", "+3 MP в начале каждого хода."));
+        c.add(new PassiveDef(Passives.FIRST_STRIKE, "Первый удар", "Начинает бой с +2 AP."));
+        c.add(new PassiveDef(Passives.THICK_SKIN, "Толстая кожа", "Начинает бой под Защитой (половина урона до первого хода)."));
+    }
+
+    /**
+     * Герои партии: характеристики, рост за уровень и круговая сетка навыков.
+     * Порядок узлов: центр, 6 узлов первого кольца (сверху по часовой), 12 второго, 6 внешних (см. Progression.Grid).
+     */
     private static void demoHeroes(Content c) {
         c.add(new Progression.HeroDef("hero", "Герой", "Мечник", new Stats(120, 20, 22, 8, 12, 12),
-                new Stats(12, 2, 3, 1, 2, 1), List.of("fire_slash", "shield_bash", "focus"),
-                List.of(new Progression.SkillNode("whirlwind", 1, 2, null),
-                        new Progression.SkillNode("execute", 2, 4, "whirlwind"))));
+                new Stats(12, 2, 3, 1, 2, 1), List.of("fire_slash", "shield_bash", "focus"), grid(
+                        // кольцо 1
+                        st(Progression.Stat.ATK, 3), st(Progression.Stat.HP, 20), ab("bleeding_cut"),
+                        st(Progression.Stat.DEF, 2), pa(Passives.KEEN_EYE), st(Progression.Stat.SPD, 1),
+                        // кольцо 2
+                        ab("whirlwind"), st(Progression.Stat.ATK, 3), st(Progression.Stat.HP, 25), ab("armor_pierce"),
+                        st(Progression.Stat.MP, 5), pa(Passives.BLOODTHIRST), st(Progression.Stat.ATK, 3),
+                        st(Progression.Stat.DEF, 3), pa(Passives.PYROMANIAC), st(Progression.Stat.HP, 25),
+                        st(Progression.Stat.SPD, 1), st(Progression.Stat.MAG, 2),
+                        // внешнее кольцо
+                        ab("execute"), pa(Passives.EXECUTIONER), ab("storm_blade"), st(Progression.Stat.ATK, 6),
+                        pa(Passives.COMBO_MASTER), st(Progression.Stat.HP, 60))));
         c.add(new Progression.HeroDef("lyra", "Лира", "Чародейка", new Stats(85, 70, 9, 24, 7, 14),
-                new Stats(7, 8, 1, 3, 1, 1), List.of("fireball", "blizzard", "cure", "haste_spell"),
-                List.of(new Progression.SkillNode("thunder", 1, 2, null),
-                        new Progression.SkillNode("barrier", 2, 4, "thunder"))));
+                new Stats(7, 8, 1, 3, 1, 1), List.of("fireball", "blizzard", "cure", "haste_spell"), grid(
+                        st(Progression.Stat.MAG, 3), st(Progression.Stat.MP, 10), ab("water_jet"),
+                        st(Progression.Stat.HP, 12), pa(Passives.MANA_FLOW), st(Progression.Stat.SPD, 1),
+                        ab("thunder"), st(Progression.Stat.MAG, 3), st(Progression.Stat.MP, 10), ab("ice_lance"),
+                        st(Progression.Stat.HP, 15), pa(Passives.ELEMENTALIST), st(Progression.Stat.MAG, 3),
+                        st(Progression.Stat.DEF, 2), ab("renew"), st(Progression.Stat.MP, 10),
+                        st(Progression.Stat.SPD, 1), pa(Passives.PYROMANIAC),
+                        ab("chain_lightning"), pa(Passives.COMBO_MASTER), ab("barrier"), st(Progression.Stat.MAG, 6),
+                        pa(Passives.FIRST_STRIKE), st(Progression.Stat.MP, 25))));
         c.add(new Progression.HeroDef("bram", "Брам", "Страж", new Stats(160, 15, 18, 6, 18, 8),
-                new Stats(16, 1, 2, 1, 3, 0), List.of("cleave", "rally"),
-                List.of(new Progression.SkillNode("iron_wall", 1, 2, null),
-                        new Progression.SkillNode("earthquake", 2, 4, "iron_wall"))));
+                new Stats(16, 1, 2, 1, 3, 0), List.of("cleave", "rally"), grid(
+                        st(Progression.Stat.DEF, 3), st(Progression.Stat.HP, 30), ab("iron_wall"),
+                        st(Progression.Stat.ATK, 2), pa(Passives.THICK_SKIN), st(Progression.Stat.SPD, 1),
+                        ab("sunder"), st(Progression.Stat.DEF, 3), st(Progression.Stat.HP, 30), ab("ground_slam"),
+                        st(Progression.Stat.ATK, 3), pa(Passives.BLOODTHIRST), st(Progression.Stat.DEF, 3),
+                        st(Progression.Stat.MP, 5), ab("second_wind"), st(Progression.Stat.HP, 30),
+                        st(Progression.Stat.ATK, 3), pa(Passives.FIRST_STRIKE),
+                        ab("earthquake"), pa(Passives.COMBO_MASTER), st(Progression.Stat.HP, 80),
+                        st(Progression.Stat.DEF, 6), pa(Passives.KEEN_EYE), st(Progression.Stat.ATK, 6))));
     }
+
+    private static List<Progression.GridNode> grid(Progression.GridNode... nodes) {
+        List<Progression.GridNode> out = new java.util.ArrayList<>();
+        out.add(Progression.GridNode.start());
+        out.addAll(List.of(nodes));
+        return out;
+    }
+
+    private static Progression.GridNode st(Progression.Stat s, int v) { return Progression.GridNode.stat(s, v); }
+    private static Progression.GridNode ab(String id) { return Progression.GridNode.ability(id); }
+    private static Progression.GridNode pa(String id) { return Progression.GridNode.passive(id); }
 
     /** Стартовая партия из 3 персонажей (1 уровень, без прокачки). */
     public static List<Combatant> demoParty() {

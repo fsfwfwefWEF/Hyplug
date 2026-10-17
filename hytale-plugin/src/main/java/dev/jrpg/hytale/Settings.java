@@ -16,18 +16,30 @@ public final class Settings {
     /** Полоски HP/MP; false — только числа. */
     public boolean uiBars = true;
     public String turnRing = "", targetRing = "", hitFx = "";
-    public long actionDelayMs = 1400, enemyThinkMs = 900;
+    /** Пауза в мс с учётом {@link #battleSpeed}. */
+    public long ms(long base) {
+        return Math.round(base / battleSpeed);
+    }
+
+    public long actionDelayMs = 2400, enemyThinkMs = 1500;
+    /** Общая скорость боя: 1 — обычная, 2 — вдвое быстрее, 0.5 — вдвое медленнее (делит все паузы). */
+    public double battleSpeed = 1.0;
+    /** Всплывающие цифры урона и названия эффектов над бойцами. */
+    public boolean combatText = true;
     public boolean proximityTrigger = true;
 
     /** Камера: углы в градусах, расстояния в блоках. */
     public static final class Camera {
         public boolean enabled = true;
-        /** "world" — точка взгляда в мировых координатах; "player" — смещением от игрока. */
-        public String anchor = "world";
-        public float lerp = 0.12f;
-        public double overviewDistance = 17, overviewPitch = -32, overviewSide = 35;
-        public double focusDistance = 6.5, focusPitch = -18, focusSide = 40;
-        public double actionDistance = 7, actionPitch = -24, actionSide = 70;
+        public float lerp = 0.1f;
+        /** Камера с другой стороны арены. */
+        public boolean flip = false;
+        /** Камера никогда не опускается ниже стольких блоков над точкой взгляда (чтобы не влезать в модели). */
+        public double minHeight = 3.5;
+        public double overviewDistance = 20, overviewPitch = -38, overviewSide = 55;
+        public double focusDistance = 11, focusPitch = -28, focusSide = 45;
+        public double actionDistance = 10, actionPitch = -30, actionSide = 75;
+        public double targetDistance = 15;
     }
 
     public static Settings parse(String json) {
@@ -41,8 +53,10 @@ public final class Settings {
             Map<String, Object> c = Json.obj(cam);
             Camera k = s.camera;
             k.enabled = Json.bool(c, "enabled", k.enabled);
-            k.anchor = Json.str(c, "anchor", k.anchor);
             k.lerp = (float) Json.num(c, "lerp", k.lerp);
+            k.flip = Json.bool(c, "flip", k.flip);
+            k.minHeight = Json.num(c, "minHeight", k.minHeight);
+            k.targetDistance = Json.num(c, "targetDistance", k.targetDistance);
             Object o = c.get("overview");
             if (o != null) {
                 Map<String, Object> v = Json.obj(o);
@@ -80,6 +94,8 @@ public final class Settings {
         }
         s.actionDelayMs = (long) Json.num(m, "actionDelayMs", s.actionDelayMs);
         s.enemyThinkMs = (long) Json.num(m, "enemyThinkMs", s.enemyThinkMs);
+        s.battleSpeed = Math.max(0.1, Json.num(m, "battleSpeed", s.battleSpeed));
+        s.combatText = Json.bool(m, "combatText", s.combatText);
         s.proximityTrigger = Json.bool(m, "proximityTrigger", true);
         return s;
     }

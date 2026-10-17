@@ -7,7 +7,7 @@
     "abilities": ["venom_bite", "web"] },
   { "id": "slime", "role": "Slime|Frog_Green|Toad", "name": "Слизень", "model": "Slime",
     "stats": { "maxHp": 110, "maxMp": 40, "atk": 12, "mag": 10, "def": 10, "spd": 6 },
-    "abilities": ["goo_mend"] },
+    "abilities": ["goo_mend", "goo_spit"] },
   { "id": "spiderling", "role": "Spider", "name": "Паучонок", "model": "Spider",
     "stats": { "maxHp": 35, "maxMp": 0, "atk": 11, "mag": 0, "def": 4, "spd": 13 },
     "abilities": ["venom_bite"] },

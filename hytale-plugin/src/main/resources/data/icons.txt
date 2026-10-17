@@ -21,6 +21,15 @@ fang
 flee
 levelup
 info
+heart
+star
+water
+bleed
+crack
+st_wet
+st_frozen
+st_armor_break
+st_bleed
 st_poison
 st_burn
 st_regen

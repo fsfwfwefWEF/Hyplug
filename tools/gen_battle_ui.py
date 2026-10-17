@@ -1,19 +1,22 @@
-"""Собирает разметку боевого меню (BattleMenu.ui): много однотипных слотов проще генерировать.
+"""Собирает разметку боевого меню (BattleMenu.ui) и круговой сетки навыков (Progression.ui).
 
-Запуск из корня проекта: python3 tools/gen_battle_ui.py
+Много однотипных слотов и узлов проще генерировать. Запуск из корня проекта: python3 tools/gen_battle_ui.py
+Используются только проверенные в игре конструкции: Group, Label, $C.@SecondaryTextButton,
+$C.@CancelTextButton, Anchor (Width/Height/Left/Top), LayoutMode Top/Left, FlexWeight, Background, Padding.
 """
+import math
 import os
 
-OUT = os.path.join(os.path.dirname(__file__), "..", "hytale-plugin", "src", "main", "resources",
-                   "Common", "UI", "Custom", "JrpgBattle", "BattleMenu.ui")
+OUT_DIR = os.path.join(os.path.dirname(__file__), "..", "hytale-plugin", "src", "main", "resources",
+                       "Common", "UI", "Custom", "JrpgBattle")
 
 QUEUE = 8
 ENEMIES = 5
 PARTY = 3
 OPTIONS = 6
 
-PANEL = "#0b111c(0.88)"
-PANEL2 = "#141d2e(0.92)"
+PANEL = "#0b111c(0.82)"
+PANEL2 = "#141d2e(0.88)"
 GOLD = "#e8c46a"
 TEXT = "#e9eef6"
 DIM = "#9fb0c6"
@@ -22,9 +25,8 @@ HP = "#5fd27a"
 MP_BACK = "#1c2440"
 MP = "#5aa2ff"
 
-BAR_W_CARD = 260
-BAR_W_ENEMY = 196
-BAR_W_ACT = 270
+BAR_W_PARTY = 210
+BAR_W_ENEMY = 150
 
 
 def label(id_, text="", size=14, color=TEXT, bold=False, height=None, width=None, flex=False, wrap=False):
@@ -74,243 +76,312 @@ def group(id_, props, children):
     return head + "\n" + indent(body, 2) + "\n}"
 
 
+def button(id_, text, w, h, cancel=False, left=None, top=None):
+    kind = "CancelTextButton" if cancel else "SecondaryTextButton"
+    anchor = ([f"Left: {left}", f"Top: {top}"] if left is not None else []) + [f"Width: {w}", f"Height: {h}"]
+    return f'$C.@{kind} #{id_} {{ @Text = "{text}"; Anchor: ({", ".join(anchor)}); }}'
+
+
+# ---------- бой ----------
+
 def queue_slot(i):
     big = i == 0
     return group(f"Q{i}", [
-        f"Anchor: (Height: {58 if big else 48});",
+        f"Anchor: (Height: {46 if big else 32});",
         "LayoutMode: Left;",
-        f"Background: {'#2c3c5e(0.95)' if big else '#121a28(0.9)'};",
-        "Padding: (Full: 4);",
+        f"Background: {'#2c3c5e(0.95)' if big else '#121a28(0.0)'};",
+        "Padding: (Full: 3);",
     ], [
-        slot(f"Q{i}Icon", 40),
-        spacer(w=8),
+        slot(f"Q{i}Icon", 40 if big else 22),
+        spacer(w=6),
         group("", ["FlexWeight: 1;", "LayoutMode: Top;"], [
-            label(f"Q{i}Name", size=16 if big else 14, bold=big, height=22),
-            label(f"Q{i}Sub", size=12, color=GOLD if big else DIM, height=16),
+            label(f"Q{i}Name", size=14 if big else 12, bold=big, height=20 if big else 15),
+            label(f"Q{i}Sub", size=11, color=GOLD if big else DIM, height=16 if big else 12),
         ]),
     ])
 
 
 def enemy_card(i):
     return group(f"E{i}", [
-        "Anchor: (Width: 214);",
+        "Anchor: (Width: 196, Height: 66);",
         "LayoutMode: Top;",
         f"Background: {PANEL};",
-        "Padding: (Full: 6);",
+        "Padding: (Full: 5);",
     ], [
-        group("", ["Anchor: (Height: 42);", "LayoutMode: Left;"], [
-            slot(f"E{i}Icon", 40),
-            spacer(w=6),
-            group("", ["FlexWeight: 1;", "LayoutMode: Top;"], [
-                label(f"E{i}Name", size=14, bold=True, color="#ffb3a6", height=20),
-                label(f"E{i}Hp", size=12, color=DIM, height=18),
-            ]),
-        ]),
-        bar(f"E{i}Hp", BAR_W_ENEMY, HP_BACK, "#e0605a"),
-        spacer(h=4),
         group("", ["Anchor: (Height: 26);", "LayoutMode: Left;"], [
-            group(f"E{i}Status", ["FlexWeight: 1;", "LayoutMode: Left;"], []),
-            f'$C.@SecondaryTextButton #E{i}Info {{ @Text = "?"; Anchor: (Width: 30, Height: 24); }}',
+            slot(f"E{i}Icon", 22),
+            spacer(w=5),
+            label(f"E{i}Name", size=13, bold=True, color="#ffb3a6", height=24, flex=True),
+            button(f"E{i}Info", "?", 26, 22),
         ]),
+        group("", ["Anchor: (Height: 12);", "LayoutMode: Left;"], [
+            bar(f"E{i}Hp", BAR_W_ENEMY, HP_BACK, "#e0605a", h=5),
+            spacer(w=4),
+            label(f"E{i}Hp", size=10, color=DIM, height=12, flex=True),
+        ]),
+        group(f"E{i}Status", ["Anchor: (Height: 22);", "LayoutMode: Left;"], []),
     ])
 
 
-def party_card(i):
+def party_row(i):
     return group(f"P{i}", [
-        "Anchor: (Width: 290);",
-        "LayoutMode: Top;",
-        f"Background: {PANEL};",
-        "Padding: (Full: 6);",
+        "Anchor: (Height: 62);",
+        "LayoutMode: Left;",
+        f"Background: {PANEL2};",
+        "Padding: (Full: 4);",
     ], [
-        group(f"P{i}Turn", ["Anchor: (Height: 3);", f"Background: {GOLD};"], []),
-        group("", ["Anchor: (Height: 42);", "LayoutMode: Left;"], [
-            slot(f"P{i}Icon", 40),
-            spacer(w=6),
-            group("", ["FlexWeight: 1;", "LayoutMode: Top;"], [
-                label(f"P{i}Name", size=15, bold=True, color="#a9d8ff", height=20),
-                label(f"P{i}Nums", size=12, color=DIM, height=18),
+        group(f"P{i}Turn", ["Anchor: (Width: 4);", f"Background: {GOLD};"], []),
+        spacer(w=5),
+        slot(f"P{i}Icon", 40),
+        spacer(w=6),
+        group("", ["FlexWeight: 1;", "LayoutMode: Top;"], [
+            group("", ["Anchor: (Height: 20);", "LayoutMode: Left;"], [
+                label(f"P{i}Name", size=14, bold=True, color="#a9d8ff", width=110, height=20),
+                label(f"P{i}Nums", size=11, color=DIM, height=20, flex=True),
             ]),
-            f'$C.@SecondaryTextButton #P{i}Info {{ @Text = "?"; Anchor: (Width: 30, Height: 24); }}',
+            bar(f"P{i}Hp", BAR_W_PARTY, HP_BACK, HP, h=6),
+            spacer(h=2),
+            bar(f"P{i}Mp", BAR_W_PARTY, MP_BACK, MP, h=4),
+            spacer(h=2),
+            group(f"P{i}Status", ["Anchor: (Height: 22);", "LayoutMode: Left;"], []),
         ]),
-        bar(f"P{i}Hp", BAR_W_CARD, HP_BACK, HP),
-        spacer(h=3),
-        bar(f"P{i}Mp", BAR_W_CARD, MP_BACK, MP, h=5),
-        spacer(h=4),
-        group(f"P{i}Status", ["Anchor: (Height: 24);", "LayoutMode: Left;"], []),
+        button(f"P{i}Info", "?", 26, 22),
     ])
 
 
 def option_row(i):
-    return group(f"Row{i}", ["Anchor: (Height: 42);", "LayoutMode: Left;"], [
-        slot(f"Opt{i}Icon", 40),
+    return group(f"Row{i}", ["Anchor: (Height: 30);", "LayoutMode: Left;"], [
+        slot(f"Opt{i}Icon", 22),
         spacer(w=6),
-        f'$C.@SecondaryTextButton #Opt{i} {{ @Text = ""; Anchor: (Width: 250, Height: 38); }}',
+        button(f"Opt{i}", "", 200, 28),
         spacer(w=6),
-        label(f"Opt{i}Hint", size=13, color=GOLD, width=90, height=38),
+        label(f"Opt{i}Hint", size=11, color=GOLD, height=28, flex=True),
     ])
 
 
-def main():
-    left = group("LeftCol", ["Anchor: (Width: 300);", "LayoutMode: Top;"], [
-        group("QueuePanel", ["Anchor: (Height: 476);", "LayoutMode: Top;", f"Background: {PANEL};", "Padding: (Full: 8);"],
-              [label("", "ОЧЕРЕДЬ ХОДОВ", 15, GOLD, True, height=24)]
-              + sum(([queue_slot(i), spacer(h=3)] for i in range(QUEUE)), [])),
+def battle():
+    enemy_row = group("EnemyRow", ["Anchor: (Height: 66);", "LayoutMode: Left;"],
+                      [spacer(flex=True)] + sum(([enemy_card(i), spacer(w=6)] for i in range(ENEMIES)), [])
+                      + [spacer(flex=True)])
+    banner = group("BannerRow", ["Anchor: (Height: 60);", "LayoutMode: Left;"], [
         spacer(flex=True),
-        group("ActiveCard", ["Anchor: (Height: 278);", "LayoutMode: Top;", f"Background: {PANEL2};", "Padding: (Full: 10);"], [
-            label("ActHeader", "ХОДИТ", 12, GOLD, True, height=18),
-            group("", ["Anchor: (Height: 92);", "LayoutMode: Left;"], [
-                slot("ActIcon", 88),
-                spacer(w=10),
-                group("", ["FlexWeight: 1;", "LayoutMode: Top;"], [
-                    label("ActName", "", 22, TEXT, True, height=30),
-                    label("ActTitle", "", 14, GOLD, height=20),
-                    label("ActNums", "", 13, DIM, height=36, wrap=True),
-                ]),
-            ]),
-            bar("ActHp", BAR_W_ACT, HP_BACK, HP, h=10),
-            spacer(h=3),
-            bar("ActMp", BAR_W_ACT, MP_BACK, MP, h=6),
-            spacer(h=6),
-            group("ActStatus", ["Anchor: (Height: 24);", "LayoutMode: Left;"], []),
-            label("ActStatusText", "", 12, TEXT, height=54, wrap=True),
-            label("ActImmune", "", 12, "#c9a7ff", height=18),
+        group("BannerBox", ["Anchor: (Width: 620, Height: 56);", "LayoutMode: Top;", "Background: #070b12(0.72);",
+                            "Padding: (Full: 6);"], [
+            label("Banner", "", 20, GOLD, True, height=24),
+            label("BannerSub", "", 13, TEXT, height=18),
         ]),
-    ])
-
-    enemy_row = group("EnemyRow", ["Anchor: (Height: 118);", "LayoutMode: Left;"],
-                      sum(([enemy_card(i), spacer(w=8)] for i in range(ENEMIES)), []))
-    party_row = group("PartyRow", ["Anchor: (Height: 128);", "LayoutMode: Left;"],
-                      sum(([party_card(i), spacer(w=8)] for i in range(PARTY)), []))
-    center = group("Center", ["FlexWeight: 1;", "LayoutMode: Top;"], [
-        enemy_row,
-        spacer(h=10),
-        label("Banner", "", 30, GOLD, True, height=44),
         spacer(flex=True),
-        group("LogPanel", ["Anchor: (Height: 118);", "LayoutMode: Top;", f"Background: {PANEL};", "Padding: (Full: 8);"], [
-            label("Log", "", 13, "#d8e2ee", flex=True, wrap=True),
-        ]),
-        spacer(h=8),
-        party_row,
     ])
-
-    right = group("RightCol", ["Anchor: (Width: 420);", "LayoutMode: Top;"], [
+    queue = group("QueuePanel", ["Anchor: (Width: 176);", "LayoutMode: Top;", f"Background: {PANEL};",
+                                 "Padding: (Full: 6);"],
+                  [label("", "ОЧЕРЕДЬ", 12, GOLD, True, height=18)]
+                  + sum(([queue_slot(i), spacer(h=2)] for i in range(QUEUE)), []))
+    middle = group("Middle", ["FlexWeight: 1;", "LayoutMode: Left;"], [
+        group("", ["Anchor: (Width: 176);", "LayoutMode: Top;"], [queue, spacer(flex=True)]),
         spacer(flex=True),
-        group("InfoPanel", ["Anchor: (Height: 260);", "LayoutMode: Top;", f"Background: {PANEL2};", "Padding: (Full: 10);"], [
-            group("", ["Anchor: (Height: 44);", "LayoutMode: Left;"], [
-                slot("InfoIcon", 40),
-                spacer(w=8),
-                label("InfoTitle", "", 18, GOLD, True, height=40, flex=True),
-            ]),
-            label("InfoText", "", 13, TEXT, flex=True, wrap=True),
-        ]),
-        spacer(h=8),
-        group("MenuPanel", ["Anchor: (Height: 372);", "LayoutMode: Top;", f"Background: {PANEL};", "Padding: (Full: 10);"],
-              [label("MenuTitle", "", 18, TEXT, True, height=30)]
-              + [option_row(i) for i in range(OPTIONS)]
-              + [spacer(h=4),
-                 '$C.@CancelTextButton #Back { @Text = "Назад"; Anchor: (Height: 32); }',
-                 label("Error", "", 13, "#ff7070", height=22)]),
     ])
-
-    root = group("", ["LayoutMode: Left;", "Padding: (Full: 12);"], [left, spacer(w=12), center, spacer(w=12), right])
+    party = group("PartyPanel", ["Anchor: (Width: 450);", "LayoutMode: Top;", f"Background: {PANEL};",
+                                 "Padding: (Full: 6);"],
+                  sum(([party_row(i), spacer(h=4)] for i in range(PARTY)), []))
+    menu = group("MenuPanel", ["Anchor: (Width: 330);", "LayoutMode: Top;", f"Background: {PANEL};",
+                               "Padding: (Full: 6);"], [
+        group("", ["Anchor: (Height: 26);", "LayoutMode: Left;"], [
+            label("MenuTitle", "", 14, TEXT, True, height=24, flex=True),
+            button("Back", "Назад", 84, 24, cancel=True),
+        ]),
+    ] + [option_row(i) for i in range(OPTIONS)] + [label("Error", "", 11, "#ff7070", height=16)])
+    info = group("InfoPanel", ["Anchor: (Width: 540);", "LayoutMode: Top;", f"Background: {PANEL2};",
+                               "Padding: (Full: 8);"], [
+        group("", ["Anchor: (Height: 26);", "LayoutMode: Left;"], [
+            slot("InfoIcon", 22),
+            spacer(w=6),
+            label("InfoTitle", "", 15, GOLD, True, height=24, flex=True),
+        ]),
+        label("InfoText", "", 12, TEXT, flex=True, wrap=True),
+    ])
+    bottom = group("BottomBar", ["Anchor: (Height: 232);", "LayoutMode: Left;"], [
+        spacer(flex=True), party, spacer(w=8), menu, spacer(w=8), info, spacer(flex=True),
+    ])
+    root = group("", ["LayoutMode: Top;", "Padding: (Full: 10);"], [enemy_row, spacer(h=6), banner, middle, bottom])
     text = ('$C = "../Common.ui";\n\n'
             "// Боевое меню JRPG. Файл собран скриптом tools/gen_battle_ui.py — правь скрипт, а не этот файл.\n"
-            "// Слева очередь ходов и карточка ходящего, сверху враги, снизу партия и журнал,\n"
-            "// справа окно описаний и команды. Иконки вставляются в пустые слоты (#...Icon) из Icons/*.ui.\n\n"
+            "// Сверху враги и баннер хода, слева очередь, внизу одной полосой: партия, команды, описание.\n"
+            "// Иконки вставляются в пустые слоты (#...Icon) из Icons/*.ui.\n\n"
             + root + "\n")
-    with open(OUT, "w", encoding="utf-8") as f:
-        f.write(text)
-    print("written", os.path.abspath(OUT), len(text.splitlines()), "lines")
-    progression()
+    write("BattleMenu.ui", text)
 
 
-STATS = 6
-NODES = 4
+# ---------- круговая сетка навыков ----------
+
+GRID = 640
+CENTER = GRID // 2
+RADII = {0: 0, 1: 110, 2: 202, 3: 280}
+NODE = 68      # контейнер узла
 TABS = 3
 
 
-def stat_row(i):
-    return group(f"StatRow{i}", ["Anchor: (Height: 36);", "LayoutMode: Left;"], [
-        label(f"Stat{i}", "", 15, TEXT, height=34, flex=True),
-        f'$C.@SecondaryTextButton #StatPlus{i} {{ @Text = "+"; Anchor: (Width: 44, Height: 32); }}',
-    ])
+def ring(i):
+    return 0 if i == 0 else 1 if i <= 6 else 2 if i <= 18 else 3
 
 
-def node_row(i):
-    return group(f"Node{i}", ["Anchor: (Height: 86);", "LayoutMode: Left;", f"Background: {PANEL2};", "Padding: (Full: 6);"], [
-        slot(f"Node{i}Icon", 40),
-        spacer(w=8),
-        group("", ["FlexWeight: 1;", "LayoutMode: Top;"], [
-            label(f"Node{i}Name", "", 16, GOLD, True, height=22),
-            label(f"Node{i}Text", "", 12, TEXT, flex=True, wrap=True),
-        ]),
-        spacer(w=8),
-        group("", ["Anchor: (Width: 150);", "LayoutMode: Top;"], [
-            label(f"Node{i}State", "", 12, DIM, height=30, wrap=True),
-            f'$C.@SecondaryTextButton #Learn{i} {{ @Text = "Изучить"; Anchor: (Height: 34); }}',
-        ]),
+def angle(i):
+    r = ring(i)
+    if r == 1: return -90 + 60 * (i - 1)
+    if r == 2: return -90 + 30 * (i - 7)
+    if r == 3: return -60 + 60 * (i - 19)
+    return 0
+
+
+def neighbors(i):
+    r = ring(i)
+    if r == 0: return list(range(1, 7))
+    if r == 1: return [0, 7 + 2 * (i - 1)]
+    if r == 2:
+        j = i - 7
+        out = [7 + (j + 11) % 12, 7 + (j + 1) % 12]
+        out.append(1 + j // 2 if j % 2 == 0 else 19 + j // 2)
+        return out
+    return [7 + 2 * (i - 19) + 1]
+
+
+def pos(i):
+    a = math.radians(angle(i))
+    r = RADII[ring(i)]
+    return CENTER + r * math.cos(a), CENTER + r * math.sin(a)
+
+
+def edges():
+    out = []
+    for a in range(25):
+        for b in neighbors(a):
+            if a < b: out.append((a, b))
+    return out
+
+
+def edge_dots(a, b, color, step=11, gap=34):
+    (x1, y1), (x2, y2) = pos(a), pos(b)
+    length = math.hypot(x2 - x1, y2 - y1)
+    n = max(1, int((length - 2 * gap) / step))
+    dots = []
+    for k in range(n + 1):
+        t = (gap + k * (length - 2 * gap) / max(1, n)) / length
+        x, y = x1 + (x2 - x1) * t, y1 + (y2 - y1) * t
+        dots.append(f"Group {{ Anchor: (Left: {int(x) - 2}, Top: {int(y) - 2}, Width: 4, Height: 4); Background: {color}; }}")
+    return dots
+
+
+def full(id_, children):
+    return group(id_, [f"Anchor: (Left: 0, Top: 0, Width: {GRID}, Height: {GRID});"], children)
+
+
+def node(i):
+    x, y = pos(i)
+    left, top = int(x) - NODE // 2, int(y) - NODE // 2
+    return group(f"G{i}", [f"Anchor: (Left: {left}, Top: {top}, Width: {NODE}, Height: {NODE});"], [
+        f"Group #G{i}Sel {{ Anchor: (Left: 0, Top: 0, Width: 68, Height: 68); Background: #ffffff(0.9); }}",
+        f"Group #G{i}Lock {{ Anchor: (Left: 2, Top: 2, Width: 64, Height: 64); Background: #1a2030(0.95); }}",
+        f"Group #G{i}Avail {{ Anchor: (Left: 2, Top: 2, Width: 64, Height: 64); Background: #3d7bd9; }}",
+        f"Group #G{i}Open {{ Anchor: (Left: 2, Top: 2, Width: 64, Height: 64); Background: {GOLD}; }}",
+        # кнопка шире иконки: край кнопки вокруг иконки всегда кликается
+        button(f"G{i}Btn", "", 58, 58, left=5, top=5),
+        f"Group #G{i}Icon {{ Anchor: (Left: 14, Top: 14, Width: 40, Height: 40); }}",
     ])
 
 
 def progression():
-    tabs = group("Tabs", ["Anchor: (Height: 42);", "LayoutMode: Left;"],
-                 sum(([f'$C.@SecondaryTextButton #Tab{i} {{ @Text = ""; Anchor: (Width: 220, Height: 38); }}', spacer(w=8)]
-                      for i in range(TABS)), []))
-    left = group("HeroCol", ["Anchor: (Width: 400);", "LayoutMode: Top;", f"Background: {PANEL2};", "Padding: (Full: 10);"], [
+    tabs = group("Tabs", ["Anchor: (Height: 34);", "LayoutMode: Left;"],
+                 sum(([button(f"Tab{i}", "", 190, 32), spacer(w=6)] for i in range(TABS)), [])
+                 + [spacer(flex=True), label("Points", "", 15, GOLD, True, width=260, height=32)])
+    hero = group("HeroCol", ["Anchor: (Width: 290);", "LayoutMode: Top;", f"Background: {PANEL2};", "Padding: (Full: 10);"], [
         group("", ["Anchor: (Height: 92);", "LayoutMode: Left;"], [
             slot("HeroIcon", 88),
             spacer(w=10),
             group("", ["FlexWeight: 1;", "LayoutMode: Top;"], [
-                label("HeroName", "", 22, TEXT, True, height=30),
-                label("HeroTitle", "", 14, GOLD, height=20),
-                label("HeroLevel", "", 14, DIM, height=36, wrap=True),
+                label("HeroName", "", 20, TEXT, True, height=28),
+                label("HeroTitle", "", 13, GOLD, height=20),
+                label("HeroLevel", "", 12, DIM, height=36, wrap=True),
             ]),
         ]),
-        bar("Exp", 370, "#2a2410", GOLD, h=8),
+        bar("Exp", 266, "#2a2410", GOLD, h=6),
         spacer(h=8),
-        label("Points", "", 14, GOLD, True, height=40, wrap=True),
-        label("", "ХАРАКТЕРИСТИКИ", 13, DIM, True, height=22),
-    ] + [stat_row(i) for i in range(STATS)] + [
-        spacer(h=6),
+        label("HeroStats", "", 12, TEXT, height=96, wrap=True),
+        label("HeroPassives", "", 12, "#c58cff", height=60, wrap=True),
         label("Known", "", 12, DIM, flex=True, wrap=True),
+        button("AddExp", "+100 опыта (тест)", 266, 30),
+        spacer(h=4),
+        button("Respec", "Сбросить сетку", 266, 30),
     ])
-    right = group("TreeCol", ["FlexWeight: 1;", "LayoutMode: Top;", f"Background: {PANEL};", "Padding: (Full: 10);"], [
-        label("", "ДЕРЕВО НАВЫКОВ", 15, GOLD, True, height=26),
-        label("", "Очки навыков даются за уровень. Навыки открываются по порядку.", 12, DIM, height=20),
-    ] + sum(([node_row(i), spacer(h=6)] for i in range(NODES)), []) + [
-        spacer(flex=True),
-        label("Message", "", 14, "#ffd27a", height=24),
+    edge_list = edges()
+    off = full("EdgesOff", sum((edge_dots(a, b, "#4a5a78(0.8)") for a, b in edge_list), []))
+    on = [full(f"Edge{k}", edge_dots(a, b, GOLD)) for k, (a, b) in enumerate(edge_list)]
+    rings = full("Rings", sum((ring_dots(r) for r in (1, 2, 3)), []))
+    grid = group("Grid", [f"Anchor: (Width: {GRID}, Height: {GRID});", f"Background: {PANEL};"],
+                 [rings, off] + on + [node(i) for i in range(25)])
+    detail = group("DetailCol", ["FlexWeight: 1;", "LayoutMode: Top;", f"Background: {PANEL2};", "Padding: (Full: 10);"], [
+        group("", ["Anchor: (Height: 44);", "LayoutMode: Left;"], [
+            slot("SelIcon", 40),
+            spacer(w=8),
+            group("", ["FlexWeight: 1;", "LayoutMode: Top;"], [
+                label("SelTitle", "", 16, GOLD, True, height=22),
+                label("SelKind", "", 12, DIM, height=18),
+            ]),
+        ]),
+        spacer(h=6),
+        label("SelText", "", 12, TEXT, flex=True, wrap=True),
+        group("", ["Anchor: (Height: 30);", "LayoutMode: Left;"], [
+            button("PrevNode", "<", 60, 28), spacer(w=6),
+            label("", "соседние узлы", 12, DIM, height=28, flex=True),
+            button("NextNode", ">", 60, 28),
+        ]),
+        spacer(h=6),
+        button("Learn", "Открыть узел", 250, 34),
+        spacer(h=4),
+        label("Message", "", 12, "#ffd27a", height=36, wrap=True),
+        spacer(h=4),
+        button("Close", "Закрыть", 250, 32, cancel=True),
     ])
-    window = group("Window", ["Anchor: (Width: 1120);", "LayoutMode: Top;", "Background: #070b12(0.94);", "Padding: (Full: 14);"], [
-        group("", ["Anchor: (Height: 40);", "LayoutMode: Left;"], [
-            label("", "ПРОКАЧКА ПАРТИИ", 24, GOLD, True, height=38, flex=True),
-            label("", "тестовая версия", 13, DIM, width=160, height=38),
+    window = group("Window", ["Anchor: (Width: 1250);", "LayoutMode: Top;", "Background: #070b12(0.95);", "Padding: (Full: 12);"], [
+        group("", ["Anchor: (Height: 32);", "LayoutMode: Left;"], [
+            label("", "СЕТКА НАВЫКОВ", 22, GOLD, True, height=30, flex=True),
+            label("", "открывай узлы рядом с уже открытыми", 12, DIM, width=330, height=30),
         ]),
         tabs,
         spacer(h=8),
-        group("", ["FlexWeight: 1;", "LayoutMode: Left;"], [left, spacer(w=12), right]),
-        spacer(h=10),
-        group("", ["Anchor: (Height: 40);", "LayoutMode: Left;"], [
-            '$C.@SecondaryTextButton #AddExp { @Text = "+100 опыта (тест)"; Anchor: (Width: 230, Height: 36); }',
-            spacer(w=8),
-            '$C.@SecondaryTextButton #Respec { @Text = "Сбросить очки"; Anchor: (Width: 200, Height: 36); }',
-            spacer(flex=True),
-            '$C.@CancelTextButton #Close { @Text = "Закрыть"; Anchor: (Width: 160, Height: 36); }',
-        ]),
+        group("", [f"Anchor: (Height: {GRID});", "LayoutMode: Left;"], [hero, spacer(w=10), grid, spacer(w=10), detail]),
     ])
     root = group("", ["LayoutMode: Top;"], [
         spacer(flex=True),
-        group("", ["Anchor: (Height: 760);", "LayoutMode: Left;"], [spacer(flex=True), window, spacer(flex=True)]),
+        group("", [f"Anchor: (Height: {GRID + 110});", "LayoutMode: Left;"], [spacer(flex=True), window, spacer(flex=True)]),
         spacer(flex=True),
     ])
-    out = os.path.join(os.path.dirname(OUT), "Progression.ui")
     text = ('$C = "../Common.ui";\n\n'
-            "// Меню прокачки партии (тестовое). Собрано tools/gen_battle_ui.py — правь скрипт.\n\n"
+            "// Круговая сетка навыков. Собрано tools/gen_battle_ui.py — правь скрипт.\n"
+            "// Узел #G<n>: слои #G<n>Sel (выбран), #G<n>Lock/Avail/Open (состояние), кнопка #G<n>Btn, иконка #G<n>Icon.\n"
+            "// Рёбра: серые точки #EdgesOff всегда, золотые #Edge<k> — когда оба конца открыты.\n\n"
             + root + "\n")
-    with open(out, "w", encoding="utf-8") as f:
+    write("Progression.ui", text)
+    # порядок рёбер нужен плагину: печатаем для проверки с Progression.Grid.edges()
+    print("edges:", edge_list)
+
+
+def ring_dots(r):
+    radius = RADII[r]
+    n = int(2 * math.pi * radius / 18)
+    dots = []
+    for k in range(n):
+        a = 2 * math.pi * k / n
+        x, y = CENTER + radius * math.cos(a), CENTER + radius * math.sin(a)
+        dots.append(f"Group {{ Anchor: (Left: {int(x) - 1}, Top: {int(y) - 1}, Width: 2, Height: 2); Background: #2c3a52(0.9); }}")
+    return dots
+
+
+def write(name, text):
+    path = os.path.join(OUT_DIR, name)
+    with open(path, "w", encoding="utf-8") as f:
         f.write(text)
-    print("written", os.path.abspath(out), len(text.splitlines()), "lines")
+    print("written", os.path.abspath(path), len(text.splitlines()), "lines")
 
 
 if __name__ == "__main__":
-    main()
+    battle()
+    progression()

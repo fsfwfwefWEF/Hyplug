@@ -20,6 +20,7 @@ public final class Describe {
         String flavor = content.flavor(a.id());
         if (!flavor.isEmpty()) lines.add(flavor);
         lines.add("Цель: " + target(a.target()));
+        String element = content.element(a);
         if (a.damagePower() > 0) {
             lines.add("Урон: " + pct(a.damagePower()) + " от " + (a.magical() ? "магии" : "силы")
                     + (a.magical() ? " (защита цели влияет слабо)" : ""));
@@ -35,6 +36,14 @@ public final class Describe {
             lines.add("Снимает: " + String.join(", ", a.cures().stream().map(id -> content.status(id).name()).toList()));
         }
         lines.add(cost(a));
+        if (!element.isEmpty() && a.damagePower() > 0) {
+            lines.add("Стихия: " + Element.name(element));
+            for (Combo k : content.combos()) {
+                if (k.element().equals(element)) {
+                    lines.add("Комбо по цели с «" + content.status(k.requires()).name() + "»: " + k.name() + " — " + k.text());
+                }
+            }
+        }
         if (a.weight() > 100) lines.add("Тяжёлое действие: следующий ход наступит позже");
         else if (a.weight() < 100) lines.add("Быстрое действие: следующий ход наступит раньше");
         return String.join("\n", lines);
@@ -71,6 +80,7 @@ public final class Describe {
             case SKIP_TURN -> "пропускает ход";
             case DAMAGE_TAKEN_MULT -> "получает " + pct(s.power()) + " урона";
             case NEXT_ACTION_MULT -> "следующая атака x" + num(s.power());
+            case MARKER -> "особая метка для комбо стихий";
         };
     }
 
@@ -94,6 +104,14 @@ public final class Describe {
         }
         if (!c.immunities.isEmpty()) {
             lines.add("Иммунитет: " + String.join(", ", c.immunities.stream().map(id -> content.status(id).name()).toList()));
+        }
+        List<String> weak = new ArrayList<>();
+        for (Combo k : content.combos()) {
+            if (c.status(k.requires()) != null) weak.add(k.name() + " (" + Element.name(k.element()) + ")");
+        }
+        if (!weak.isEmpty()) lines.add("Уязвим к комбо: " + String.join(", ", weak));
+        if (!c.passives.isEmpty()) {
+            lines.add("Пассивные: " + String.join(", ", c.passives.stream().map(id -> content.passive(id).name()).toList()));
         }
         if (!c.abilities.isEmpty()) {
             lines.add("Способности:");
@@ -142,6 +160,10 @@ public final class Describe {
                 case "slow" -> { return a.magical() ? "ice" : "web"; }
                 case "guard", "brood_shield" -> { return "shield"; }
                 case "charged" -> { return "focus"; }
+                case "wet" -> { return "water"; }
+                case "bleed" -> { return "bleed"; }
+                case "armor_break" -> { return "crack"; }
+                case "frozen" -> { return "ice"; }
                 default -> { }
             }
         }
@@ -167,6 +189,63 @@ public final class Describe {
     /** Ключ портрета: Assets/Portraits/<ключ>.png (герои по id, враги по шаблону). */
     public static String portrait(Combatant c) {
         return c.templateId != null ? c.templateId : c.id;
+    }
+
+    // ---------- прокачка ----------
+
+    /** Название узла сетки. */
+    public static String nodeTitle(Content content, Progression.Hero hero, Progression.GridNode n) {
+        return switch (n.kind()) {
+            case START -> hero.def.name() + ": " + hero.def.title();
+            case STAT -> n.stat().label + " +" + n.value();
+            case ABILITY -> content.ability(n.ref()).name();
+            case PASSIVE -> content.passive(n.ref()).name();
+        };
+    }
+
+    public static String nodeKind(Progression.GridNode n) {
+        return switch (n.kind()) {
+            case START -> "Начало пути";
+            case STAT -> "Характеристика";
+            case ABILITY -> "Способность";
+            case PASSIVE -> "Пассивное умение";
+        };
+    }
+
+    /** Описание узла сетки: что даёт, сколько стоит, почему нельзя открыть. */
+    public static String node(Content content, Progression.Hero hero, int index) {
+        Progression.GridNode n = hero.node(index);
+        List<String> lines = new ArrayList<>();
+        switch (n.kind()) {
+            case START -> lines.add("Центр сетки. Открывай соседние узлы, чтобы двигаться к внешним кольцам.");
+            case STAT -> lines.add("Навсегда повышает характеристику «" + n.stat().label + "» на " + n.value() + ".");
+            case ABILITY -> lines.add(ability(content, content.ability(n.ref())));
+            case PASSIVE -> lines.add(content.passive(n.ref()).text());
+        }
+        if (index != 0) {
+            lines.add("");
+            lines.add("Цена: " + Progression.Grid.cost(index, n) + " очк.   Уровень: " + Progression.Grid.minLevel(index) + "+");
+            String why = hero.whyCantUnlock(index);
+            lines.add(hero.unlocked.contains(index) ? "Открыто" : why == null ? "Можно открыть" : "Нельзя: " + why);
+        }
+        return String.join("\n", lines);
+    }
+
+    /** Ключ иконки узла сетки. */
+    public static String nodeIcon(Content content, Progression.Hero hero, Progression.GridNode n) {
+        return switch (n.kind()) {
+            case START -> "pt_" + hero.def.id();
+            case STAT -> switch (n.stat()) {
+                case HP -> "heart";
+                case MP -> "ether";
+                case ATK -> "sword";
+                case MAG -> "magic";
+                case DEF -> "shield";
+                case SPD -> "haste";
+            };
+            case ABILITY -> abilityIcon(content, content.ability(n.ref()));
+            case PASSIVE -> "star";
+        };
     }
 
     // ---------- утилиты ----------

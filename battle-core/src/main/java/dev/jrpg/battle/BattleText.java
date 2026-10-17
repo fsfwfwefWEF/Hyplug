@@ -39,11 +39,15 @@ public final class BattleText {
         return (current ? "▶ " : "") + c.name + "  " + c.hp + "/" + c.stats.maxHp();
     }
 
+    /** Имена комбо для журнала: id → имя (заполняет {@link Content} при добавлении комбо). */
+    public static final java.util.Map<String, String> COMBO_NAMES = new java.util.concurrent.ConcurrentHashMap<>();
+
     public static String describe(ActionResult r) {
         StringBuilder sb = new StringBuilder(r.actor().name + ": " + r.actionName());
         if (r.fleeAttempt()) sb.append(r.fled() ? " — удалось!" : " — не вышло");
         for (ActionResult.Hit h : r.hits()) {
             sb.append("\n  ").append(h.target().name).append(':');
+            for (String k : h.combos()) sb.append(" [").append(COMBO_NAMES.getOrDefault(k, k)).append(']');
             if (h.damage() > 0) sb.append(" -").append(h.damage()).append(" HP").append(h.crit() ? " КРИТ!" : "");
             if (h.heal() > 0) sb.append(" +").append(h.heal()).append(" HP");
             if (h.mpRestore() > 0) sb.append(" +").append(h.mpRestore()).append(" MP");

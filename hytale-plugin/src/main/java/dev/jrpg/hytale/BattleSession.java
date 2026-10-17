@@ -35,8 +35,10 @@ import java.util.concurrent.TimeUnit;
  * Потоки: всё, что трогает мир/ECS/Battle, выполняется в потоке мира (world.execute).
  */
 public final class BattleSession implements BattleListener {
-    private static final double[] PARTY_X = {0, -2.5, 2.5, -5, 5};
-    private static final long INTRO_MS = 1600;
+    private static final double[] PARTY_X = {0, -3.5, 3.5, -7, 7};
+    private static final long INTRO_MS = 2200;
+    /** Пауза между всплывающими надписями над одним бойцом, мс. */
+    private static final long POP_STEP_MS = 450;
 
     private final JrpgPlugin plugin;
     private final Encounter encounter;
@@ -56,6 +58,8 @@ public final class BattleSession implements BattleListener {
     private boolean closed;
     private int summonSlot;
     private String banner = "";
+    /** Вторая строка баннера: итог действия («Паук: -34, Горение»). */
+    private String bannerSub = "";
     /** Окно описаний: на что навели мышь в меню (номер пункта) или кого «осматривают» кнопкой «?». */
     private int hoverIndex = -1;
     private BattleMenu.Screen hoverScreen;
@@ -127,13 +131,12 @@ public final class BattleSession implements BattleListener {
         }
 
         camera = new BattleCamera(player, plugin.settings().camera, center, enemyCenter);
-        camera.setPlayerPos(homes.get("hero"));
         camera.overview();
         banner = encounter.name();
         say("Бой: " + encounter.name());
         openMenu();
         // Небольшая заставка общим планом, потом первый ход.
-        later(INTRO_MS, () -> {
+        later(plugin.settings().ms(INTRO_MS), () -> {
             banner = "";
             battle.start(Battle.Opening.NORMAL);
             refresh();
@@ -248,17 +251,33 @@ public final class BattleSession implements BattleListener {
         hoverIndex = index;
         hoverScreen = menu.screen();
         inspectId = null;
+        // Камера при наведении больше не дёргается (в 0.4 она прыгала от цели к цели).
         if (hoverScreen == BattleMenu.Screen.TARGET && index >= 0 && index < menu.targets().size()) {
             Combatant t = menu.targets().get(index);
-            camera.action(homes.get(battle.current().id), homes.get(t.id), true);
             Fx.particle(plugin.settings().targetRing, homes.get(t.id), playerEntity, store);
         }
         refresh();
     }
 
-    /** Кнопка «?» на карточке бойца: его характеристики, статусы и способности. */
+    /**
+     * Клик по карточке бойца: на экране выбора цели — выбрать его целью, иначе показать его
+     * характеристики, статусы и способности.
+     */
     void onInspect(String combatantId) {
         if (closed || combatantId == null) return;
+        if (battle.phase() == Battle.Phase.AWAIT_COMMAND && menu.screen() == BattleMenu.Screen.TARGET) {
+            BattleAction action = menu.clickTarget(combatantId);
+            if (action != null) {
+                clearInfo();
+                try {
+                    battle.submit(action);
+                } catch (IllegalArgumentException e) {
+                    menu.rejected(e.getMessage());
+                }
+                refresh();
+                return;
+            }
+        }
         inspectId = combatantId;
         hoverIndex = -1;
         refresh();
@@ -272,8 +291,9 @@ public final class BattleSession implements BattleListener {
     /** На экране выбора цели — кольца под всеми возможными целями и общий план. */
     private void highlightTargets() {
         if (menu.screen() != BattleMenu.Screen.TARGET) return;
-        camera.overview();
-        for (Combatant t : menu.targets()) {
+        List<Combatant> targets = menu.targets();
+        camera.targets(targets.isEmpty() || targets.get(0).side == Side.ENEMY);
+        for (Combatant t : targets) {
             Vector3d pos = homes.get(t.id);
             if (pos != null) Fx.particle(plugin.settings().targetRing, pos, playerEntity, store);
         }
@@ -305,6 +325,7 @@ public final class BattleSession implements BattleListener {
     BattleMenu menu() { return menu; }
     Settings settings() { return plugin.settings(); }
     String banner() { return banner; }
+    String bannerSub() { return bannerSub; }
     List<String> logLines() { return List.copyOf(log); }
 
     Info info() {
@@ -322,8 +343,11 @@ public final class BattleSession implements BattleListener {
         if (battle.phase() == Battle.Phase.ENDED) {
             return new Info(menu.title(), String.join("\n", log), "levelup");
         }
-        if (c == null) return new Info(encounter.name(), "Наведи мышь на команду или нажми «?» на карточке, "
-                + "чтобы прочитать описание.", "info");
+        // Пока ходит враг или идёт анимация — последние строки журнала, в свой ход — карточка героя.
+        if (c == null || c.side != Side.PARTY || battle.phase() != Battle.Phase.AWAIT_COMMAND) {
+            return new Info("Журнал боя", log.isEmpty() ? "Наведи мышь на команду или нажми «?» на карточке, "
+                    + "чтобы прочитать описание." : String.join("\n", log), "info");
+        }
         return new Info(c.name, Describe.combatant(k, c), "portrait:" + Describe.portrait(c));
     }
 
@@ -333,6 +357,8 @@ public final class BattleSession implements BattleListener {
     public void onTurnStart(Combatant actor, List<Combatant> forecast) {
         Vector3d pos = homes.get(actor.id);
         camera.focus(pos, actor.side == Side.PARTY);
+        banner = "Ход: " + actor.name;
+        bannerSub = "";
         if (pos != null) Fx.particle(plugin.settings().turnRing, pos, playerEntity, store);
         clearInfo();
     }
@@ -345,6 +371,7 @@ public final class BattleSession implements BattleListener {
     @Override
     public void onStatusTick(Combatant t, StatusInstance s, int delta) {
         addLog(t.name + ": " + s.def.name() + " " + (delta > 0 ? "+" : "") + delta + " HP");
+        pop(t, 0, (delta > 0 ? "+" : "") + delta + " " + s.def.name(), delta > 0 ? HEAL : STATUS);
     }
 
     @Override
@@ -355,12 +382,13 @@ public final class BattleSession implements BattleListener {
     @Override
     public void onTurnSkipped(Combatant actor, String reason) {
         addLog(actor.name + " пропускает ход (" + reason + ")");
+        pop(actor, 0, "Пропуск хода", STATUS);
     }
 
     @Override
     public void onActionExecuted(ActionResult r) {
         addLog(BattleText.describe(r));
-        presentDelay = r.actor().side == Side.ENEMY ? plugin.settings().enemyThinkMs : 0;
+        presentDelay = r.actor().side == Side.ENEMY ? plugin.settings().ms(plugin.settings().enemyThinkMs) : 0;
         if (presentDelay > 0) {
             refresh();
             later(presentDelay, () -> present(r));
@@ -372,12 +400,14 @@ public final class BattleSession implements BattleListener {
     /** Показ действия: баннер, кадр камеры, выход к цели, частицы; потом возврат и следующий ход. */
     private void present(ActionResult r) {
         Combatant actor = r.actor();
-        banner = r.actionName();
+        banner = actor.name + ": " + r.actionName();
+        bannerSub = summary(r);
         Ref<EntityStore> actorRef = puppets.get(actor.id);
         Combatant firstTarget = r.hits().isEmpty() ? null : r.hits().get(0).target();
         Vector3d home = homes.get(actor.id);
         Vector3d targetPos = firstTarget == null ? null : homes.get(firstTarget.id);
-        camera.action(home, targetPos, actor.side == Side.PARTY);
+        if (firstTarget == null || firstTarget == actor) camera.focus(home, actor.side == Side.PARTY);
+        else camera.action(home, targetPos);
 
         boolean lunge = actorRef != null && firstTarget != null && firstTarget.side != actor.side
                 && home != null && targetPos != null;
@@ -389,11 +419,14 @@ public final class BattleSession implements BattleListener {
         for (ActionResult.Hit h : r.hits()) {
             Vector3d pos = homes.get(h.target().id);
             if (pos != null && h.damage() > 0) Fx.particle(plugin.settings().hitFx, pos, playerEntity, store);
+            popHit(h);
         }
+        if (r.fleeAttempt()) pop(actor, 0, r.fled() ? "Сбежали!" : "Не вышло", STATUS);
         refresh();
-        later(plugin.settings().actionDelayMs, () -> {
+        later(plugin.settings().ms(plugin.settings().actionDelayMs), () -> {
             if (lunge) Fx.teleport(store, actorRef, home, yawOf(actor));
             banner = "";
+            bannerSub = "";
             if (battle.phase() == Battle.Phase.PRESENTING) battle.acknowledge();
             refresh();
         });
@@ -403,7 +436,7 @@ public final class BattleSession implements BattleListener {
     public void onCombatantDown(Combatant c) {
         addLog(c.name + " повержен!");
         // Убираем куклу, когда удар уже показан.
-        later(presentDelay + plugin.settings().actionDelayMs / 2, () -> {
+        later(presentDelay + plugin.settings().ms(plugin.settings().actionDelayMs) / 2, () -> {
             despawn(c.id);
             refresh();
         });
@@ -448,10 +481,65 @@ public final class BattleSession implements BattleListener {
                 say(msg + " Открой прокачку: /jrpg party");
             }
             banner = "ПОБЕДА!";
+            bannerSub = "Награда: " + encounter.exp() + " опыта";
         } else {
             banner = outcome == Battle.Outcome.FLED ? "Партия сбежала" : "Поражение…";
         }
         refresh();
+    }
+
+    // ---------- всплывающие надписи ----------
+
+    private static final String DAMAGE = "#ffffff", CRIT = "#ffd23f", HEAL = "#6be37a", MANA = "#6aa8ff",
+            STATUS = "#c58cff", COMBO = "#ffa040", CURE = "#9fe0ff";
+
+    /** Цифры и эффекты одного попадания: урон сразу, потом статусы и комбо по очереди. */
+    private void popHit(ActionResult.Hit h) {
+        Combatant t = h.target();
+        Content k = battle.content();
+        long at = 250;
+        if (h.damage() > 0) pop(t, at, (h.crit() ? "Крит! -" : "-") + h.damage(), h.crit() ? CRIT : DAMAGE);
+        if (h.heal() > 0) pop(t, at, "+" + h.heal(), HEAL);
+        if (h.mpRestore() > 0) pop(t, at += POP_STEP_MS, "+" + h.mpRestore() + " MP", MANA);
+        for (String id : h.combos()) pop(t, at += POP_STEP_MS, comboName(id) + "!", COMBO);
+        for (String id : h.statusesApplied()) pop(t, at += POP_STEP_MS, k.status(id).name(), STATUS);
+        for (String id : h.statusesCured()) pop(t, at += POP_STEP_MS, "Снято: " + k.status(id).name(), CURE);
+        if (h.damage() == 0 && h.heal() == 0 && h.statusesApplied().isEmpty() && h.combos().isEmpty()
+                && h.mpRestore() == 0 && h.statusesCured().isEmpty() && t.side != battle.current().side) {
+            pop(t, at, "Нет эффекта", CURE);
+        }
+    }
+
+    private void pop(Combatant c, long delayMs, String text, String color) {
+        if (!plugin.settings().combatText) return;
+        Runnable show = () -> {
+            Ref<EntityStore> ref = puppets.get(c.id);
+            if (ref != null) Fx.combatText(store, playerEntity, ref, text, color);
+        };
+        if (delayMs <= 0) show.run();
+        else later(delayMs, show);
+    }
+
+    private String comboName(String id) {
+        for (Combo k : battle.content().combos()) if (k.id().equals(id)) return k.name();
+        return id;
+    }
+
+    /** Короткий итог действия для второй строки баннера. */
+    private String summary(ActionResult r) {
+        Content k = battle.content();
+        List<String> parts = new java.util.ArrayList<>();
+        for (ActionResult.Hit h : r.hits()) {
+            List<String> bits = new java.util.ArrayList<>();
+            if (h.damage() > 0) bits.add("-" + h.damage() + (h.crit() ? " крит" : ""));
+            if (h.heal() > 0) bits.add("+" + h.heal() + " HP");
+            for (String id : h.combos()) bits.add(comboName(id) + "!");
+            for (String id : h.statusesApplied()) bits.add(k.status(id).name());
+            if (h.killed()) bits.add("повержен");
+            if (!bits.isEmpty()) parts.add(h.target().name + ": " + String.join(", ", bits));
+        }
+        if (parts.size() > 3) return parts.size() + " целей: " + String.join("; ", parts.subList(0, 3)) + "…";
+        return String.join("; ", parts);
     }
 
     // ---------- завершение ----------

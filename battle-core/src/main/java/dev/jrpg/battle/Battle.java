@@ -54,6 +54,8 @@ public final class Battle {
             if (opening == Opening.PARTY_ADVANTAGE && c.side == Side.PARTY) c.ct += 50;
             if (opening == Opening.AMBUSH && c.side == Side.ENEMY) c.ct += 50;
             c.ap = c.side == Side.PARTY && opening == Opening.PARTY_ADVANTAGE ? 2 : 1;
+            if (c.passives.contains(Passives.FIRST_STRIKE)) c.ap += 2;
+            if (c.passives.contains(Passives.THICK_SKIN)) applyStatus(c, content.status("guard"), 1, false);
         }
         listener.onBattleStart(this);
         script.onBattleStart(this);
@@ -124,6 +126,7 @@ public final class Battle {
             Combatant actor = TurnQueue.advance(combatants);
             current = actor;
             actor.ap = Math.min(Combatant.MAX_AP, actor.ap + 1);
+            if (actor.passives.contains(Passives.MANA_FLOW)) actor.mp = Math.min(actor.stats.maxMp(), actor.mp + 3);
             listener.onTurnStart(actor, TurnQueue.forecast(combatants, FORECAST_SIZE));
 
             tickStatuses(actor, StatusDef.Trigger.TURN_START);
@@ -252,18 +255,46 @@ public final class Battle {
         }
 
         List<ActionResult.Hit> hits = new ArrayList<>();
+        String element = content.element(ab);
+        int lifesteal = 0;
         for (Combatant t : resolveTargets(actor, ab.target(), targetId)) {
             int damage = 0;
             boolean crit = false;
+            List<String> applied = new ArrayList<>();
+            List<String> combos = new ArrayList<>();
+            boolean blockStatuses = false;
             if (ab.damagePower() > 0) {
+                // Комбо стихий считаются до урона: они меняют множитель и снимают/вешают статусы.
+                double comboMult = 1.0;
+                double comboBonus = 0;
+                for (Combo k : content.combos()) {
+                    if (!k.element().equals(element) || t.status(k.requires()) == null) continue;
+                    combos.add(k.id());
+                    comboMult *= k.damageMult();
+                    comboBonus += t.stats.maxHp() * k.bonusMaxHp();
+                    if (k.consume()) t.statuses.removeIf(s -> s.def.id().equals(k.requires()));
+                    if (k.blockStatuses()) blockStatuses = true;
+                    if (k.applies() != null && !t.immunities.contains(k.applies())) {
+                        applyStatus(t, content.status(k.applies()), k.applyTurns(), t == actor);
+                        applied.add(k.applies());
+                    }
+                }
+                if (!combos.isEmpty() && actor.passives.contains(Passives.COMBO_MASTER)) {
+                    comboMult *= 1.3;
+                    comboBonus *= 1.3;
+                }
                 int power = ab.magical() ? actor.stats.mag() : actor.stats.atk();
                 double raw = power * ab.damagePower() * actionMult * (0.9 + random.nextDouble() * 0.2)
                         - t.stats.def() * (ab.magical() ? 0.25 : 0.5);
-                crit = random.nextDouble() < 0.05;
+                double critChance = 0.05 + (actor.passives.contains(Passives.KEEN_EYE) ? 0.10 : 0);
+                crit = random.nextDouble() < critChance;
                 if (crit) raw *= 1.5;
-                raw *= t.multiplier(StatusDef.Kind.DAMAGE_TAKEN_MULT);
-                damage = Math.min(t.hp, Math.max(1, (int) Math.round(raw)));
+                raw *= t.multiplier(StatusDef.Kind.DAMAGE_TAKEN_MULT) * comboMult;
+                if (actor.passives.contains(Passives.PYROMANIAC) && t.status("burn") != null) raw *= 1.25;
+                if (actor.passives.contains(Passives.EXECUTIONER) && t.hp < t.stats.maxHp() * 0.3) raw *= 1.4;
+                damage = Math.min(t.hp, Math.max(1, (int) Math.round(raw + comboBonus)));
                 t.hp -= damage;
+                if (actor.passives.contains(Passives.BLOODTHIRST)) lifesteal += (int) Math.round(damage * 0.15);
             }
             int heal = 0;
             if (ab.healPower() > 0 && t.isAlive()) {
@@ -279,18 +310,25 @@ public final class Battle {
             for (String cure : ab.cures()) {
                 if (t.statuses.removeIf(s -> s.def.id().equals(cure))) cured.add(cure);
             }
-            List<String> applied = new ArrayList<>();
-            if (t.isAlive()) {
+            if (t.isAlive() && !blockStatuses) {
+                double bonusChance = actor.passives.contains(Passives.ELEMENTALIST) ? 0.15 : 0;
                 for (StatusApply sa : ab.applies()) {
                     if (t.immunities.contains(sa.statusId())) continue;
-                    if (random.nextDouble() < sa.chance()) {
+                    if (random.nextDouble() < sa.chance() + bonusChance) {
                         applyStatus(t, content.status(sa.statusId()), sa.turns(), t == actor);
-                        applied.add(sa.statusId());
+                        if (!applied.contains(sa.statusId())) applied.add(sa.statusId());
                     }
                 }
             }
             hits.add(new ActionResult.Hit(t, damage, heal, mpBack, crit, applied, cured,
-                    damage > 0 && !t.isAlive()));
+                    damage > 0 && !t.isAlive(), combos));
+        }
+        if (lifesteal > 0 && actor.isAlive()) {
+            int healed = Math.min(actor.stats.maxHp() - actor.hp, lifesteal);
+            if (healed > 0) {
+                actor.hp += healed;
+                hits.add(new ActionResult.Hit(actor, 0, healed, 0, false, List.of(), List.of(), false, List.of()));
+            }
         }
         return new ActionResult(actor, nameOverride != null ? nameOverride : ab.name(), ab.sequenceId(),
                 hits, false, false);

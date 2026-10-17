@@ -19,6 +19,8 @@ public final class Combatant {
     public boolean boss;
     /** id статусов, которые на бойца не действуют (босс может быть невосприимчив к оглушению). */
     public final java.util.Set<String> immunities = new java.util.HashSet<>();
+    /** Пассивные умения из прокачки (id из {@link Content#passive(String)}). */
+    public final java.util.Set<String> passives = new java.util.HashSet<>();
     /** Ссылка на сущность/модель в адаптере (например, UUID NPC в Hytale). */
     public String entityKey;
 

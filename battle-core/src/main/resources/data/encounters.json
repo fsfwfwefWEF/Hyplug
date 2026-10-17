@@ -7,9 +7,9 @@
     "respawnMinutes": 20,
     "canFlee": true,
     "enemies": [
-      { "template": "goblin", "x": -2.5, "z": 5 },
-      { "template": "spider", "x": 0, "z": 6 },
-      { "template": "slime", "x": 2.5, "z": 5 }
+      { "template": "goblin", "x": -4, "z": 9 },
+      { "template": "spider", "x": 0, "z": 10 },
+      { "template": "slime", "x": 4, "z": 9 }
     ],
     "loot": [ { "item": "potion", "count": 1, "chance": 0.6 }, { "item": "antidote", "count": 1, "chance": 0.3 } ],
     "exp": 40
@@ -25,9 +25,9 @@
       { "speaker": "spider_queen", "text": "Дети мои, к ужину!" }
     ],
     "enemies": [
-      { "template": "spider_queen", "x": 0, "z": 7 },
-      { "template": "spiderling", "x": -3, "z": 5 },
-      { "template": "spiderling", "x": 3, "z": 5 }
+      { "template": "spider_queen", "x": 0, "z": 11 },
+      { "template": "spiderling", "x": -4.5, "z": 9 },
+      { "template": "spiderling", "x": 4.5, "z": 9 }
     ],
     "phases": [
       { "boss": "spider_queen", "hpBelow": 0.6, "name": "Кислотный дождь",

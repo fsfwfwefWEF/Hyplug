@@ -1,862 +1,807 @@
 $C = "../Common.ui";
 
 // Боевое меню JRPG. Файл собран скриптом tools/gen_battle_ui.py — правь скрипт, а не этот файл.
-// Слева очередь ходов и карточка ходящего, сверху враги, снизу партия и журнал,
-// справа окно описаний и команды. Иконки вставляются в пустые слоты (#...Icon) из Icons/*.ui.
+// Сверху враги и баннер хода, слева очередь, внизу одной полосой: партия, команды, описание.
+// Иконки вставляются в пустые слоты (#...Icon) из Icons/*.ui.
 
 Group {
-  LayoutMode: Left;
-  Padding: (Full: 12);
+  LayoutMode: Top;
+  Padding: (Full: 10);
 
-  Group #LeftCol {
-    Anchor: (Width: 300);
-    LayoutMode: Top;
+  Group #EnemyRow {
+    Anchor: (Height: 66);
+    LayoutMode: Left;
 
-    Group #QueuePanel {
-      Anchor: (Height: 476);
-      LayoutMode: Top;
-      Background: #0b111c(0.88);
-      Padding: (Full: 8);
-
-      Label {
-        Text: "ОЧЕРЕДЬ ХОДОВ";
-        Anchor: (Height: 24);
-        Style: (FontSize: 15, TextColor: #e8c46a, RenderBold: true);
-      }
-      Group #Q0 {
-        Anchor: (Height: 58);
-        LayoutMode: Left;
-        Background: #2c3c5e(0.95);
-        Padding: (Full: 4);
-
-        Group #Q0Icon { Anchor: (Width: 40, Height: 40); }
-        Group { Anchor: (Width: 8); }
-        Group {
-          FlexWeight: 1;
-          LayoutMode: Top;
-
-          Label #Q0Name {
-            Text: "";
-            Anchor: (Height: 22);
-            Style: (FontSize: 16, TextColor: #e9eef6, RenderBold: true);
-          }
-          Label #Q0Sub {
-            Text: "";
-            Anchor: (Height: 16);
-            Style: (FontSize: 12, TextColor: #e8c46a);
-          }
-        }
-      }
-      Group { Anchor: (Height: 3); }
-      Group #Q1 {
-        Anchor: (Height: 48);
-        LayoutMode: Left;
-        Background: #121a28(0.9);
-        Padding: (Full: 4);
-
-        Group #Q1Icon { Anchor: (Width: 40, Height: 40); }
-        Group { Anchor: (Width: 8); }
-        Group {
-          FlexWeight: 1;
-          LayoutMode: Top;
-
-          Label #Q1Name {
-            Text: "";
-            Anchor: (Height: 22);
-            Style: (FontSize: 14, TextColor: #e9eef6);
-          }
-          Label #Q1Sub {
-            Text: "";
-            Anchor: (Height: 16);
-            Style: (FontSize: 12, TextColor: #9fb0c6);
-          }
-        }
-      }
-      Group { Anchor: (Height: 3); }
-      Group #Q2 {
-        Anchor: (Height: 48);
-        LayoutMode: Left;
-        Background: #121a28(0.9);
-        Padding: (Full: 4);
-
-        Group #Q2Icon { Anchor: (Width: 40, Height: 40); }
-        Group { Anchor: (Width: 8); }
-        Group {
-          FlexWeight: 1;
-          LayoutMode: Top;
-
-          Label #Q2Name {
-            Text: "";
-            Anchor: (Height: 22);
-            Style: (FontSize: 14, TextColor: #e9eef6);
-          }
-          Label #Q2Sub {
-            Text: "";
-            Anchor: (Height: 16);
-            Style: (FontSize: 12, TextColor: #9fb0c6);
-          }
-        }
-      }
-      Group { Anchor: (Height: 3); }
-      Group #Q3 {
-        Anchor: (Height: 48);
-        LayoutMode: Left;
-        Background: #121a28(0.9);
-        Padding: (Full: 4);
-
-        Group #Q3Icon { Anchor: (Width: 40, Height: 40); }
-        Group { Anchor: (Width: 8); }
-        Group {
-          FlexWeight: 1;
-          LayoutMode: Top;
-
-          Label #Q3Name {
-            Text: "";
-            Anchor: (Height: 22);
-            Style: (FontSize: 14, TextColor: #e9eef6);
-          }
-          Label #Q3Sub {
-            Text: "";
-            Anchor: (Height: 16);
-            Style: (FontSize: 12, TextColor: #9fb0c6);
-          }
-        }
-      }
-      Group { Anchor: (Height: 3); }
-      Group #Q4 {
-        Anchor: (Height: 48);
-        LayoutMode: Left;
-        Background: #121a28(0.9);
-        Padding: (Full: 4);
-
-        Group #Q4Icon { Anchor: (Width: 40, Height: 40); }
-        Group { Anchor: (Width: 8); }
-        Group {
-          FlexWeight: 1;
-          LayoutMode: Top;
-
-          Label #Q4Name {
-            Text: "";
-            Anchor: (Height: 22);
-            Style: (FontSize: 14, TextColor: #e9eef6);
-          }
-          Label #Q4Sub {
-            Text: "";
-            Anchor: (Height: 16);
-            Style: (FontSize: 12, TextColor: #9fb0c6);
-          }
-        }
-      }
-      Group { Anchor: (Height: 3); }
-      Group #Q5 {
-        Anchor: (Height: 48);
-        LayoutMode: Left;
-        Background: #121a28(0.9);
-        Padding: (Full: 4);
-
-        Group #Q5Icon { Anchor: (Width: 40, Height: 40); }
-        Group { Anchor: (Width: 8); }
-        Group {
-          FlexWeight: 1;
-          LayoutMode: Top;
-
-          Label #Q5Name {
-            Text: "";
-            Anchor: (Height: 22);
-            Style: (FontSize: 14, TextColor: #e9eef6);
-          }
-          Label #Q5Sub {
-            Text: "";
-            Anchor: (Height: 16);
-            Style: (FontSize: 12, TextColor: #9fb0c6);
-          }
-        }
-      }
-      Group { Anchor: (Height: 3); }
-      Group #Q6 {
-        Anchor: (Height: 48);
-        LayoutMode: Left;
-        Background: #121a28(0.9);
-        Padding: (Full: 4);
-
-        Group #Q6Icon { Anchor: (Width: 40, Height: 40); }
-        Group { Anchor: (Width: 8); }
-        Group {
-          FlexWeight: 1;
-          LayoutMode: Top;
-
-          Label #Q6Name {
-            Text: "";
-            Anchor: (Height: 22);
-            Style: (FontSize: 14, TextColor: #e9eef6);
-          }
-          Label #Q6Sub {
-            Text: "";
-            Anchor: (Height: 16);
-            Style: (FontSize: 12, TextColor: #9fb0c6);
-          }
-        }
-      }
-      Group { Anchor: (Height: 3); }
-      Group #Q7 {
-        Anchor: (Height: 48);
-        LayoutMode: Left;
-        Background: #121a28(0.9);
-        Padding: (Full: 4);
-
-        Group #Q7Icon { Anchor: (Width: 40, Height: 40); }
-        Group { Anchor: (Width: 8); }
-        Group {
-          FlexWeight: 1;
-          LayoutMode: Top;
-
-          Label #Q7Name {
-            Text: "";
-            Anchor: (Height: 22);
-            Style: (FontSize: 14, TextColor: #e9eef6);
-          }
-          Label #Q7Sub {
-            Text: "";
-            Anchor: (Height: 16);
-            Style: (FontSize: 12, TextColor: #9fb0c6);
-          }
-        }
-      }
-      Group { Anchor: (Height: 3); }
-    }
     Group { FlexWeight: 1; }
-    Group #ActiveCard {
-      Anchor: (Height: 278);
+    Group #E0 {
+      Anchor: (Width: 196, Height: 66);
       LayoutMode: Top;
-      Background: #141d2e(0.92);
-      Padding: (Full: 10);
+      Background: #0b111c(0.82);
+      Padding: (Full: 5);
 
-      Label #ActHeader {
-        Text: "ХОДИТ";
-        Anchor: (Height: 18);
-        Style: (FontSize: 12, TextColor: #e8c46a, RenderBold: true);
+      Group {
+        Anchor: (Height: 26);
+        LayoutMode: Left;
+
+        Group #E0Icon { Anchor: (Width: 22, Height: 22); }
+        Group { Anchor: (Width: 5); }
+        Label #E0Name {
+          Text: "";
+          Anchor: (Height: 24);
+          FlexWeight: 1;
+          Style: (FontSize: 13, TextColor: #ffb3a6, RenderBold: true);
+        }
+        $C.@SecondaryTextButton #E0Info { @Text = "?"; Anchor: (Width: 26, Height: 22); }
       }
       Group {
-        Anchor: (Height: 92);
+        Anchor: (Height: 12);
         LayoutMode: Left;
 
-        Group #ActIcon { Anchor: (Width: 88, Height: 88); }
-        Group { Anchor: (Width: 10); }
+        Group #E0HpBack {
+          Anchor: (Width: 150, Height: 5);
+          LayoutMode: Left;
+          Background: #3a1c22;
+          Group #E0HpFill { Anchor: (Width: 150, Height: 5); Background: #e0605a; }
+        }
+        Group { Anchor: (Width: 4); }
+        Label #E0Hp {
+          Text: "";
+          Anchor: (Height: 12);
+          FlexWeight: 1;
+          Style: (FontSize: 10, TextColor: #9fb0c6);
+        }
+      }
+      Group #E0Status {
+        Anchor: (Height: 22);
+        LayoutMode: Left;
+      }
+    }
+    Group { Anchor: (Width: 6); }
+    Group #E1 {
+      Anchor: (Width: 196, Height: 66);
+      LayoutMode: Top;
+      Background: #0b111c(0.82);
+      Padding: (Full: 5);
+
+      Group {
+        Anchor: (Height: 26);
+        LayoutMode: Left;
+
+        Group #E1Icon { Anchor: (Width: 22, Height: 22); }
+        Group { Anchor: (Width: 5); }
+        Label #E1Name {
+          Text: "";
+          Anchor: (Height: 24);
+          FlexWeight: 1;
+          Style: (FontSize: 13, TextColor: #ffb3a6, RenderBold: true);
+        }
+        $C.@SecondaryTextButton #E1Info { @Text = "?"; Anchor: (Width: 26, Height: 22); }
+      }
+      Group {
+        Anchor: (Height: 12);
+        LayoutMode: Left;
+
+        Group #E1HpBack {
+          Anchor: (Width: 150, Height: 5);
+          LayoutMode: Left;
+          Background: #3a1c22;
+          Group #E1HpFill { Anchor: (Width: 150, Height: 5); Background: #e0605a; }
+        }
+        Group { Anchor: (Width: 4); }
+        Label #E1Hp {
+          Text: "";
+          Anchor: (Height: 12);
+          FlexWeight: 1;
+          Style: (FontSize: 10, TextColor: #9fb0c6);
+        }
+      }
+      Group #E1Status {
+        Anchor: (Height: 22);
+        LayoutMode: Left;
+      }
+    }
+    Group { Anchor: (Width: 6); }
+    Group #E2 {
+      Anchor: (Width: 196, Height: 66);
+      LayoutMode: Top;
+      Background: #0b111c(0.82);
+      Padding: (Full: 5);
+
+      Group {
+        Anchor: (Height: 26);
+        LayoutMode: Left;
+
+        Group #E2Icon { Anchor: (Width: 22, Height: 22); }
+        Group { Anchor: (Width: 5); }
+        Label #E2Name {
+          Text: "";
+          Anchor: (Height: 24);
+          FlexWeight: 1;
+          Style: (FontSize: 13, TextColor: #ffb3a6, RenderBold: true);
+        }
+        $C.@SecondaryTextButton #E2Info { @Text = "?"; Anchor: (Width: 26, Height: 22); }
+      }
+      Group {
+        Anchor: (Height: 12);
+        LayoutMode: Left;
+
+        Group #E2HpBack {
+          Anchor: (Width: 150, Height: 5);
+          LayoutMode: Left;
+          Background: #3a1c22;
+          Group #E2HpFill { Anchor: (Width: 150, Height: 5); Background: #e0605a; }
+        }
+        Group { Anchor: (Width: 4); }
+        Label #E2Hp {
+          Text: "";
+          Anchor: (Height: 12);
+          FlexWeight: 1;
+          Style: (FontSize: 10, TextColor: #9fb0c6);
+        }
+      }
+      Group #E2Status {
+        Anchor: (Height: 22);
+        LayoutMode: Left;
+      }
+    }
+    Group { Anchor: (Width: 6); }
+    Group #E3 {
+      Anchor: (Width: 196, Height: 66);
+      LayoutMode: Top;
+      Background: #0b111c(0.82);
+      Padding: (Full: 5);
+
+      Group {
+        Anchor: (Height: 26);
+        LayoutMode: Left;
+
+        Group #E3Icon { Anchor: (Width: 22, Height: 22); }
+        Group { Anchor: (Width: 5); }
+        Label #E3Name {
+          Text: "";
+          Anchor: (Height: 24);
+          FlexWeight: 1;
+          Style: (FontSize: 13, TextColor: #ffb3a6, RenderBold: true);
+        }
+        $C.@SecondaryTextButton #E3Info { @Text = "?"; Anchor: (Width: 26, Height: 22); }
+      }
+      Group {
+        Anchor: (Height: 12);
+        LayoutMode: Left;
+
+        Group #E3HpBack {
+          Anchor: (Width: 150, Height: 5);
+          LayoutMode: Left;
+          Background: #3a1c22;
+          Group #E3HpFill { Anchor: (Width: 150, Height: 5); Background: #e0605a; }
+        }
+        Group { Anchor: (Width: 4); }
+        Label #E3Hp {
+          Text: "";
+          Anchor: (Height: 12);
+          FlexWeight: 1;
+          Style: (FontSize: 10, TextColor: #9fb0c6);
+        }
+      }
+      Group #E3Status {
+        Anchor: (Height: 22);
+        LayoutMode: Left;
+      }
+    }
+    Group { Anchor: (Width: 6); }
+    Group #E4 {
+      Anchor: (Width: 196, Height: 66);
+      LayoutMode: Top;
+      Background: #0b111c(0.82);
+      Padding: (Full: 5);
+
+      Group {
+        Anchor: (Height: 26);
+        LayoutMode: Left;
+
+        Group #E4Icon { Anchor: (Width: 22, Height: 22); }
+        Group { Anchor: (Width: 5); }
+        Label #E4Name {
+          Text: "";
+          Anchor: (Height: 24);
+          FlexWeight: 1;
+          Style: (FontSize: 13, TextColor: #ffb3a6, RenderBold: true);
+        }
+        $C.@SecondaryTextButton #E4Info { @Text = "?"; Anchor: (Width: 26, Height: 22); }
+      }
+      Group {
+        Anchor: (Height: 12);
+        LayoutMode: Left;
+
+        Group #E4HpBack {
+          Anchor: (Width: 150, Height: 5);
+          LayoutMode: Left;
+          Background: #3a1c22;
+          Group #E4HpFill { Anchor: (Width: 150, Height: 5); Background: #e0605a; }
+        }
+        Group { Anchor: (Width: 4); }
+        Label #E4Hp {
+          Text: "";
+          Anchor: (Height: 12);
+          FlexWeight: 1;
+          Style: (FontSize: 10, TextColor: #9fb0c6);
+        }
+      }
+      Group #E4Status {
+        Anchor: (Height: 22);
+        LayoutMode: Left;
+      }
+    }
+    Group { Anchor: (Width: 6); }
+    Group { FlexWeight: 1; }
+  }
+  Group { Anchor: (Height: 6); }
+  Group #BannerRow {
+    Anchor: (Height: 60);
+    LayoutMode: Left;
+
+    Group { FlexWeight: 1; }
+    Group #BannerBox {
+      Anchor: (Width: 620, Height: 56);
+      LayoutMode: Top;
+      Background: #070b12(0.72);
+      Padding: (Full: 6);
+
+      Label #Banner {
+        Text: "";
+        Anchor: (Height: 24);
+        Style: (FontSize: 20, TextColor: #e8c46a, RenderBold: true);
+      }
+      Label #BannerSub {
+        Text: "";
+        Anchor: (Height: 18);
+        Style: (FontSize: 13, TextColor: #e9eef6);
+      }
+    }
+    Group { FlexWeight: 1; }
+  }
+  Group #Middle {
+    FlexWeight: 1;
+    LayoutMode: Left;
+
+    Group {
+      Anchor: (Width: 176);
+      LayoutMode: Top;
+
+      Group #QueuePanel {
+        Anchor: (Width: 176);
+        LayoutMode: Top;
+        Background: #0b111c(0.82);
+        Padding: (Full: 6);
+
+        Label {
+          Text: "ОЧЕРЕДЬ";
+          Anchor: (Height: 18);
+          Style: (FontSize: 12, TextColor: #e8c46a, RenderBold: true);
+        }
+        Group #Q0 {
+          Anchor: (Height: 46);
+          LayoutMode: Left;
+          Background: #2c3c5e(0.95);
+          Padding: (Full: 3);
+
+          Group #Q0Icon { Anchor: (Width: 40, Height: 40); }
+          Group { Anchor: (Width: 6); }
+          Group {
+            FlexWeight: 1;
+            LayoutMode: Top;
+
+            Label #Q0Name {
+              Text: "";
+              Anchor: (Height: 20);
+              Style: (FontSize: 14, TextColor: #e9eef6, RenderBold: true);
+            }
+            Label #Q0Sub {
+              Text: "";
+              Anchor: (Height: 16);
+              Style: (FontSize: 11, TextColor: #e8c46a);
+            }
+          }
+        }
+        Group { Anchor: (Height: 2); }
+        Group #Q1 {
+          Anchor: (Height: 32);
+          LayoutMode: Left;
+          Background: #121a28(0.0);
+          Padding: (Full: 3);
+
+          Group #Q1Icon { Anchor: (Width: 22, Height: 22); }
+          Group { Anchor: (Width: 6); }
+          Group {
+            FlexWeight: 1;
+            LayoutMode: Top;
+
+            Label #Q1Name {
+              Text: "";
+              Anchor: (Height: 15);
+              Style: (FontSize: 12, TextColor: #e9eef6);
+            }
+            Label #Q1Sub {
+              Text: "";
+              Anchor: (Height: 12);
+              Style: (FontSize: 11, TextColor: #9fb0c6);
+            }
+          }
+        }
+        Group { Anchor: (Height: 2); }
+        Group #Q2 {
+          Anchor: (Height: 32);
+          LayoutMode: Left;
+          Background: #121a28(0.0);
+          Padding: (Full: 3);
+
+          Group #Q2Icon { Anchor: (Width: 22, Height: 22); }
+          Group { Anchor: (Width: 6); }
+          Group {
+            FlexWeight: 1;
+            LayoutMode: Top;
+
+            Label #Q2Name {
+              Text: "";
+              Anchor: (Height: 15);
+              Style: (FontSize: 12, TextColor: #e9eef6);
+            }
+            Label #Q2Sub {
+              Text: "";
+              Anchor: (Height: 12);
+              Style: (FontSize: 11, TextColor: #9fb0c6);
+            }
+          }
+        }
+        Group { Anchor: (Height: 2); }
+        Group #Q3 {
+          Anchor: (Height: 32);
+          LayoutMode: Left;
+          Background: #121a28(0.0);
+          Padding: (Full: 3);
+
+          Group #Q3Icon { Anchor: (Width: 22, Height: 22); }
+          Group { Anchor: (Width: 6); }
+          Group {
+            FlexWeight: 1;
+            LayoutMode: Top;
+
+            Label #Q3Name {
+              Text: "";
+              Anchor: (Height: 15);
+              Style: (FontSize: 12, TextColor: #e9eef6);
+            }
+            Label #Q3Sub {
+              Text: "";
+              Anchor: (Height: 12);
+              Style: (FontSize: 11, TextColor: #9fb0c6);
+            }
+          }
+        }
+        Group { Anchor: (Height: 2); }
+        Group #Q4 {
+          Anchor: (Height: 32);
+          LayoutMode: Left;
+          Background: #121a28(0.0);
+          Padding: (Full: 3);
+
+          Group #Q4Icon { Anchor: (Width: 22, Height: 22); }
+          Group { Anchor: (Width: 6); }
+          Group {
+            FlexWeight: 1;
+            LayoutMode: Top;
+
+            Label #Q4Name {
+              Text: "";
+              Anchor: (Height: 15);
+              Style: (FontSize: 12, TextColor: #e9eef6);
+            }
+            Label #Q4Sub {
+              Text: "";
+              Anchor: (Height: 12);
+              Style: (FontSize: 11, TextColor: #9fb0c6);
+            }
+          }
+        }
+        Group { Anchor: (Height: 2); }
+        Group #Q5 {
+          Anchor: (Height: 32);
+          LayoutMode: Left;
+          Background: #121a28(0.0);
+          Padding: (Full: 3);
+
+          Group #Q5Icon { Anchor: (Width: 22, Height: 22); }
+          Group { Anchor: (Width: 6); }
+          Group {
+            FlexWeight: 1;
+            LayoutMode: Top;
+
+            Label #Q5Name {
+              Text: "";
+              Anchor: (Height: 15);
+              Style: (FontSize: 12, TextColor: #e9eef6);
+            }
+            Label #Q5Sub {
+              Text: "";
+              Anchor: (Height: 12);
+              Style: (FontSize: 11, TextColor: #9fb0c6);
+            }
+          }
+        }
+        Group { Anchor: (Height: 2); }
+        Group #Q6 {
+          Anchor: (Height: 32);
+          LayoutMode: Left;
+          Background: #121a28(0.0);
+          Padding: (Full: 3);
+
+          Group #Q6Icon { Anchor: (Width: 22, Height: 22); }
+          Group { Anchor: (Width: 6); }
+          Group {
+            FlexWeight: 1;
+            LayoutMode: Top;
+
+            Label #Q6Name {
+              Text: "";
+              Anchor: (Height: 15);
+              Style: (FontSize: 12, TextColor: #e9eef6);
+            }
+            Label #Q6Sub {
+              Text: "";
+              Anchor: (Height: 12);
+              Style: (FontSize: 11, TextColor: #9fb0c6);
+            }
+          }
+        }
+        Group { Anchor: (Height: 2); }
+        Group #Q7 {
+          Anchor: (Height: 32);
+          LayoutMode: Left;
+          Background: #121a28(0.0);
+          Padding: (Full: 3);
+
+          Group #Q7Icon { Anchor: (Width: 22, Height: 22); }
+          Group { Anchor: (Width: 6); }
+          Group {
+            FlexWeight: 1;
+            LayoutMode: Top;
+
+            Label #Q7Name {
+              Text: "";
+              Anchor: (Height: 15);
+              Style: (FontSize: 12, TextColor: #e9eef6);
+            }
+            Label #Q7Sub {
+              Text: "";
+              Anchor: (Height: 12);
+              Style: (FontSize: 11, TextColor: #9fb0c6);
+            }
+          }
+        }
+        Group { Anchor: (Height: 2); }
+      }
+      Group { FlexWeight: 1; }
+    }
+    Group { FlexWeight: 1; }
+  }
+  Group #BottomBar {
+    Anchor: (Height: 232);
+    LayoutMode: Left;
+
+    Group { FlexWeight: 1; }
+    Group #PartyPanel {
+      Anchor: (Width: 450);
+      LayoutMode: Top;
+      Background: #0b111c(0.82);
+      Padding: (Full: 6);
+
+      Group #P0 {
+        Anchor: (Height: 62);
+        LayoutMode: Left;
+        Background: #141d2e(0.88);
+        Padding: (Full: 4);
+
+        Group #P0Turn {
+          Anchor: (Width: 4);
+          Background: #e8c46a;
+        }
+        Group { Anchor: (Width: 5); }
+        Group #P0Icon { Anchor: (Width: 40, Height: 40); }
+        Group { Anchor: (Width: 6); }
         Group {
           FlexWeight: 1;
           LayoutMode: Top;
 
-          Label #ActName {
-            Text: "";
-            Anchor: (Height: 30);
-            Style: (FontSize: 22, TextColor: #e9eef6, RenderBold: true);
-          }
-          Label #ActTitle {
-            Text: "";
+          Group {
             Anchor: (Height: 20);
-            Style: (FontSize: 14, TextColor: #e8c46a);
-          }
-          Label #ActNums {
-            Text: "";
-            Anchor: (Height: 36);
-            Style: (FontSize: 13, TextColor: #9fb0c6, Wrap: true);
-          }
-        }
-      }
-      Group #ActHpBack {
-        Anchor: (Width: 270, Height: 10);
-        LayoutMode: Left;
-        Background: #3a1c22;
-        Group #ActHpFill { Anchor: (Width: 270, Height: 10); Background: #5fd27a; }
-      }
-      Group { Anchor: (Height: 3); }
-      Group #ActMpBack {
-        Anchor: (Width: 270, Height: 6);
-        LayoutMode: Left;
-        Background: #1c2440;
-        Group #ActMpFill { Anchor: (Width: 270, Height: 6); Background: #5aa2ff; }
-      }
-      Group { Anchor: (Height: 6); }
-      Group #ActStatus {
-        Anchor: (Height: 24);
-        LayoutMode: Left;
-      }
-      Label #ActStatusText {
-        Text: "";
-        Anchor: (Height: 54);
-        Style: (FontSize: 12, TextColor: #e9eef6, Wrap: true);
-      }
-      Label #ActImmune {
-        Text: "";
-        Anchor: (Height: 18);
-        Style: (FontSize: 12, TextColor: #c9a7ff);
-      }
-    }
-  }
-  Group { Anchor: (Width: 12); }
-  Group #Center {
-    FlexWeight: 1;
-    LayoutMode: Top;
-
-    Group #EnemyRow {
-      Anchor: (Height: 118);
-      LayoutMode: Left;
-
-      Group #E0 {
-        Anchor: (Width: 214);
-        LayoutMode: Top;
-        Background: #0b111c(0.88);
-        Padding: (Full: 6);
-
-        Group {
-          Anchor: (Height: 42);
-          LayoutMode: Left;
-
-          Group #E0Icon { Anchor: (Width: 40, Height: 40); }
-          Group { Anchor: (Width: 6); }
-          Group {
-            FlexWeight: 1;
-            LayoutMode: Top;
-
-            Label #E0Name {
-              Text: "";
-              Anchor: (Height: 20);
-              Style: (FontSize: 14, TextColor: #ffb3a6, RenderBold: true);
-            }
-            Label #E0Hp {
-              Text: "";
-              Anchor: (Height: 18);
-              Style: (FontSize: 12, TextColor: #9fb0c6);
-            }
-          }
-        }
-        Group #E0HpBack {
-          Anchor: (Width: 196, Height: 8);
-          LayoutMode: Left;
-          Background: #3a1c22;
-          Group #E0HpFill { Anchor: (Width: 196, Height: 8); Background: #e0605a; }
-        }
-        Group { Anchor: (Height: 4); }
-        Group {
-          Anchor: (Height: 26);
-          LayoutMode: Left;
-
-          Group #E0Status {
-            FlexWeight: 1;
             LayoutMode: Left;
-          }
-          $C.@SecondaryTextButton #E0Info { @Text = "?"; Anchor: (Width: 30, Height: 24); }
-        }
-      }
-      Group { Anchor: (Width: 8); }
-      Group #E1 {
-        Anchor: (Width: 214);
-        LayoutMode: Top;
-        Background: #0b111c(0.88);
-        Padding: (Full: 6);
-
-        Group {
-          Anchor: (Height: 42);
-          LayoutMode: Left;
-
-          Group #E1Icon { Anchor: (Width: 40, Height: 40); }
-          Group { Anchor: (Width: 6); }
-          Group {
-            FlexWeight: 1;
-            LayoutMode: Top;
-
-            Label #E1Name {
-              Text: "";
-              Anchor: (Height: 20);
-              Style: (FontSize: 14, TextColor: #ffb3a6, RenderBold: true);
-            }
-            Label #E1Hp {
-              Text: "";
-              Anchor: (Height: 18);
-              Style: (FontSize: 12, TextColor: #9fb0c6);
-            }
-          }
-        }
-        Group #E1HpBack {
-          Anchor: (Width: 196, Height: 8);
-          LayoutMode: Left;
-          Background: #3a1c22;
-          Group #E1HpFill { Anchor: (Width: 196, Height: 8); Background: #e0605a; }
-        }
-        Group { Anchor: (Height: 4); }
-        Group {
-          Anchor: (Height: 26);
-          LayoutMode: Left;
-
-          Group #E1Status {
-            FlexWeight: 1;
-            LayoutMode: Left;
-          }
-          $C.@SecondaryTextButton #E1Info { @Text = "?"; Anchor: (Width: 30, Height: 24); }
-        }
-      }
-      Group { Anchor: (Width: 8); }
-      Group #E2 {
-        Anchor: (Width: 214);
-        LayoutMode: Top;
-        Background: #0b111c(0.88);
-        Padding: (Full: 6);
-
-        Group {
-          Anchor: (Height: 42);
-          LayoutMode: Left;
-
-          Group #E2Icon { Anchor: (Width: 40, Height: 40); }
-          Group { Anchor: (Width: 6); }
-          Group {
-            FlexWeight: 1;
-            LayoutMode: Top;
-
-            Label #E2Name {
-              Text: "";
-              Anchor: (Height: 20);
-              Style: (FontSize: 14, TextColor: #ffb3a6, RenderBold: true);
-            }
-            Label #E2Hp {
-              Text: "";
-              Anchor: (Height: 18);
-              Style: (FontSize: 12, TextColor: #9fb0c6);
-            }
-          }
-        }
-        Group #E2HpBack {
-          Anchor: (Width: 196, Height: 8);
-          LayoutMode: Left;
-          Background: #3a1c22;
-          Group #E2HpFill { Anchor: (Width: 196, Height: 8); Background: #e0605a; }
-        }
-        Group { Anchor: (Height: 4); }
-        Group {
-          Anchor: (Height: 26);
-          LayoutMode: Left;
-
-          Group #E2Status {
-            FlexWeight: 1;
-            LayoutMode: Left;
-          }
-          $C.@SecondaryTextButton #E2Info { @Text = "?"; Anchor: (Width: 30, Height: 24); }
-        }
-      }
-      Group { Anchor: (Width: 8); }
-      Group #E3 {
-        Anchor: (Width: 214);
-        LayoutMode: Top;
-        Background: #0b111c(0.88);
-        Padding: (Full: 6);
-
-        Group {
-          Anchor: (Height: 42);
-          LayoutMode: Left;
-
-          Group #E3Icon { Anchor: (Width: 40, Height: 40); }
-          Group { Anchor: (Width: 6); }
-          Group {
-            FlexWeight: 1;
-            LayoutMode: Top;
-
-            Label #E3Name {
-              Text: "";
-              Anchor: (Height: 20);
-              Style: (FontSize: 14, TextColor: #ffb3a6, RenderBold: true);
-            }
-            Label #E3Hp {
-              Text: "";
-              Anchor: (Height: 18);
-              Style: (FontSize: 12, TextColor: #9fb0c6);
-            }
-          }
-        }
-        Group #E3HpBack {
-          Anchor: (Width: 196, Height: 8);
-          LayoutMode: Left;
-          Background: #3a1c22;
-          Group #E3HpFill { Anchor: (Width: 196, Height: 8); Background: #e0605a; }
-        }
-        Group { Anchor: (Height: 4); }
-        Group {
-          Anchor: (Height: 26);
-          LayoutMode: Left;
-
-          Group #E3Status {
-            FlexWeight: 1;
-            LayoutMode: Left;
-          }
-          $C.@SecondaryTextButton #E3Info { @Text = "?"; Anchor: (Width: 30, Height: 24); }
-        }
-      }
-      Group { Anchor: (Width: 8); }
-      Group #E4 {
-        Anchor: (Width: 214);
-        LayoutMode: Top;
-        Background: #0b111c(0.88);
-        Padding: (Full: 6);
-
-        Group {
-          Anchor: (Height: 42);
-          LayoutMode: Left;
-
-          Group #E4Icon { Anchor: (Width: 40, Height: 40); }
-          Group { Anchor: (Width: 6); }
-          Group {
-            FlexWeight: 1;
-            LayoutMode: Top;
-
-            Label #E4Name {
-              Text: "";
-              Anchor: (Height: 20);
-              Style: (FontSize: 14, TextColor: #ffb3a6, RenderBold: true);
-            }
-            Label #E4Hp {
-              Text: "";
-              Anchor: (Height: 18);
-              Style: (FontSize: 12, TextColor: #9fb0c6);
-            }
-          }
-        }
-        Group #E4HpBack {
-          Anchor: (Width: 196, Height: 8);
-          LayoutMode: Left;
-          Background: #3a1c22;
-          Group #E4HpFill { Anchor: (Width: 196, Height: 8); Background: #e0605a; }
-        }
-        Group { Anchor: (Height: 4); }
-        Group {
-          Anchor: (Height: 26);
-          LayoutMode: Left;
-
-          Group #E4Status {
-            FlexWeight: 1;
-            LayoutMode: Left;
-          }
-          $C.@SecondaryTextButton #E4Info { @Text = "?"; Anchor: (Width: 30, Height: 24); }
-        }
-      }
-      Group { Anchor: (Width: 8); }
-    }
-    Group { Anchor: (Height: 10); }
-    Label #Banner {
-      Text: "";
-      Anchor: (Height: 44);
-      Style: (FontSize: 30, TextColor: #e8c46a, RenderBold: true);
-    }
-    Group { FlexWeight: 1; }
-    Group #LogPanel {
-      Anchor: (Height: 118);
-      LayoutMode: Top;
-      Background: #0b111c(0.88);
-      Padding: (Full: 8);
-
-      Label #Log {
-        Text: "";
-        FlexWeight: 1;
-        Style: (FontSize: 13, TextColor: #d8e2ee, Wrap: true);
-      }
-    }
-    Group { Anchor: (Height: 8); }
-    Group #PartyRow {
-      Anchor: (Height: 128);
-      LayoutMode: Left;
-
-      Group #P0 {
-        Anchor: (Width: 290);
-        LayoutMode: Top;
-        Background: #0b111c(0.88);
-        Padding: (Full: 6);
-
-        Group #P0Turn {
-          Anchor: (Height: 3);
-          Background: #e8c46a;
-        }
-        Group {
-          Anchor: (Height: 42);
-          LayoutMode: Left;
-
-          Group #P0Icon { Anchor: (Width: 40, Height: 40); }
-          Group { Anchor: (Width: 6); }
-          Group {
-            FlexWeight: 1;
-            LayoutMode: Top;
 
             Label #P0Name {
               Text: "";
-              Anchor: (Height: 20);
-              Style: (FontSize: 15, TextColor: #a9d8ff, RenderBold: true);
+              Anchor: (Width: 110, Height: 20);
+              Style: (FontSize: 14, TextColor: #a9d8ff, RenderBold: true);
             }
             Label #P0Nums {
               Text: "";
-              Anchor: (Height: 18);
-              Style: (FontSize: 12, TextColor: #9fb0c6);
+              Anchor: (Height: 20);
+              FlexWeight: 1;
+              Style: (FontSize: 11, TextColor: #9fb0c6);
             }
           }
-          $C.@SecondaryTextButton #P0Info { @Text = "?"; Anchor: (Width: 30, Height: 24); }
+          Group #P0HpBack {
+            Anchor: (Width: 210, Height: 6);
+            LayoutMode: Left;
+            Background: #3a1c22;
+            Group #P0HpFill { Anchor: (Width: 210, Height: 6); Background: #5fd27a; }
+          }
+          Group { Anchor: (Height: 2); }
+          Group #P0MpBack {
+            Anchor: (Width: 210, Height: 4);
+            LayoutMode: Left;
+            Background: #1c2440;
+            Group #P0MpFill { Anchor: (Width: 210, Height: 4); Background: #5aa2ff; }
+          }
+          Group { Anchor: (Height: 2); }
+          Group #P0Status {
+            Anchor: (Height: 22);
+            LayoutMode: Left;
+          }
         }
-        Group #P0HpBack {
-          Anchor: (Width: 260, Height: 8);
-          LayoutMode: Left;
-          Background: #3a1c22;
-          Group #P0HpFill { Anchor: (Width: 260, Height: 8); Background: #5fd27a; }
-        }
-        Group { Anchor: (Height: 3); }
-        Group #P0MpBack {
-          Anchor: (Width: 260, Height: 5);
-          LayoutMode: Left;
-          Background: #1c2440;
-          Group #P0MpFill { Anchor: (Width: 260, Height: 5); Background: #5aa2ff; }
-        }
-        Group { Anchor: (Height: 4); }
-        Group #P0Status {
-          Anchor: (Height: 24);
-          LayoutMode: Left;
-        }
+        $C.@SecondaryTextButton #P0Info { @Text = "?"; Anchor: (Width: 26, Height: 22); }
       }
-      Group { Anchor: (Width: 8); }
+      Group { Anchor: (Height: 4); }
       Group #P1 {
-        Anchor: (Width: 290);
-        LayoutMode: Top;
-        Background: #0b111c(0.88);
-        Padding: (Full: 6);
+        Anchor: (Height: 62);
+        LayoutMode: Left;
+        Background: #141d2e(0.88);
+        Padding: (Full: 4);
 
         Group #P1Turn {
-          Anchor: (Height: 3);
+          Anchor: (Width: 4);
           Background: #e8c46a;
         }
+        Group { Anchor: (Width: 5); }
+        Group #P1Icon { Anchor: (Width: 40, Height: 40); }
+        Group { Anchor: (Width: 6); }
         Group {
-          Anchor: (Height: 42);
-          LayoutMode: Left;
+          FlexWeight: 1;
+          LayoutMode: Top;
 
-          Group #P1Icon { Anchor: (Width: 40, Height: 40); }
-          Group { Anchor: (Width: 6); }
           Group {
-            FlexWeight: 1;
-            LayoutMode: Top;
+            Anchor: (Height: 20);
+            LayoutMode: Left;
 
             Label #P1Name {
               Text: "";
-              Anchor: (Height: 20);
-              Style: (FontSize: 15, TextColor: #a9d8ff, RenderBold: true);
+              Anchor: (Width: 110, Height: 20);
+              Style: (FontSize: 14, TextColor: #a9d8ff, RenderBold: true);
             }
             Label #P1Nums {
               Text: "";
-              Anchor: (Height: 18);
-              Style: (FontSize: 12, TextColor: #9fb0c6);
+              Anchor: (Height: 20);
+              FlexWeight: 1;
+              Style: (FontSize: 11, TextColor: #9fb0c6);
             }
           }
-          $C.@SecondaryTextButton #P1Info { @Text = "?"; Anchor: (Width: 30, Height: 24); }
+          Group #P1HpBack {
+            Anchor: (Width: 210, Height: 6);
+            LayoutMode: Left;
+            Background: #3a1c22;
+            Group #P1HpFill { Anchor: (Width: 210, Height: 6); Background: #5fd27a; }
+          }
+          Group { Anchor: (Height: 2); }
+          Group #P1MpBack {
+            Anchor: (Width: 210, Height: 4);
+            LayoutMode: Left;
+            Background: #1c2440;
+            Group #P1MpFill { Anchor: (Width: 210, Height: 4); Background: #5aa2ff; }
+          }
+          Group { Anchor: (Height: 2); }
+          Group #P1Status {
+            Anchor: (Height: 22);
+            LayoutMode: Left;
+          }
         }
-        Group #P1HpBack {
-          Anchor: (Width: 260, Height: 8);
-          LayoutMode: Left;
-          Background: #3a1c22;
-          Group #P1HpFill { Anchor: (Width: 260, Height: 8); Background: #5fd27a; }
-        }
-        Group { Anchor: (Height: 3); }
-        Group #P1MpBack {
-          Anchor: (Width: 260, Height: 5);
-          LayoutMode: Left;
-          Background: #1c2440;
-          Group #P1MpFill { Anchor: (Width: 260, Height: 5); Background: #5aa2ff; }
-        }
-        Group { Anchor: (Height: 4); }
-        Group #P1Status {
-          Anchor: (Height: 24);
-          LayoutMode: Left;
-        }
+        $C.@SecondaryTextButton #P1Info { @Text = "?"; Anchor: (Width: 26, Height: 22); }
       }
-      Group { Anchor: (Width: 8); }
+      Group { Anchor: (Height: 4); }
       Group #P2 {
-        Anchor: (Width: 290);
-        LayoutMode: Top;
-        Background: #0b111c(0.88);
-        Padding: (Full: 6);
+        Anchor: (Height: 62);
+        LayoutMode: Left;
+        Background: #141d2e(0.88);
+        Padding: (Full: 4);
 
         Group #P2Turn {
-          Anchor: (Height: 3);
+          Anchor: (Width: 4);
           Background: #e8c46a;
         }
+        Group { Anchor: (Width: 5); }
+        Group #P2Icon { Anchor: (Width: 40, Height: 40); }
+        Group { Anchor: (Width: 6); }
         Group {
-          Anchor: (Height: 42);
-          LayoutMode: Left;
+          FlexWeight: 1;
+          LayoutMode: Top;
 
-          Group #P2Icon { Anchor: (Width: 40, Height: 40); }
-          Group { Anchor: (Width: 6); }
           Group {
-            FlexWeight: 1;
-            LayoutMode: Top;
+            Anchor: (Height: 20);
+            LayoutMode: Left;
 
             Label #P2Name {
               Text: "";
-              Anchor: (Height: 20);
-              Style: (FontSize: 15, TextColor: #a9d8ff, RenderBold: true);
+              Anchor: (Width: 110, Height: 20);
+              Style: (FontSize: 14, TextColor: #a9d8ff, RenderBold: true);
             }
             Label #P2Nums {
               Text: "";
-              Anchor: (Height: 18);
-              Style: (FontSize: 12, TextColor: #9fb0c6);
+              Anchor: (Height: 20);
+              FlexWeight: 1;
+              Style: (FontSize: 11, TextColor: #9fb0c6);
             }
           }
-          $C.@SecondaryTextButton #P2Info { @Text = "?"; Anchor: (Width: 30, Height: 24); }
+          Group #P2HpBack {
+            Anchor: (Width: 210, Height: 6);
+            LayoutMode: Left;
+            Background: #3a1c22;
+            Group #P2HpFill { Anchor: (Width: 210, Height: 6); Background: #5fd27a; }
+          }
+          Group { Anchor: (Height: 2); }
+          Group #P2MpBack {
+            Anchor: (Width: 210, Height: 4);
+            LayoutMode: Left;
+            Background: #1c2440;
+            Group #P2MpFill { Anchor: (Width: 210, Height: 4); Background: #5aa2ff; }
+          }
+          Group { Anchor: (Height: 2); }
+          Group #P2Status {
+            Anchor: (Height: 22);
+            LayoutMode: Left;
+          }
         }
-        Group #P2HpBack {
-          Anchor: (Width: 260, Height: 8);
-          LayoutMode: Left;
-          Background: #3a1c22;
-          Group #P2HpFill { Anchor: (Width: 260, Height: 8); Background: #5fd27a; }
-        }
-        Group { Anchor: (Height: 3); }
-        Group #P2MpBack {
-          Anchor: (Width: 260, Height: 5);
-          LayoutMode: Left;
-          Background: #1c2440;
-          Group #P2MpFill { Anchor: (Width: 260, Height: 5); Background: #5aa2ff; }
-        }
-        Group { Anchor: (Height: 4); }
-        Group #P2Status {
-          Anchor: (Height: 24);
-          LayoutMode: Left;
-        }
+        $C.@SecondaryTextButton #P2Info { @Text = "?"; Anchor: (Width: 26, Height: 22); }
       }
-      Group { Anchor: (Width: 8); }
+      Group { Anchor: (Height: 4); }
     }
-  }
-  Group { Anchor: (Width: 12); }
-  Group #RightCol {
-    Anchor: (Width: 420);
-    LayoutMode: Top;
-
-    Group { FlexWeight: 1; }
-    Group #InfoPanel {
-      Anchor: (Height: 260);
+    Group { Anchor: (Width: 8); }
+    Group #MenuPanel {
+      Anchor: (Width: 330);
       LayoutMode: Top;
-      Background: #141d2e(0.92);
-      Padding: (Full: 10);
+      Background: #0b111c(0.82);
+      Padding: (Full: 6);
 
       Group {
-        Anchor: (Height: 44);
+        Anchor: (Height: 26);
         LayoutMode: Left;
 
-        Group #InfoIcon { Anchor: (Width: 40, Height: 40); }
-        Group { Anchor: (Width: 8); }
+        Label #MenuTitle {
+          Text: "";
+          Anchor: (Height: 24);
+          FlexWeight: 1;
+          Style: (FontSize: 14, TextColor: #e9eef6, RenderBold: true);
+        }
+        $C.@CancelTextButton #Back { @Text = "Назад"; Anchor: (Width: 84, Height: 24); }
+      }
+      Group #Row0 {
+        Anchor: (Height: 30);
+        LayoutMode: Left;
+
+        Group #Opt0Icon { Anchor: (Width: 22, Height: 22); }
+        Group { Anchor: (Width: 6); }
+        $C.@SecondaryTextButton #Opt0 { @Text = ""; Anchor: (Width: 200, Height: 28); }
+        Group { Anchor: (Width: 6); }
+        Label #Opt0Hint {
+          Text: "";
+          Anchor: (Height: 28);
+          FlexWeight: 1;
+          Style: (FontSize: 11, TextColor: #e8c46a);
+        }
+      }
+      Group #Row1 {
+        Anchor: (Height: 30);
+        LayoutMode: Left;
+
+        Group #Opt1Icon { Anchor: (Width: 22, Height: 22); }
+        Group { Anchor: (Width: 6); }
+        $C.@SecondaryTextButton #Opt1 { @Text = ""; Anchor: (Width: 200, Height: 28); }
+        Group { Anchor: (Width: 6); }
+        Label #Opt1Hint {
+          Text: "";
+          Anchor: (Height: 28);
+          FlexWeight: 1;
+          Style: (FontSize: 11, TextColor: #e8c46a);
+        }
+      }
+      Group #Row2 {
+        Anchor: (Height: 30);
+        LayoutMode: Left;
+
+        Group #Opt2Icon { Anchor: (Width: 22, Height: 22); }
+        Group { Anchor: (Width: 6); }
+        $C.@SecondaryTextButton #Opt2 { @Text = ""; Anchor: (Width: 200, Height: 28); }
+        Group { Anchor: (Width: 6); }
+        Label #Opt2Hint {
+          Text: "";
+          Anchor: (Height: 28);
+          FlexWeight: 1;
+          Style: (FontSize: 11, TextColor: #e8c46a);
+        }
+      }
+      Group #Row3 {
+        Anchor: (Height: 30);
+        LayoutMode: Left;
+
+        Group #Opt3Icon { Anchor: (Width: 22, Height: 22); }
+        Group { Anchor: (Width: 6); }
+        $C.@SecondaryTextButton #Opt3 { @Text = ""; Anchor: (Width: 200, Height: 28); }
+        Group { Anchor: (Width: 6); }
+        Label #Opt3Hint {
+          Text: "";
+          Anchor: (Height: 28);
+          FlexWeight: 1;
+          Style: (FontSize: 11, TextColor: #e8c46a);
+        }
+      }
+      Group #Row4 {
+        Anchor: (Height: 30);
+        LayoutMode: Left;
+
+        Group #Opt4Icon { Anchor: (Width: 22, Height: 22); }
+        Group { Anchor: (Width: 6); }
+        $C.@SecondaryTextButton #Opt4 { @Text = ""; Anchor: (Width: 200, Height: 28); }
+        Group { Anchor: (Width: 6); }
+        Label #Opt4Hint {
+          Text: "";
+          Anchor: (Height: 28);
+          FlexWeight: 1;
+          Style: (FontSize: 11, TextColor: #e8c46a);
+        }
+      }
+      Group #Row5 {
+        Anchor: (Height: 30);
+        LayoutMode: Left;
+
+        Group #Opt5Icon { Anchor: (Width: 22, Height: 22); }
+        Group { Anchor: (Width: 6); }
+        $C.@SecondaryTextButton #Opt5 { @Text = ""; Anchor: (Width: 200, Height: 28); }
+        Group { Anchor: (Width: 6); }
+        Label #Opt5Hint {
+          Text: "";
+          Anchor: (Height: 28);
+          FlexWeight: 1;
+          Style: (FontSize: 11, TextColor: #e8c46a);
+        }
+      }
+      Label #Error {
+        Text: "";
+        Anchor: (Height: 16);
+        Style: (FontSize: 11, TextColor: #ff7070);
+      }
+    }
+    Group { Anchor: (Width: 8); }
+    Group #InfoPanel {
+      Anchor: (Width: 540);
+      LayoutMode: Top;
+      Background: #141d2e(0.88);
+      Padding: (Full: 8);
+
+      Group {
+        Anchor: (Height: 26);
+        LayoutMode: Left;
+
+        Group #InfoIcon { Anchor: (Width: 22, Height: 22); }
+        Group { Anchor: (Width: 6); }
         Label #InfoTitle {
           Text: "";
-          Anchor: (Height: 40);
+          Anchor: (Height: 24);
           FlexWeight: 1;
-          Style: (FontSize: 18, TextColor: #e8c46a, RenderBold: true);
+          Style: (FontSize: 15, TextColor: #e8c46a, RenderBold: true);
         }
       }
       Label #InfoText {
         Text: "";
         FlexWeight: 1;
-        Style: (FontSize: 13, TextColor: #e9eef6, Wrap: true);
+        Style: (FontSize: 12, TextColor: #e9eef6, Wrap: true);
       }
     }
-    Group { Anchor: (Height: 8); }
-    Group #MenuPanel {
-      Anchor: (Height: 372);
-      LayoutMode: Top;
-      Background: #0b111c(0.88);
-      Padding: (Full: 10);
-
-      Label #MenuTitle {
-        Text: "";
-        Anchor: (Height: 30);
-        Style: (FontSize: 18, TextColor: #e9eef6, RenderBold: true);
-      }
-      Group #Row0 {
-        Anchor: (Height: 42);
-        LayoutMode: Left;
-
-        Group #Opt0Icon { Anchor: (Width: 40, Height: 40); }
-        Group { Anchor: (Width: 6); }
-        $C.@SecondaryTextButton #Opt0 { @Text = ""; Anchor: (Width: 250, Height: 38); }
-        Group { Anchor: (Width: 6); }
-        Label #Opt0Hint {
-          Text: "";
-          Anchor: (Width: 90, Height: 38);
-          Style: (FontSize: 13, TextColor: #e8c46a);
-        }
-      }
-      Group #Row1 {
-        Anchor: (Height: 42);
-        LayoutMode: Left;
-
-        Group #Opt1Icon { Anchor: (Width: 40, Height: 40); }
-        Group { Anchor: (Width: 6); }
-        $C.@SecondaryTextButton #Opt1 { @Text = ""; Anchor: (Width: 250, Height: 38); }
-        Group { Anchor: (Width: 6); }
-        Label #Opt1Hint {
-          Text: "";
-          Anchor: (Width: 90, Height: 38);
-          Style: (FontSize: 13, TextColor: #e8c46a);
-        }
-      }
-      Group #Row2 {
-        Anchor: (Height: 42);
-        LayoutMode: Left;
-
-        Group #Opt2Icon { Anchor: (Width: 40, Height: 40); }
-        Group { Anchor: (Width: 6); }
-        $C.@SecondaryTextButton #Opt2 { @Text = ""; Anchor: (Width: 250, Height: 38); }
-        Group { Anchor: (Width: 6); }
-        Label #Opt2Hint {
-          Text: "";
-          Anchor: (Width: 90, Height: 38);
-          Style: (FontSize: 13, TextColor: #e8c46a);
-        }
-      }
-      Group #Row3 {
-        Anchor: (Height: 42);
-        LayoutMode: Left;
-
-        Group #Opt3Icon { Anchor: (Width: 40, Height: 40); }
-        Group { Anchor: (Width: 6); }
-        $C.@SecondaryTextButton #Opt3 { @Text = ""; Anchor: (Width: 250, Height: 38); }
-        Group { Anchor: (Width: 6); }
-        Label #Opt3Hint {
-          Text: "";
-          Anchor: (Width: 90, Height: 38);
-          Style: (FontSize: 13, TextColor: #e8c46a);
-        }
-      }
-      Group #Row4 {
-        Anchor: (Height: 42);
-        LayoutMode: Left;
-
-        Group #Opt4Icon { Anchor: (Width: 40, Height: 40); }
-        Group { Anchor: (Width: 6); }
-        $C.@SecondaryTextButton #Opt4 { @Text = ""; Anchor: (Width: 250, Height: 38); }
-        Group { Anchor: (Width: 6); }
-        Label #Opt4Hint {
-          Text: "";
-          Anchor: (Width: 90, Height: 38);
-          Style: (FontSize: 13, TextColor: #e8c46a);
-        }
-      }
-      Group #Row5 {
-        Anchor: (Height: 42);
-        LayoutMode: Left;
-
-        Group #Opt5Icon { Anchor: (Width: 40, Height: 40); }
-        Group { Anchor: (Width: 6); }
-        $C.@SecondaryTextButton #Opt5 { @Text = ""; Anchor: (Width: 250, Height: 38); }
-        Group { Anchor: (Width: 6); }
-        Label #Opt5Hint {
-          Text: "";
-          Anchor: (Width: 90, Height: 38);
-          Style: (FontSize: 13, TextColor: #e8c46a);
-        }
-      }
-      Group { Anchor: (Height: 4); }
-      $C.@CancelTextButton #Back { @Text = "Назад"; Anchor: (Height: 32); }
-      Label #Error {
-        Text: "";
-        Anchor: (Height: 22);
-        Style: (FontSize: 13, TextColor: #ff7070);
-      }
-    }
+    Group { FlexWeight: 1; }
   }
 }

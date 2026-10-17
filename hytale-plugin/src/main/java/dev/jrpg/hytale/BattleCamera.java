@@ -16,20 +16,20 @@ import org.joml.Vector3d;
  * Боевая камера в духе Final Fantasy: общий план арены сверху и сбоку, при ходе — наезд на того,
  * кто действует, при атаке — кадр «атакующий + цель».
  *
- * Камера — «орбита» вокруг точки: смотрим на точку look с расстояния dist, поворот (yaw) и наклон (pitch)
- * задаются в градусах. В Hytale yaw = 0 смотрит на -Z, отрицательный pitch — взгляд сверху вниз.
+ * Каждый кадр — «орбита» вокруг точки взгляда look: камера стоит на расстоянии dist, сбоку на угол side
+ * и сверху на угол pitch. Позицию камеры считаем сами: клиент Hytale ставит камеру ровно в переданную
+ * точку (в 0.4 мы передавали точку взгляда, и камера оказывалась внутри персонажей).
  *
- * Точка look передаётся либо как мировые координаты (anchor = "world", PositionType.Custom),
- * либо как смещение от игрока (anchor = "player", PositionType.AttachedToPlusOffset), если первый
- * вариант в игре поведёт себя не так.
+ * Угол side отсчитывается от направления «из-за спины партии»: 0 — камера сзади партии и смотрит на врагов,
+ * 90 — строго сбоку арены. Камера всегда остаётся с одной стороны арены (правило 180°),
+ * иначе картинка «прыгает» и непонятно, кто где.
  */
 public final class BattleCamera {
     private final PlayerRef player;
     private final Settings.Camera s;
-    /** Арена: где стоит партия, где враги, направление «партия → враги» (единичный вектор по XZ). */
+    /** Арена: центр партии, центр врагов и единичные векторы «партия → враги» (A) и «вправо» (R) по XZ. */
     private final Vector3d partyCenter, enemyCenter;
-    private final double axisX, axisZ;
-    private Vector3d playerPos;
+    private final double ax, az, rx, rz;
     private String lastShot = "";
 
     public BattleCamera(PlayerRef player, Settings.Camera settings, Vector3d partyCenter, Vector3d enemyCenter) {
@@ -39,31 +39,32 @@ public final class BattleCamera {
         this.enemyCenter = new Vector3d(enemyCenter);
         double dx = enemyCenter.x - partyCenter.x, dz = enemyCenter.z - partyCenter.z;
         double len = Math.max(1e-6, Math.hypot(dx, dz));
-        this.axisX = dx / len;
-        this.axisZ = dz / len;
-        this.playerPos = new Vector3d(partyCenter);
+        this.ax = dx / len;
+        this.az = dz / len;
+        double sign = s.flip ? -1 : 1;
+        this.rx = -az * sign;
+        this.rz = ax * sign;
     }
 
-    /** Где сейчас стоит игрок (нужно для режима anchor = "player"). */
-    public void setPlayerPos(Vector3d pos) {
-        if (pos != null) this.playerPos = new Vector3d(pos);
+    private Vector3d arenaMid(double up) {
+        return new Vector3d((partyCenter.x + enemyCenter.x) / 2, partyCenter.y + up, (partyCenter.z + enemyCenter.z) / 2);
     }
 
-    /** Yaw (градусы), при котором камера смотрит вдоль оси «партия → враги». */
-    private double axisYawDeg() {
-        return Math.toDegrees(Math.atan2(-axisX, -axisZ));
-    }
-
-    /** Общий план: центр арены, сбоку-сзади партии и сверху. */
+    /** Общий план: центр арены, сбоку и сверху. */
     public void overview() {
-        Vector3d look = new Vector3d((partyCenter.x + enemyCenter.x) / 2, partyCenter.y + 1.0,
-                (partyCenter.z + enemyCenter.z) / 2);
-        shot("overview", look, axisYawDeg() + s.overviewSide, s.overviewPitch, s.overviewDistance, s.lerp);
+        shot("overview", arenaMid(1.0), s.overviewSide, s.overviewPitch, s.overviewDistance);
+    }
+
+    /** Кадр выбора цели: враги крупнее, чем на общем плане, но видны все. */
+    public void targets(boolean enemies) {
+        Vector3d c = enemies ? enemyCenter : partyCenter;
+        Vector3d look = new Vector3d(c.x, c.y + 1.0, c.z);
+        shot("targets:" + enemies, look, enemies ? s.focusSide + 10 : s.focusSide, s.overviewPitch, s.targetDistance);
     }
 
     /**
-     * Наезд на бойца, чей сейчас ход. Герой — вид «из-за плеча» в сторону врагов (видно и героя, и цели),
-     * враг — спереди-сбоку со стороны партии.
+     * Наезд на бойца, чей ход. Партия — из-за спины сбоку (видно героя и врагов впереди),
+     * враг — со стороны партии и сбоку (видно его «лицо»).
      */
     public void focus(Vector3d pos, boolean partySide) {
         if (pos == null) {
@@ -71,46 +72,50 @@ public final class BattleCamera {
             return;
         }
         Vector3d look = new Vector3d(pos.x, pos.y + 1.2, pos.z);
-        double yaw = partySide ? axisYawDeg() + s.focusSide : axisYawDeg() - s.focusSide;
-        shot("focus:" + pos, look, yaw, s.focusPitch, s.focusDistance, s.lerp);
+        shot("focus:" + pos, look, partySide ? s.focusSide : s.focusSide + 15, s.focusPitch, s.focusDistance);
     }
 
     /** Кадр «действующий + цель»: точка между ними, камера сбоку, чтобы видно было обоих. */
-    public void action(Vector3d actor, Vector3d target, boolean partySide) {
+    public void action(Vector3d actor, Vector3d target) {
         if (actor == null || target == null) {
-            focus(actor, partySide);
+            focus(actor, true);
             return;
         }
         Vector3d look = new Vector3d((actor.x + target.x) / 2, Math.max(actor.y, target.y) + 1.0, (actor.z + target.z) / 2);
         double span = Math.hypot(actor.x - target.x, actor.z - target.z);
-        double dist = Math.max(s.focusDistance, s.actionDistance + span * 0.6);
-        double yaw = axisYawDeg() + (partySide ? s.actionSide : -s.actionSide);
-        shot("action:" + look, look, yaw, s.actionPitch, dist, s.lerp);
+        double dist = Math.max(s.focusDistance, s.actionDistance + span * 0.7);
+        shot("action:" + look, look, s.actionSide, s.actionPitch, dist);
     }
 
-    private void shot(String id, Vector3d look, double yawDeg, double pitchDeg, double dist, float lerp) {
+    private void shot(String id, Vector3d look, double sideDeg, double pitchDeg, double dist) {
         if (!s.enabled) return;
         lastShot = id;
         try {
+            // Направление от точки взгляда к камере: назад (к партии) на cos(side), вправо на sin(side).
+            double side = Math.toRadians(sideDeg), pitch = Math.toRadians(Math.min(-5, pitchDeg));
+            double ux = -ax * Math.cos(side) + rx * Math.sin(side);
+            double uz = -az * Math.cos(side) + rz * Math.sin(side);
+            double horiz = dist * Math.cos(-pitch);
+            double camX = look.x + ux * horiz, camZ = look.z + uz * horiz;
+            double camY = look.y + Math.max(s.minHeight, dist * Math.sin(-pitch));
+            // Смотрим из камеры на точку look (yaw как у сущностей: atan2(-dx, -dz)).
+            double vx = look.x - camX, vy = look.y - camY, vz = look.z - camZ;
+            float yaw = (float) Math.atan2(-vx, -vz);
+            float realPitch = (float) Math.atan2(vy, Math.hypot(vx, vz));
+
             ServerCameraSettings c = new ServerCameraSettings();
             c.isFirstPerson = false;
             c.eyeOffset = false;
             c.displayCursor = true;
-            c.positionLerpSpeed = lerp;
-            c.rotationLerpSpeed = lerp;
-            c.distance = (float) dist;
-            c.positionDistanceOffsetType = PositionDistanceOffsetType.DistanceOffset;
-            if ("player".equals(s.anchor)) {
-                c.attachedToType = AttachedToType.LocalPlayer;
-                c.positionType = PositionType.AttachedToPlusOffset;
-                c.positionOffset = new Position(look.x - playerPos.x, look.y - playerPos.y, look.z - playerPos.z);
-            } else {
-                c.attachedToType = AttachedToType.None;
-                c.positionType = PositionType.Custom;
-                c.position = new Position(look.x, look.y, look.z);
-            }
+            c.positionLerpSpeed = s.lerp;
+            c.rotationLerpSpeed = s.lerp;
+            c.distance = 0f;
+            c.positionDistanceOffsetType = PositionDistanceOffsetType.None;
+            c.attachedToType = AttachedToType.None;
+            c.positionType = PositionType.Custom;
+            c.position = new Position(camX, camY, camZ);
             c.rotationType = RotationType.Custom;
-            c.rotation = new Direction((float) Math.toRadians(yawDeg), (float) Math.toRadians(pitchDeg), 0f);
+            c.rotation = new Direction(yaw, realPitch, 0f);
             player.getPacketHandler().writeNoCache(new SetServerCamera(ClientCameraView.Custom, true, c));
         } catch (Throwable t) {
             Fx.warnOnce("Камера боя не сработала (" + id + ")", t);

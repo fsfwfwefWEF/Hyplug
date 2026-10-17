@@ -5,7 +5,10 @@ import com.hypixel.hytale.component.Store;
 import org.joml.Vector3d;
 import com.hypixel.hytale.math.vector.Rotation3f;
 import com.hypixel.hytale.server.core.entity.entities.Player;
+import com.hypixel.hytale.protocol.Color;
+import com.hypixel.hytale.protocol.CombatTextUpdate;
 import com.hypixel.hytale.server.core.entity.nameplate.Nameplate;
+import com.hypixel.hytale.server.core.modules.entity.tracker.EntityTrackerSystems;
 import com.hypixel.hytale.server.core.modules.entity.component.TransformComponent;
 import com.hypixel.hytale.server.core.modules.entity.teleport.Teleport;
 import com.hypixel.hytale.server.core.universe.world.ParticleUtil;
@@ -80,6 +83,24 @@ public final class Fx {
             store.putComponent(ref, Teleport.getComponentType(), Teleport.createForPlayer(pos, rot).setHeadRotation(rot));
         } catch (Throwable t) {
             warnOnce("Не удалось переместить игрока", t);
+        }
+    }
+
+    /**
+     * Всплывающий текст над сущностью (как цифры урона в обычном бою Hytale), виден игроку viewer.
+     * color — "#rrggbb". Работает для NPC; над самим игроком клиент может его не показать.
+     */
+    public static void combatText(Store<EntityStore> store, Ref<EntityStore> viewer, Ref<EntityStore> target,
+                                  String text, String color) {
+        try {
+            if (target == null || !target.isValid() || viewer == null || !viewer.isValid()) return;
+            EntityTrackerSystems.EntityViewer v = store.getComponent(viewer, EntityTrackerSystems.EntityViewer.getComponentType());
+            if (v == null) return;
+            int rgb = Integer.parseInt(color.substring(1), 16);
+            Color c = new Color((byte) (rgb >> 16), (byte) (rgb >> 8), (byte) rgb);
+            v.queueUpdate(target, new CombatTextUpdate(0f, text, c));
+        } catch (Throwable t) {
+            warnOnce("Всплывающий текст не сработал", t);
         }
     }
 

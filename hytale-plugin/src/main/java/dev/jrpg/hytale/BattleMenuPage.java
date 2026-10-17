@@ -18,7 +18,6 @@ import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import dev.jrpg.battle.Battle;
 import dev.jrpg.battle.BattleMenu;
 import dev.jrpg.battle.Combatant;
-import dev.jrpg.battle.Content;
 import dev.jrpg.battle.Describe;
 import dev.jrpg.battle.Side;
 import dev.jrpg.battle.StatusInstance;
@@ -29,13 +28,12 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
  * Боевое меню: Common/UI/Custom/JrpgBattle/BattleMenu.ui (собирается tools/gen_battle_ui.py).
  *
- * Слева очередь ходов (#Q0..#Q7) и карточка ходящего (#Act...), сверху карточки врагов (#E0..#E4),
- * снизу партия (#P0..#P2) и журнал, справа окно описаний (#Info...) и команды (#Opt0..#Opt5 + #Back).
+ * Сверху карточки врагов (#E0..#E4) и баннер хода (#Banner/#BannerSub), слева очередь ходов (#Q0..#Q7),
+ * внизу одной полосой партия (#P0..#P2), команды (#Opt0..#Opt5 + #Back) и окно описаний (#Info...).
  * Наведение мыши на команду или кнопку «?» на карточке показывает описание в окне описаний.
  * Иконки — маленькие документы Icons/&lt;ключ&gt;_&lt;размер&gt;.ui, вставляются в пустые слоты.
  */
@@ -43,7 +41,7 @@ public final class BattleMenuPage extends InteractiveCustomUIPage<BattleMenuPage
     public static final String LAYOUT = "JrpgBattle/BattleMenu.ui";
     public static final String ICONS = "JrpgBattle/Icons/";
     public static final int BUTTONS = 6, QUEUE = 8, ENEMIES = 5, PARTY = 3;
-    private static final int BAR_CARD = 260, BAR_ENEMY = 196, BAR_ACT = 270;
+    private static final int BAR_CARD = 210, BAR_ENEMY = 150;
     private static final String PARTY_COLOR = "#a9d8ff", ENEMY_COLOR = "#ffb3a6";
 
     private final BattleSession session;
@@ -112,15 +110,15 @@ public final class BattleMenuPage extends InteractiveCustomUIPage<BattleMenuPage
 
     private void fill(UICommandBuilder cmd) {
         Battle b = session.battle();
-        Content k = b.content();
         fillQueue(cmd, b);
-        fillActive(cmd, b, k);
         fillEnemies(cmd, b);
         fillParty(cmd, b);
         fillMenu(cmd, session.menu());
         fillInfo(cmd);
-        cmd.set("#Banner.Text", session.banner());
-        cmd.set("#Log.Text", String.join("\n", session.logLines()));
+        String banner = session.banner(), sub = session.bannerSub();
+        cmd.set("#BannerBox.Visible", !banner.isEmpty() || !sub.isEmpty());
+        cmd.set("#Banner.Text", banner);
+        cmd.set("#BannerSub.Text", sub);
     }
 
     private void fillQueue(UICommandBuilder cmd, Battle b) {
@@ -135,29 +133,8 @@ public final class BattleMenuPage extends InteractiveCustomUIPage<BattleMenuPage
             cmd.set(q + "Name.Style.TextColor", c.side == Side.PARTY ? PARTY_COLOR : ENEMY_COLOR);
             String sub = i == 0 ? "сейчас ходит" : (c.side == Side.PARTY ? "союзник" : (c.boss ? "БОСС" : "враг"));
             cmd.set(q + "Sub.Text", sub + "   " + c.hp + "/" + c.stats.maxHp() + " HP");
-            icon(cmd, q + "Icon", portraitKey(c), "m");
+            icon(cmd, q + "Icon", portraitKey(c), i == 0 ? "m" : "s");
         }
-    }
-
-    private void fillActive(UICommandBuilder cmd, Battle b, Content k) {
-        Combatant c = b.current();
-        if (c == null) c = b.combatants().get(0);
-        cmd.set("#ActHeader.Text", b.phase() == Battle.Phase.ENDED ? "БОЙ ОКОНЧЕН"
-                : c.side == Side.PARTY ? "ХОДИТ" : "ХОДИТ ВРАГ");
-        cmd.set("#ActName.Text", c.name);
-        cmd.set("#ActName.Style.TextColor", c.side == Side.PARTY ? "#ffffff" : ENEMY_COLOR);
-        cmd.set("#ActTitle.Text", Describe.roleTitle(c));
-        cmd.set("#ActNums.Text", "HP " + c.hp + "/" + c.stats.maxHp()
-                + (c.stats.maxMp() > 0 ? "   MP " + c.mp + "/" + c.stats.maxMp() : "")
-                + "\nAP " + c.ap + " / " + Combatant.MAX_AP);
-        bar(cmd, "#ActHp", c.hp, c.stats.maxHp(), BAR_ACT, 10);
-        bar(cmd, "#ActMp", c.mp, c.stats.maxMp(), BAR_ACT, 6);
-        icon(cmd, "#ActIcon", portraitKey(c), "l");
-        statusIcons(cmd, "#ActStatus", c);
-        cmd.set("#ActStatusText.Text", c.statuses.isEmpty() ? "Статусов нет"
-                : c.statuses.stream().map(Describe::status).collect(Collectors.joining("\n")));
-        cmd.set("#ActImmune.Text", c.immunities.isEmpty() ? "" : "Иммунитет: " + c.immunities.stream()
-                .map(id -> k.status(id).name()).collect(Collectors.joining(", ")));
     }
 
     private void fillEnemies(UICommandBuilder cmd, Battle b) {
@@ -170,9 +147,9 @@ public final class BattleMenuPage extends InteractiveCustomUIPage<BattleMenuPage
             if (!shown) continue;
             Combatant c = list.get(i);
             cmd.set(e + "Name.Text", (c == b.current() ? "> " : "") + c.name);
-            cmd.set(e + "Hp.Text", c.hp + "/" + c.stats.maxHp() + " HP" + (c.boss ? "   БОСС" : ""));
-            bar(cmd, e + "Hp", c.hp, c.stats.maxHp(), BAR_ENEMY, 8);
-            icon(cmd, e + "Icon", portraitKey(c), "m");
+            cmd.set(e + "Hp.Text", c.hp + "/" + c.stats.maxHp() + (c.boss ? " БОСС" : ""));
+            bar(cmd, e + "Hp", c.hp, c.stats.maxHp(), BAR_ENEMY, 5);
+            icon(cmd, e + "Icon", portraitKey(c), "s");
             statusIcons(cmd, e + "Status", c);
         }
     }
@@ -188,10 +165,10 @@ public final class BattleMenuPage extends InteractiveCustomUIPage<BattleMenuPage
             Combatant c = list.get(i);
             cmd.set(p + "Turn.Visible", c == b.current() && b.phase() != Battle.Phase.ENDED);
             cmd.set(p + "Name.Text", c.name + (c.isAlive() ? "" : "  (без сознания)"));
-            cmd.set(p + "Nums.Text", "HP " + c.hp + "/" + c.stats.maxHp() + "   MP " + c.mp + "/" + c.stats.maxMp()
-                    + "   AP " + c.ap);
-            bar(cmd, p + "Hp", c.hp, c.stats.maxHp(), BAR_CARD, 8);
-            bar(cmd, p + "Mp", c.mp, c.stats.maxMp(), BAR_CARD, 5);
+            cmd.set(p + "Nums.Text", "HP " + c.hp + "/" + c.stats.maxHp() + "  MP " + c.mp + "/" + c.stats.maxMp()
+                    + "  AP " + c.ap);
+            bar(cmd, p + "Hp", c.hp, c.stats.maxHp(), BAR_CARD, 6);
+            bar(cmd, p + "Mp", c.mp, c.stats.maxMp(), BAR_CARD, 4);
             icon(cmd, p + "Icon", portraitKey(c), "m");
             statusIcons(cmd, p + "Status", c);
         }
@@ -208,7 +185,7 @@ public final class BattleMenuPage extends InteractiveCustomUIPage<BattleMenuPage
             BattleMenu.Option o = opts.get(i);
             cmd.set("#Opt" + i + ".Text", o.label());
             cmd.set("#Opt" + i + "Hint.Text", o.enabled() ? o.hint() : "нельзя");
-            icon(cmd, "#Opt" + i + "Icon", iconKey(o.icon()), "m");
+            icon(cmd, "#Opt" + i + "Icon", iconKey(o.icon()), "s");
         }
         cmd.set("#Back.Visible", m.canGoBack());
     }
@@ -217,7 +194,7 @@ public final class BattleMenuPage extends InteractiveCustomUIPage<BattleMenuPage
         BattleSession.Info info = session.info();
         cmd.set("#InfoTitle.Text", info.title());
         cmd.set("#InfoText.Text", info.text());
-        icon(cmd, "#InfoIcon", iconKey(info.icon()), "m");
+        icon(cmd, "#InfoIcon", iconKey(info.icon()), "s");
     }
 
     // ---------- иконки и полоски ----------

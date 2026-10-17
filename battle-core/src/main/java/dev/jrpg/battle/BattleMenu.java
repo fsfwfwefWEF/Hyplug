@@ -179,9 +179,7 @@ public final class BattleMenu {
         if (!effect.target().needsTargetChoice()) return build(what, null);
         pending = what;
         screen = Screen.TARGET;
-        // Если цель одна — не спрашиваем.
-        List<Combatant> t = targets();
-        if (t.size() == 1) return build(what, t.get(0).id);
+        // Цель выбирается всегда, даже если она одна: игрок видит, по кому бьёт.
         return null;
     }
 
@@ -190,6 +188,17 @@ public final class BattleMenu {
         if (what.equals("attack")) return new BattleAction.Attack(targetId);
         if (what.startsWith("skill:")) return new BattleAction.UseAbility(what.substring(6), targetId);
         return new BattleAction.UseItem(what.substring(5), targetId);
+    }
+
+    /** Выбор цели по id (клик по карточке врага/союзника на экране выбора цели). null — не цель. */
+    public BattleAction clickTarget(String combatantId) {
+        error = null;
+        if (screen() != Screen.TARGET) return null;
+        for (Combatant t : targets()) {
+            if (t.id.equals(combatantId)) return build(pending, t.id);
+        }
+        error = "Это не цель для выбранного действия";
+        return null;
     }
 
     /** Текущие цели экрана выбора цели (для подсветки кольцом при наведении). */
