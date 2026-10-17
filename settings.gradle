@@ -1,0 +1,3 @@
+rootProject.name = 'jrpg-mod'
+include 'battle-core'
+include 'hytale-plugin'

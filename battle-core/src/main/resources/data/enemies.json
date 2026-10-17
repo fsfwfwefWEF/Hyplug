@@ -1,0 +1,18 @@
+[
+  { "id": "goblin", "role": "Trork_Warrior", "name": "Гоблин", "model": "Goblin_Scrapper",
+    "stats": { "maxHp": 90, "maxMp": 0, "atk": 17, "mag": 0, "def": 8, "spd": 11 },
+    "abilities": ["goblin_frenzy"] },
+  { "id": "spider", "role": "Spider", "name": "Ядовитый паук", "model": "Spider",
+    "stats": { "maxHp": 70, "maxMp": 0, "atk": 15, "mag": 0, "def": 6, "spd": 15 },
+    "abilities": ["venom_bite", "web"] },
+  { "id": "slime", "role": "Slime", "name": "Слизень", "model": "Slime",
+    "stats": { "maxHp": 110, "maxMp": 40, "atk": 12, "mag": 10, "def": 10, "spd": 6 },
+    "abilities": ["goo_mend"] },
+  { "id": "spiderling", "role": "Spider", "name": "Паучонок", "model": "Spider",
+    "stats": { "maxHp": 35, "maxMp": 0, "atk": 11, "mag": 0, "def": 4, "spd": 13 },
+    "abilities": ["venom_bite"] },
+  { "id": "spider_queen", "role": "Spider", "name": "Королева пауков Арахна", "boss": true, "model": "JRPG_SpiderQueen",
+    "immunities": ["stun", "slow"],
+    "stats": { "maxHp": 380, "maxMp": 0, "atk": 19, "mag": 14, "def": 12, "spd": 10 },
+    "abilities": ["venom_bite", "web"] }
+]

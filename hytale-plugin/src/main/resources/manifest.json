@@ -1,0 +1,14 @@
+{
+  "Group": "Hveien",
+  "Name": "JrpgBattles",
+  "Version": "0.3.0",
+  "Description": "Пошаговые JRPG-бои: партия из 3 героев, меню действий, способности, предметы, статусы, боссы.",
+  "Authors": [ { "Name": "Hveien" } ],
+  "Website": "",
+  "DisabledByDefault": false,
+  "IncludesAssetPack": true,
+  "Dependencies": { "Hytale:AssetModule": "*" },
+  "OptionalDependencies": {},
+  "ServerVersion": "*",
+  "Main": "dev.jrpg.hytale.JrpgPlugin"
+}

@@ -1,0 +1,88 @@
+$C = "../Common.ui";
+
+// Боевое меню JRPG: панель внизу экрана, сверху пусто, чтобы была видна арена.
+Group {
+  LayoutMode: Top;
+
+  // Распорка: занимает всё место над панелью
+  Group { FlexWeight: 1; }
+
+  Group #Panel {
+    Anchor: (Height: 340);
+    LayoutMode: Left;
+    Background: #0d1420(0.92);
+    Padding: (Full: 14);
+
+    // Левая колонка: партия и враги
+    Group {
+      Anchor: (Width: 520);
+      LayoutMode: Top;
+
+      Label {
+        Text: "ПАРТИЯ";
+        Anchor: (Height: 24);
+        Style: (FontSize: 15, TextColor: #8fd3ff, RenderBold: true);
+      }
+      Label #PartyInfo {
+        Text: "";
+        Anchor: (Height: 110);
+        Style: (FontSize: 15, TextColor: #ffffff, Wrap: true);
+      }
+      Label {
+        Text: "ВРАГИ";
+        Anchor: (Height: 24);
+        Style: (FontSize: 15, TextColor: #ff9b8f, RenderBold: true);
+      }
+      Label #EnemyInfo {
+        Text: "";
+        FlexWeight: 1;
+        Style: (FontSize: 15, TextColor: #ffffff, Wrap: true);
+      }
+    }
+
+    Group { Anchor: (Width: 14); }
+
+    // Средняя колонка: очередь ходов и журнал
+    Group {
+      FlexWeight: 1;
+      LayoutMode: Top;
+
+      Label #Queue {
+        Text: "";
+        Anchor: (Height: 44);
+        Style: (FontSize: 14, TextColor: #ffe08a, Wrap: true);
+      }
+      Label #Log {
+        Text: "";
+        FlexWeight: 1;
+        Style: (FontSize: 15, TextColor: #d8e2ee, Wrap: true);
+      }
+    }
+
+    Group { Anchor: (Width: 14); }
+
+    // Правая колонка: меню действий
+    Group {
+      Anchor: (Width: 360);
+      LayoutMode: Top;
+
+      Label #MenuTitle {
+        Text: "";
+        Anchor: (Height: 30);
+        Style: (FontSize: 17, TextColor: #ffffff, RenderBold: true);
+      }
+      $C.@SecondaryTextButton #Opt0 { @Text = ""; Anchor: (Height: 34); }
+      $C.@SecondaryTextButton #Opt1 { @Text = ""; Anchor: (Height: 34); }
+      $C.@SecondaryTextButton #Opt2 { @Text = ""; Anchor: (Height: 34); }
+      $C.@SecondaryTextButton #Opt3 { @Text = ""; Anchor: (Height: 34); }
+      $C.@SecondaryTextButton #Opt4 { @Text = ""; Anchor: (Height: 34); }
+      $C.@SecondaryTextButton #Opt5 { @Text = ""; Anchor: (Height: 34); }
+      $C.@CancelTextButton #Back { @Text = "Назад"; Anchor: (Height: 30); }
+      Label #Error {
+        Text: "";
+        Anchor: (Height: 22);
+        Style: (FontSize: 13, TextColor: #ff7070);
+      }
+    }
+  }
+}

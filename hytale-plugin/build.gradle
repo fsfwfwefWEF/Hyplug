@@ -1,0 +1,30 @@
+plugins { id 'java' }
+
+// Сервер Hytale работает на Java 25.
+java { toolchain { languageVersion = JavaLanguageVersion.of(25) } }
+tasks.withType(JavaCompile).configureEach { options.encoding = 'UTF-8' }
+
+repositories {
+    mavenCentral()
+    // Официальный Maven Hytale: отсюда берётся HytaleServer.jar для компиляции
+    maven { url = 'https://maven.hytale.com/release' }
+}
+
+// Версия сервера Hytale, под которую собирается мод (список: maven.hytale.com/release/com/hypixel/hytale/Server/maven-metadata.xml)
+def hytaleVersion = findProperty('hytaleVersion') ?: '0.7.2'
+
+dependencies {
+    implementation project(':battle-core')
+    // Если положить свой HytaleServer.jar в libs/, соберётся под него; иначе скачивается с maven.hytale.com
+    if (file('libs/HytaleServer.jar').exists()) compileOnly files('libs/HytaleServer.jar')
+    else compileOnly "com.hypixel.hytale:Server:${hytaleVersion}"
+}
+
+// Один jar мода: плагин + ядро боя + данные (json) + asset pack (UI).
+jar {
+    archiveBaseName = 'JrpgBattles'
+    archiveVersion = '0.3.0'
+    dependsOn ':battle-core:jar'
+    from { configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) } }
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}

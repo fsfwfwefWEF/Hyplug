@@ -1,0 +1,45 @@
+[
+  {
+    "id": "mill_goblins",
+    "name": "Гоблины у старой мельницы",
+    "location": { "world": "*", "x": 120, "y": 64, "z": -40, "triggerRadius": 6 },
+    "unique": false,
+    "respawnMinutes": 20,
+    "canFlee": true,
+    "enemies": [
+      { "template": "goblin", "x": -2.5, "z": 5 },
+      { "template": "spider", "x": 0, "z": 6 },
+      { "template": "slime", "x": 2.5, "z": 5 }
+    ],
+    "loot": [ { "item": "potion", "count": 1, "chance": 0.6 }, { "item": "antidote", "count": 1, "chance": 0.3 } ],
+    "exp": 40
+  },
+  {
+    "id": "spider_queen_lair",
+    "name": "Логово Королевы пауков",
+    "location": { "world": "*", "x": 310, "y": 40, "z": 215, "triggerRadius": 10 },
+    "unique": true,
+    "canFlee": false,
+    "intro": [
+      { "speaker": "spider_queen", "text": "Кто посмел потревожить моё логово?" },
+      { "speaker": "spider_queen", "text": "Дети мои, к ужину!" }
+    ],
+    "enemies": [
+      { "template": "spider_queen", "x": 0, "z": 7 },
+      { "template": "spiderling", "x": -3, "z": 5 },
+      { "template": "spiderling", "x": 3, "z": 5 }
+    ],
+    "phases": [
+      { "boss": "spider_queen", "hpBelow": 0.6, "name": "Кислотный дождь",
+        "say": "Вы ещё пожалеете! Дети, ко мне!",
+        "addAbilities": ["acid_rain"], "summon": ["spiderling", "spiderling"] },
+      { "boss": "spider_queen", "hpBelow": 0.25, "name": "Ярость королевы",
+        "say": "ДОВОЛЬНО!",
+        "addAbilities": ["queen_frenzy"], "removeAbilities": ["web"],
+        "selfStatuses": [ { "statusId": "haste", "chance": 1.0, "turns": 99 } ] }
+    ],
+    "script": "spider_queen",
+    "loot": [ { "item": "queen_fang", "count": 1, "chance": 1.0 }, { "item": "potion", "count": 3, "chance": 1.0 } ],
+    "exp": 500
+  }
+]
