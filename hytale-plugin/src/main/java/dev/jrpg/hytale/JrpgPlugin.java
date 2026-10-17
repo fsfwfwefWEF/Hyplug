@@ -6,6 +6,8 @@ import dev.jrpg.battle.Battle;
 import dev.jrpg.battle.Content;
 import dev.jrpg.battle.GameData;
 import dev.jrpg.battle.Progression;
+import dev.jrpg.battle.SaveData;
+import com.hypixel.hytale.server.core.event.events.player.PlayerDisconnectEvent;
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.server.core.entity.entities.Player;
@@ -33,16 +35,22 @@ public final class JrpgPlugin extends JavaPlugin {
      * Версия встроенных файлов данных. Если копия в папке мода старее, она сохраняется в backup-vN/
      * и заменяется новой (иначе новые враги/настройки не появятся у тех, кто уже запускал мод).
      */
-    private static final int DATA_VERSION = 5;
+    private static final int DATA_VERSION = 6;
+    /** Автосохранение загруженных игроков, с. */
+    private static final long AUTOSAVE_S = 60;
     private static JrpgPlugin instance;
 
     private final Content content = Content.demo();
     private final WorldProgress progress = new WorldProgress();
     private final ConcurrentHashMap<UUID, BattleSession> sessions = new ConcurrentHashMap<>();
-    /** Боевые предметы партии каждого игрока (пока в памяти; сохранение — следующий этап). */
+    /** Рюкзак каждого игрока (зелья, боевые предметы, добыча). Сохраняется в players/<uuid>.json. */
     private final ConcurrentHashMap<UUID, java.util.Map<String, Integer>> inventories = new ConcurrentHashMap<>();
-    /** Прокачка партии каждого игрока (пока в памяти, до перезапуска сервера). */
+    /** Прокачка партии каждого игрока. Сохраняется туда же. */
     private final ConcurrentHashMap<UUID, Progression.Party> parties = new ConcurrentHashMap<>();
+    /** Мелкие настройки игрока (follow — компаньоны ходят следом). */
+    private final ConcurrentHashMap<UUID, java.util.Map<String, Object>> flags = new ConcurrentHashMap<>();
+    private Saves saves;
+    private final CompanionFollowers followers = new CompanionFollowers(this);
     /** Свой планировщик для пауз между ходами; всё, что трогает мир, переносится в world.execute. */
     private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor(r -> {
         Thread t = new Thread(r, "jrpg-scheduler");
@@ -65,9 +73,14 @@ public final class JrpgPlugin extends JavaPlugin {
     @Override
     protected void setup() {
         reloadData();
+        saves = new Saves(this, getDataDirectory());
+        saves.loadWorld(progress);
         getCommandRegistry().registerCommand(new JrpgCommand(this));
         EncounterWatcher watcher = new EncounterWatcher(this);
         scheduler.scheduleAtFixedRate(watcher::tickSafe, 2, 1, TimeUnit.SECONDS);
+        scheduler.scheduleAtFixedRate(this::autosave, AUTOSAVE_S, AUTOSAVE_S, TimeUnit.SECONDS);
+        followers.start();
+        getEventRegistry().register(PlayerDisconnectEvent.class, e -> onDisconnect(e.getPlayerRef()));
         getLogger().at(Level.INFO).log("JRPG Battles: загружено встреч " + data.encounters().size());
     }
 
@@ -75,7 +88,29 @@ public final class JrpgPlugin extends JavaPlugin {
     protected void shutdown() {
         for (BattleSession s : sessions.values()) s.abort("сервер останавливается");
         clearSquads();
+        followers.clearAll();
+        for (UUID id : java.util.List.copyOf(parties.keySet())) savePlayerNow(id);
+        saveWorld();
         scheduler.shutdownNow();
+    }
+
+    /** Игрок вышел: сохранить и выгрузить, убрать его бой и компаньонов. */
+    private void onDisconnect(PlayerRef ref) {
+        UUID id = ref.getUuid();
+        try {
+            BattleSession s = sessions.get(id);
+            if (s != null) s.abort("игрок вышел");
+            followers.forget(id);
+            savePlayerNow(id);
+        } catch (Throwable t) {
+            warn("Ошибка при выходе игрока", t);
+        } finally {
+            parties.remove(id);
+            inventories.remove(id);
+            flags.remove(id);
+            prompting.remove(id);
+            Pages.forget(id);
+        }
     }
 
     /** Читает данные из папки мода (создаёт копии встроенных файлов при первом запуске). */
@@ -89,6 +124,7 @@ public final class JrpgPlugin extends JavaPlugin {
             }
             data = GameData.load(content, dir);
             settings = Settings.parse(Files.readString(dir.resolve("settings.json")));
+            ParticleCatalog.reset();
             return "Данные загружены из " + dir.toAbsolutePath();
         } catch (Exception e) {
             getLogger().at(Level.SEVERE).log("JRPG: ошибка в файлах данных (" + dir + "): " + e.getMessage()
@@ -131,7 +167,73 @@ public final class JrpgPlugin extends JavaPlugin {
     }
 
     public Progression.Party partyOf(UUID player) {
-        return parties.computeIfAbsent(player, k -> new Progression.Party(content));
+        load(player);
+        return parties.get(player);
+    }
+
+    /** При первом обращении — прочитать сохранение игрока (или начать новое). */
+    private synchronized void load(UUID player) {
+        if (parties.containsKey(player)) return;
+        Progression.Party party = new Progression.Party(content);
+        java.util.Map<String, Integer> inv;
+        java.util.Map<String, Object> fl = new ConcurrentHashMap<>();
+        SaveData.Player save = saves == null ? null : saves.loadPlayer(player);
+        if (save != null) {
+            SaveData.applyParty(save, party);
+            inv = new java.util.LinkedHashMap<>(SaveData.inventory(save, content));
+            save.flags().forEach((k, v) -> { if (v != null) fl.put(k, v); });
+            log("Загружено сохранение игрока " + player);
+        } else {
+            inv = new java.util.LinkedHashMap<>(Content.demoInventory());
+        }
+        inventories.put(player, java.util.Collections.synchronizedMap(inv));
+        flags.put(player, fl);
+        parties.put(player, party);
+    }
+
+    public boolean flag(UUID player, String key, boolean def) {
+        load(player);
+        return flags.get(player).get(key) instanceof Boolean b ? b : def;
+    }
+
+    public void setFlag(UUID player, String key, boolean value) {
+        load(player);
+        flags.get(player).put(key, value);
+        savePlayer(player);
+    }
+
+    /** Сохранить игрока: JSON собирается сразу (в потоке мира), файл пишется в фоне. */
+    public void savePlayer(UUID player) {
+        String json = playerJson(player);
+        if (json != null) scheduler.execute(() -> saves.writePlayer(player, json));
+    }
+
+    private void savePlayerNow(UUID player) {
+        String json = playerJson(player);
+        if (json != null) saves.writePlayer(player, json);
+    }
+
+    private String playerJson(UUID player) {
+        Progression.Party party = parties.get(player);
+        if (party == null || saves == null) return null;
+        java.util.Map<String, Integer> inv = inventories.get(player);
+        synchronized (inv) {
+            return SaveData.writePlayer(party, new java.util.LinkedHashMap<>(inv), new java.util.LinkedHashMap<>(flags.get(player)));
+        }
+    }
+
+    public void saveWorld() {
+        if (saves != null) saves.writeWorld(SaveData.writeWorld(progress));
+    }
+
+    private void autosave() {
+        for (UUID id : java.util.List.copyOf(parties.keySet())) {
+            try {
+                savePlayerNow(id);
+            } catch (Throwable t) {
+                // Партию как раз меняли в потоке мира — сохранится в следующий раз.
+            }
+        }
     }
 
     /**
@@ -214,7 +316,15 @@ public final class JrpgPlugin extends JavaPlugin {
     }
 
     public java.util.Map<String, Integer> inventoryOf(UUID player) {
-        return inventories.computeIfAbsent(player, k -> Content.demoInventory());
+        load(player);
+        return inventories.get(player);
+    }
+
+    CompanionFollowers followers() { return followers; }
+
+    /** Открыть рюкзак (вызывать в потоке мира). */
+    public void openBackpack(PlayerRef playerRef, Ref<EntityStore> ref, Store<EntityStore> store) {
+        Pages.open(this, playerRef, ref, store, new BackpackPage(playerRef, this));
     }
 
     public void log(String msg) {

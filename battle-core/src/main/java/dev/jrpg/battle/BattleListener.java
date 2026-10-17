@@ -22,6 +22,12 @@ public interface BattleListener {
     /** Ход персонажа партии: открыть меню (Атака/Способности/Предметы/Защита/Бегство). */
     default void onAwaitCommand(Combatant actor) {}
 
+    /**
+     * Враг замахнулся (включено {@link Battle#setReactions}): ядро ждёт {@link Battle#react}. Адаптер
+     * показывает замах и окно «Уклониться / Парировать» и по времени нажатия решает, удался ли ответ.
+     */
+    default void onReactionWindow(Combatant actor, Ability ability, List<Combatant> targets) {}
+
     /** Действие посчитано. Адаптер играет анимацию и вызывает {@link Battle#acknowledge()}. */
     default void onActionExecuted(ActionResult result) {}
 

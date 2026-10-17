@@ -129,6 +129,7 @@ public final class ProgressionPage extends InteractiveCustomUIPage<BattleMenuPag
             }
             default -> { }
         }
+        if (data.action != null && List.of("learn", "exp", "respec").contains(data.action)) plugin.savePlayer(playerRef.getUuid());
         UICommandBuilder cmd = new UICommandBuilder();
         fill(cmd);
         Pages.update(this, playerRef, cmd);

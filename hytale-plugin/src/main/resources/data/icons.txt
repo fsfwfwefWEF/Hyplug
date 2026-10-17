@@ -21,6 +21,14 @@ fang
 flee
 levelup
 info
+bone
+silk
+scrap
+tusk
+gel
+bag
+dodge
+parry
 heart
 star
 water

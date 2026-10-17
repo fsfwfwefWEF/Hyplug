@@ -12,7 +12,7 @@ import java.util.Map;
  * Экраны: Главное (Атака/Способности/Предметы/Защита/Бегство) → Способности/Предметы → Выбор цели.
  */
 public final class BattleMenu {
-    public enum Screen { MAIN, SKILLS, ITEMS, TARGET, WAITING, ENDED }
+    public enum Screen { MAIN, SKILLS, ITEMS, TARGET, WAITING, REACTION, ENDED }
 
     /**
      * Пункт меню. hint — короткая подпись справа (стоимость), icon — ключ иконки (см. {@link Describe}),
@@ -39,6 +39,7 @@ public final class BattleMenu {
         return switch (battle.phase()) {
             case ENDED -> Screen.ENDED;
             case AWAIT_COMMAND -> screen == Screen.WAITING ? Screen.MAIN : screen;
+            case AWAIT_REACTION -> Screen.REACTION;
             default -> Screen.WAITING;
         };
     }
@@ -61,6 +62,7 @@ public final class BattleMenu {
             case ITEMS -> "Предметы";
             case TARGET -> "Выбери цель";
             case WAITING -> c == null ? "…" : "Ходит " + c.name + "…";
+            case REACTION -> c.name + " атакует! Жми в момент удара";
             case ENDED -> switch (battle.outcome()) {
                 case VICTORY -> "ПОБЕДА!";
                 case DEFEAT -> "Поражение…";
@@ -79,7 +81,7 @@ public final class BattleMenu {
                 out.add(new Option("Атака", true, "+1 AP", "sword", Describe.ability(k, atk)));
                 out.add(new Option("Способности", !c.abilities.isEmpty(), "", "magic",
                         "Особые приёмы персонажа. Тратят AP или MP."));
-                out.add(new Option("Предметы", battle.inventory().values().stream().anyMatch(n -> n > 0), "", "potion",
+                out.add(new Option("Предметы", !itemIds().isEmpty(), "", "potion",
                         "Расходуемые предметы партии."));
                 out.add(new Option("Защита", true, "+1 AP", "shield", Describe.ability(k, def)));
                 out.add(new Option("Бегство", battle.fleeAllowed(), battle.fleeAllowed() ? "" : "нельзя", "flee",
@@ -114,6 +116,12 @@ public final class BattleMenu {
                 if (battle.outcome() == Battle.Outcome.VICTORY) {
                     out.add(new Option("Прокачка", true, "", "levelup", "Открыть меню прокачки партии."));
                 }
+            }
+            case REACTION -> {
+                out.add(new Option("Уклониться", true, "½ урона", "dodge",
+                        "Нажми, когда враг бьёт (кнопки засветятся). Урон вдвое меньше, статусы не липнут."));
+                out.add(new Option("Парировать", true, "0 урона", "parry",
+                        "Окно короче: нажми ровно в момент удара. Без урона и статусов, и ответный удар."));
             }
             case WAITING -> { }
         }
@@ -216,7 +224,9 @@ public final class BattleMenu {
     }
 
     private List<String> itemIds() {
+        // Материалы (добыча с врагов) в бою не используются.
         return battle.inventory().entrySet().stream().filter(e -> e.getValue() > 0)
+                .filter(e -> battle.content().hasItem(e.getKey()) && battle.content().item(e.getKey()).usable())
                 .map(Map.Entry::getKey).sorted().toList();
     }
 

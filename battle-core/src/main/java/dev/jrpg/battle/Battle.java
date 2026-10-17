@@ -13,7 +13,14 @@ import java.util.Random;
  * Результат действия считается сразу и детерминированно (при одном seed): анимация на правила не влияет.
  */
 public final class Battle {
-    public enum Phase { NOT_STARTED, AWAIT_COMMAND, PRESENTING, ENDED }
+    public enum Phase { NOT_STARTED, AWAIT_COMMAND, AWAIT_REACTION, PRESENTING, ENDED }
+    /**
+     * Ответ партии на удар врага, как в Expedition 33: уклонение — половина урона и без статусов,
+     * парирование — без урона и статусов плюс контратака. Удался ли ответ (попал ли игрок в момент),
+     * решает адаптер; NONE — не ответил или промахнулся по времени.
+     */
+    public enum Reaction { NONE, DODGE, PARRY }
+    public static final double DODGE_MULT = 0.5, COUNTER_POWER = 0.6;
     public enum Outcome { VICTORY, DEFEAT, FLED }
     /** Кто ударил первым в мире: даёт бонус к стартовой инициативе. */
     public enum Opening { NORMAL, PARTY_ADVANTAGE, AMBUSH }
@@ -34,6 +41,9 @@ public final class Battle {
     private Outcome outcome;
     private Combatant current;
     private int pendingWeight = 100;
+    private boolean reactions;
+    private BattleAction pendingEnemy;
+    private Reaction reaction = Reaction.NONE;
 
     public Battle(Content content, List<Combatant> combatants, Map<String, Integer> inventory,
                   BattleListener listener, long seed) {
@@ -71,6 +81,23 @@ public final class Battle {
         if (phase != Phase.AWAIT_COMMAND) throw new IllegalStateException("Сейчас не ждём команду: " + phase);
         validate(current, action);
         execute(current, action);
+    }
+
+    /** Включить ответы на удары врагов (фаза AWAIT_REACTION перед каждым ударом по партии). */
+    public void setReactions(boolean enabled) { this.reactions = enabled; }
+    public boolean reactions() { return reactions; }
+
+    /** Ответ на замах врага: ядро досчитывает его действие с поправкой на ответ. */
+    public void react(Reaction r) {
+        if (phase != Phase.AWAIT_REACTION) throw new IllegalStateException("Сейчас не ждём ответа: " + phase);
+        BattleAction action = pendingEnemy;
+        pendingEnemy = null;
+        reaction = r == null ? Reaction.NONE : r;
+        try {
+            execute(current, action);
+        } finally {
+            reaction = Reaction.NONE;
+        }
     }
 
     /** Адаптер закончил показ анимации — продолжаем бой. */
@@ -149,12 +176,45 @@ public final class Battle {
             if (checkEnd()) return;
             if (actor.side == Side.ENEMY) {
                 BattleAction forced = script.overrideAction(this, actor);
-                execute(actor, forced != null ? forced : ai.choose(this, actor));
+                BattleAction action = forced != null ? forced : ai.choose(this, actor);
+                Ability ab = reactions ? abilityOf(action) : null;
+                List<Combatant> threatened = ab == null ? List.of() : threatened(actor, ab, action);
+                if (!threatened.isEmpty()) {
+                    pendingEnemy = action;
+                    phase = Phase.AWAIT_REACTION;
+                    listener.onReactionWindow(actor, ab, threatened);
+                } else {
+                    execute(actor, action);
+                }
             } else {
                 phase = Phase.AWAIT_COMMAND;
                 listener.onAwaitCommand(actor);
             }
             return;
+        }
+    }
+
+    private Ability abilityOf(BattleAction action) {
+        return switch (action) {
+            case BattleAction.Attack a -> content.ability(Content.ATTACK);
+            case BattleAction.UseAbility u -> content.ability(u.abilityId());
+            default -> null;
+        };
+    }
+
+    /** Кого из партии заденет удар врага (пусто — не удар, отвечать нечем). */
+    private List<Combatant> threatened(Combatant actor, Ability ab, BattleAction action) {
+        if (ab.damagePower() <= 0) return List.of();
+        String targetId = switch (action) {
+            case BattleAction.Attack a -> a.targetId();
+            case BattleAction.UseAbility u -> u.targetId();
+            default -> null;
+        };
+        try {
+            return resolveTargets(actor, ab.target(), targetId).stream()
+                    .filter(t -> t != null && t.side == Side.PARTY && t.isAlive()).toList();
+        } catch (RuntimeException e) {
+            return List.of();
         }
     }
 
@@ -244,6 +304,7 @@ public final class Battle {
         for (ActionResult.Hit h : result.hits()) {
             if (h.killed()) listener.onCombatantDown(h.target());
         }
+        if (result.counter() != null && result.counter().killed()) listener.onCombatantDown(result.counter().target());
         script.afterAction(this, result);
     }
 
@@ -300,6 +361,9 @@ public final class Battle {
                 if (actor.passives.contains(Passives.BERSERKER) && actor.hp < actor.stats.maxHp() * 0.5) raw *= 1.35;
                 if (t.passives.contains(Passives.GUARDIAN)) raw *= 0.85;
                 damage = Math.min(t.hp, Math.max(1, (int) Math.round(raw + comboBonus)));
+                if (reacted(actor, t)) {
+                    damage = reaction == Reaction.PARRY ? 0 : Math.max(1, (int) Math.round(damage * DODGE_MULT));
+                }
                 t.hp -= damage;
                 if (actor.passives.contains(Passives.BLOODTHIRST)) lifesteal += (int) Math.round(damage * 0.15);
             }
@@ -319,7 +383,7 @@ public final class Battle {
             for (String cure : ab.cures()) {
                 if (t.statuses.removeIf(s -> s.def.id().equals(cure))) cured.add(cure);
             }
-            if (t.isAlive() && !blockStatuses) {
+            if (t.isAlive() && !blockStatuses && !(ab.damagePower() > 0 && reacted(actor, t))) {
                 double bonusChance = actor.passives.contains(Passives.ELEMENTALIST) ? 0.15 : 0;
                 for (StatusApply sa : ab.applies()) {
                     if (t.immunities.contains(sa.statusId())) continue;
@@ -339,8 +403,26 @@ public final class Battle {
                 hits.add(new ActionResult.Hit(actor, 0, healed, 0, false, List.of(), List.of(), false, List.of()));
             }
         }
+        ActionResult.Hit counter = null;
+        Combatant counterBy = null;
+        if (reaction == Reaction.PARRY && actor.side == Side.ENEMY && actor.isAlive() && ab.damagePower() > 0) {
+            counterBy = hits.stream().map(ActionResult.Hit::target)
+                    .filter(t -> t.side == Side.PARTY && t.isAlive()).findFirst().orElse(null);
+            if (counterBy != null) {
+                double raw = counterBy.stats.atk() * COUNTER_POWER * (0.9 + random.nextDouble() * 0.2)
+                        - actor.stats.def() * 0.5;
+                int dmg = Math.min(actor.hp, Math.max(1, (int) Math.round(raw)));
+                actor.hp -= dmg;
+                counter = new ActionResult.Hit(actor, dmg, 0, 0, false, List.of(), List.of(), !actor.isAlive(), List.of());
+            }
+        }
         return new ActionResult(actor, nameOverride != null ? nameOverride : ab.name(), ab.sequenceId(),
-                hits, false, false);
+                hits, false, false, actor.side == Side.ENEMY ? reaction : Reaction.NONE, counter, counterBy);
+    }
+
+    /** Удар врага по партии, на который ответили уклонением или парированием. */
+    private boolean reacted(Combatant actor, Combatant target) {
+        return reaction != Reaction.NONE && actor.side == Side.ENEMY && target.side == Side.PARTY;
     }
 
     /** Повторное наложение обновляет длительность; stackable-статусы ещё и копят стаки. */

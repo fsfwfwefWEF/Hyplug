@@ -57,6 +57,8 @@ public final class Content {
     public StatusDef status(String id) { return require(statuses, id, "статус"); }
     public Ability ability(String id) { return require(abilities, id, "способность"); }
     public Item item(String id) { return require(items, id, "предмет"); }
+    public boolean hasItem(String id) { return items.containsKey(id); }
+    public java.util.Collection<Item> items() { return items.values(); }
 
     private static <T> T require(Map<String, T> map, String id, String what) {
         T v = map.get(id);
@@ -142,6 +144,20 @@ public final class Content {
         // Уникальный лут с босса
         c.add(new Item("queen_fang", "Клык королевы", dmg("item_queen_fang", "Клык королевы", 0, 0,
                 TargetType.SINGLE_ENEMY, 2.5, false, List.of(new StatusApply("poison", 1.0, 4)), 0, 100)));
+
+        // Материалы — добыча с врагов (loot в enemies.json). В бою не используются, копятся в рюкзаке.
+        c.add(Item.material("wolf_fang", "Клык волка", "Острый волчий клык. Трофей охотника."));
+        c.add(Item.material("bone", "Кость", "Старая кость скелета. Гремит в рюкзаке."));
+        c.add(Item.material("spider_silk", "Паучий шёлк", "Прочная липкая нить паука."));
+        c.add(Item.material("goblin_scrap", "Гоблинский хлам", "Гнутые железки и болты. Гоблины ими дорожат."));
+        c.add(Item.material("trork_tusk", "Клык трорка", "Тяжёлый клык громилы-трорка."));
+        c.add(Item.material("slime_gel", "Слизь", "Дрожащий комок слизи. Пахнет болотом."));
+        c.icon("wolf_fang", "fang");
+        c.icon("bone", "bone");
+        c.icon("spider_silk", "silk");
+        c.icon("goblin_scrap", "scrap");
+        c.icon("trork_tusk", "tusk");
+        c.icon("slime_gel", "gel");
 
         // Способности, которые открываются прокачкой (дерево навыков в Progression)
         c.add(dmg("whirlwind", "Вихрь клинков", 4, 0, TargetType.ALL_ENEMIES, 1.1, false, List.of(), 0, 120));

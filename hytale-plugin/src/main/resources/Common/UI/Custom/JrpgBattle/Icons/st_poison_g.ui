@@ -1,0 +1,4 @@
+Group {
+  Anchor: (Width: 48, Height: 48);
+  Background: (TexturePath: "st_poison.png");
+}

@@ -180,7 +180,19 @@ public final class Describe {
 
     public static String itemIcon(Content content, Item item) {
         String explicit = content.icon(item.id());
-        return explicit != null ? explicit : abilityIcon(content, item.effect());
+        if (explicit != null) return explicit;
+        return item.effect() == null ? "bag" : abilityIcon(content, item.effect());
+    }
+
+    /** Описание предмета для рюкзака: вид, художественный текст и что делает в бою. */
+    public static String item(Content content, Item item, int count) {
+        StringBuilder sb = new StringBuilder(item.kind().label + "   в рюкзаке: " + count);
+        String flavor = content.flavor(item.id());
+        if (flavor.isEmpty()) flavor = item.description();
+        if (!flavor.isEmpty()) sb.append("\n").append(flavor);
+        if (item.effect() != null) sb.append("\nВ бою: ").append(ability(content, item.effect()));
+        else sb.append("\nВ бою не используется.");
+        return sb.toString();
     }
 
     /** Ключ иконки статуса: Assets/Status/<id>.png. */

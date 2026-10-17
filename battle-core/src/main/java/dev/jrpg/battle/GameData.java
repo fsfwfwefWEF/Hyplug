@@ -68,9 +68,24 @@ public final class GameData {
         Stats stats = new Stats((int) Json.num(st, "maxHp", 50), (int) Json.num(st, "maxMp", 0),
                 (int) Json.num(st, "atk", 10), (int) Json.num(st, "mag", 0), (int) Json.num(st, "def", 5),
                 (int) Json.num(st, "spd", 10));
+        Map<String, List<String>> anims = new LinkedHashMap<>();
+        if (m.get("anim") != null) {
+            Map<String, Object> am = Json.obj(m.get("anim"));
+            for (String k : am.keySet()) anims.put(k, Json.strings(am, k));
+        }
         return new EnemyTemplate(Json.str(m, "id", null), Json.str(m, "name", "?"), stats,
                 Json.strings(m, "abilities"), Json.bool(m, "boss", false), Json.strings(m, "immunities"),
-                Json.str(m, "model", null), Json.str(m, "role", null));
+                Json.str(m, "model", null), Json.str(m, "role", null), parseLoot(m), anims);
+    }
+
+    private static List<Encounter.Loot> parseLoot(Map<String, Object> m) {
+        List<Encounter.Loot> loot = new ArrayList<>();
+        for (Object o : Json.list(m, "loot")) {
+            Map<String, Object> l = Json.obj(o);
+            loot.add(new Encounter.Loot(Json.str(l, "item", null), (int) Json.num(l, "count", 1),
+                    Json.num(l, "chance", 1)));
+        }
+        return loot;
     }
 
     private static Encounter parseEncounter(Map<String, Object> m) {
@@ -101,12 +116,7 @@ public final class GameData {
                     Json.str(p, "name", ""), Json.str(p, "say", null), Json.strings(p, "addAbilities"),
                     Json.strings(p, "removeAbilities"), self, Json.strings(p, "summon")));
         }
-        List<Encounter.Loot> loot = new ArrayList<>();
-        for (Object o : Json.list(m, "loot")) {
-            Map<String, Object> l = Json.obj(o);
-            loot.add(new Encounter.Loot(Json.str(l, "item", null), (int) Json.num(l, "count", 1),
-                    Json.num(l, "chance", 1)));
-        }
+        List<Encounter.Loot> loot = parseLoot(m);
         return new Encounter(Json.str(m, "id", null), Json.str(m, "name", "?"), location,
                 Json.bool(m, "unique", false), (int) Json.num(m, "respawnMinutes", 0),
                 Json.bool(m, "canFlee", true), spots, intro, phases, Json.str(m, "script", null), loot,
@@ -117,6 +127,7 @@ public final class GameData {
     private void validate() {
         for (EnemyTemplate t : enemies.values()) {
             for (String a : t.abilities()) content.ability(a);
+            for (Encounter.Loot l : t.loot()) content.item(l.item());
         }
         for (Encounter e : encounters.values()) {
             for (Encounter.Spot s : e.enemies()) enemy(s.template());
@@ -178,6 +189,15 @@ public final class GameData {
         if (e.script() != null) scripts.add(BOSS_SCRIPTS.get(e.script()).get());
         battle.setScript(BattleScript.combine(scripts.toArray(BattleScript[]::new)));
         return battle;
+    }
+
+    /** Что выпало с поверженного врага (loot из enemies.json). */
+    public Map<String, Integer> rollLoot(EnemyTemplate t, Random random) {
+        Map<String, Integer> out = new LinkedHashMap<>();
+        for (Encounter.Loot l : t.loot()) {
+            if (random.nextDouble() < l.chance()) out.merge(l.item(), l.count(), Integer::sum);
+        }
+        return out;
     }
 
     /** Награда за победу: опыт и предметы по шансам из loot. */

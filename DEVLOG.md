@@ -277,3 +277,26 @@ jrpg-mod/
 **Проверено:** тесты, голый сервер грузит 0.6.2. Поиск земли в игре не проверен (в голом сервере нет мира).
 
 **Замечено:** прокачка партии (`JrpgPlugin.parties`) хранится только в памяти и пропадает при перезапуске сервера.
+
+## 2026-10-17: сессия 10, сохранения, рюкзак, лут, эффекты, парирование, компаньоны (0.7.0)
+
+Запрос: сохранение прогресса, эффекты ударов и магии (минимум), анимации атак разных мобов, парирование и уклонение, компаньоны ходят за игроком, предметы и отдельный рюкзак с иконками и сортировкой, лут с мобов. Босса и отряды не трогать.
+
+**Ядро (battle-core)**
+- `Item`: вид предмета `Kind` (CONSUMABLE / BATTLE / MATERIAL), материалы `Item.material(...)` без эффекта (`usable() == false`, в бою не показываются). Материалы в `Content`: wolf_fang, bone, spider_silk, goblin_scrap, trork_tusk, slime_gel.
+- Лут с врага: `enemies.json → "loot"` (item, count, chance), `GameData.rollLoot(EnemyTemplate, Random)`. Анимации врага: `"anim": { "attack": [...], "cast": [...] }`, `EnemyTemplate.anim(kind)`.
+- Ответ на удар: `Battle.setReactions(true)` (по умолчанию выкл, чтобы старые тесты и консоль работали). Перед ударом врага по партии фаза `AWAIT_REACTION` и `BattleListener.onReactionWindow(actor, ability, targets)`; адаптер вызывает `Battle.react(Reaction)`. DODGE: урон × 0.5, статусы не накладываются. PARRY: урон 0, статусы нет, контратака первого задетого героя (atk × 0.6 − def × 0.5). `ActionResult` получил `reaction`, `counter`, `counterBy`. `BattleMenu.Screen.REACTION` с «Уклониться» / «Парировать».
+- `Json.write` (запись JSON), `SaveData` (партия: level/exp/points/unlocked; рюкзак; flags; прогресс мира). Чтение терпимое: неизвестные герои, предметы, узлы пропускаются.
+- `Backpack.list(content, inventory, kind, sort)` для окна рюкзака.
+- Тесты: `ReactionSaveLootTest` (окно ответа, уклонение, парирование с контратакой, выкл по умолчанию, сохранение туда-обратно, экранирование JSON, лут волка, рюкзак). Всего 42.
+
+**Плагин**
+- `Saves`: players/<uuid>.json и world.json в папке мода, запись через .tmp + замену. `JrpgPlugin.load(uuid)` читает сохранение при первом обращении к партии/рюкзаку. Сохраняется: конец боя, прокачка (learn/exp/respec), «Выбросить», `/jrpg follow`, выход игрока (`PlayerDisconnectEvent`), остановка сервера, раз в 60 с. Мир — после победы над ручной встречей.
+- `BackpackPage` + `Backpack.ui` (генерируется `tools/gen_battle_ui.py → backpack()`): 24 ячейки на странице, вкладки, сортировка, описание (`Describe.item`), «Выбросить 1» (не в бою). Команда `/jrpg bag`. Новые иконки: bone, silk, scrap, tusk, gel, bag, dodge, parry; размер иконок `_g` (48).
+- `ParticleCatalog`: id частиц не известны заранее, поэтому при первом обращении читается `ParticleSystem.getAssetMap()`, берутся только короткие системы (lifeSpan 0..4 с, без loop/ambient/torch…), для каждого ключа (physical, fire, ice, thunder, water, earth, poison, heal, cast, buff, loot, dodge, parry, death) — самое короткое имя по словам. Выбор пишется в лог «Частицы боя», замена — `settings.json → particles.<ключ>`. `/jrpg particles <слово>`.
+- `BattleSession`: частица стихии на цели, каст у мага, лечение/усиление, физическая для ударов (`particles.hit` если задан). Анимации через `animateAs(combatant, ref, kind)`: свои имена (enemies.json `anim`, settings.json `animations.heroes`) — случайная из тех, что есть у модели, иначе общий список. Добыча падает при смерти врага (`rollDrops`): надписи «+Клык волка» над врагом, частица loot, сразу в рюкзак, итог в награде.
+- Окно ответа (`onReactionWindow` → `windupStart` → `onReact` → `resolve`): раздумье врага, подход и замах, «!» над врагом в начале окна уклонения, удар в `impactAt`. Окна в `settings.json → reactions` (уклонение 450 мс до / 150 после, парирование 220 / 90). Нажал рано/поздно — попытка сгорает. Во время замаха наведение мыши не обновляет окно (иначе сервер выбросил бы нажатие, ожидая подтверждения).
+- `CompanionFollowers`: компаньоны — куклы (Frozen) вне боя, каждые 50 мс сдвигаются к местам за спиной игрока (`TransformComponent.setPosition` + поворот, `MovementStates` walk/run/idle), шаг/бег/телепорт по расстоянию, высота по `Fx.groundY`. На бой убираются (`pause`), после — возвращаются (`resume`). `/jrpg follow`, `settings.json → followers`.
+- `DATA_VERSION = 6`.
+
+**Проверено:** 42 теста, голый сервер 0.7.2 грузит 0.7.0. В игре не проверено: имена частиц и анимаций подбираются по логу, движение компаньонов через TransformComponent у Frozen NPC, тайминги окна ответа.

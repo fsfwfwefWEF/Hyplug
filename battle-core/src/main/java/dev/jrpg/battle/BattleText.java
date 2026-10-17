@@ -55,6 +55,14 @@ public final class BattleText {
             if (!h.statusesCured().isEmpty()) sb.append(" снято: ").append(String.join(", ", h.statusesCured()));
             if (h.killed()) sb.append(" — повержен!");
         }
+        if (r.reaction() == Battle.Reaction.DODGE) sb.append("\n  Уклонение: урон вдвое меньше");
+        if (r.reaction() == Battle.Reaction.PARRY) {
+            sb.append("\n  Парирование!");
+            if (r.counter() != null && r.counterBy() != null) {
+                sb.append(" ").append(r.counterBy().name).append(" контратакует: -").append(r.counter().damage()).append(" HP")
+                        .append(r.counter().killed() ? " — повержен!" : "");
+            }
+        }
         return sb.toString();
     }
 }

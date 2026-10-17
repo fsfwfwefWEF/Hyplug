@@ -30,7 +30,19 @@
 
   // Частицы: кольцо под тем, чей ход / под целью, и эффект удара. Имена — id ассетов ParticleSystem
   // из Assets.zip игры (пустая строка — выключено). Проверить имя в игре: /jrpg particle <имя>.
+  // Эффекты ударов и магии (physical, fire, ice, thunder, water, earth, poison, heal, cast, buff, loot,
+  // dodge, parry, death) мод подбирает сам по именам частиц игры и пишет выбор в лог («Частицы боя»).
+  // Чтобы заменить — добавь ключ сюда, например "fire": "Explosion_Small"; "" — выключить.
+  // Найти имена: /jrpg particles <слово>.
   "particles": { "turnRing": "", "targetRing": "", "hit": "" },
+
+  // Парирование и уклонение: когда враг бьёт, в меню появляются «Уклониться» и «Парировать».
+  // Окна в мс до/после момента удара: уклонение — шире (½ урона), парирование — уже (0 урона + ответный удар).
+  "reactions": { "enabled": true, "dodgeBeforeMs": 450, "dodgeAfterMs": 150, "parryBeforeMs": 220, "parryAfterMs": 90 },
+
+  // Компаньоны ходят за игроком вне боя (/jrpg follow — включить/выключить для себя).
+  // Скорости в блоках в секунду; с runFrom блоков переходят на бег, дальше teleportFrom — догоняют телепортом.
+  "followers": { "enabled": true, "walkSpeed": 4.3, "runSpeed": 7.5, "runFrom": 6, "teleportFrom": 20, "distance": 2.6 },
 
   // Паузы (мс): показ результата действия и «раздумья» врага перед ударом (камера в это время на нём).
   "actionDelayMs": 2400,
@@ -49,6 +61,15 @@
     "hurt": ["Hurt", "Damage", "Flinch"],
     "death": ["Death", "Die"],
     "victory": ["Cheer", "Celebrate", "Victory", "Wave", "Emote", "Roar"],
+    "dodge": ["RollBackward", "DashBackward", "Roll", "Dodge"],
+    "parry": ["Block", "Parry", "Guard", "SwingWeaponAir", "Attack"],
+    // Свои анимации героев (герой — модель игрока, Лира — Kweebec_Seedling, Брам — Trork_Warrior).
+    // У врагов свои списки — в enemies.json, поле "anim".
+    "heroes": {
+      "hero": { "attack": ["SwingWeaponAir", "DashForward"], "dodge": ["RollBackward", "Roll"] },
+      "lyra": { "attack": ["TauntSpear", "DashForward"], "cast": ["Cheer", "Celebrate", "Happy"], "dodge": ["Roll"] },
+      "bram": { "attack": ["DashForward", "BrawlTaunt"], "cast": ["Roar", "BrawlCheer"] }
+    },
     "stepCount": 5,
     "stepMs": 70
   },

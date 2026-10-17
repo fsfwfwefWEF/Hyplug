@@ -26,6 +26,9 @@ import javax.annotation.Nonnull;
  * /jrpg roles <часть имени> — какие роли NPC есть в игре (для enemies.json / settings.json)
  * /jrpg squad <id|random> — поставить отряд из squads.json в 12-16 блоках (проверка)
  * /jrpg squads — отряды вокруг игрока
+ * /jrpg bag — рюкзак (добыча, зелья, сортировка)
+ * /jrpg follow — компаньоны ходят за игроком / остаются
+ * /jrpg particles <часть имени> — какие системы частиц есть в игре (для settings.json)
  */
 public final class JrpgCommand extends AbstractCommandCollection {
 
@@ -41,6 +44,62 @@ public final class JrpgCommand extends AbstractCommandCollection {
         addSubCommand(new Roles(plugin));
         addSubCommand(new SquadCmd(plugin));
         addSubCommand(new SquadsCmd(plugin));
+        addSubCommand(new Bag(plugin));
+        addSubCommand(new Follow(plugin));
+        addSubCommand(new Particles(plugin));
+    }
+
+    static final class Bag extends Sub {
+        Bag(JrpgPlugin plugin) {
+            super(plugin, "bag", "Рюкзак");
+        }
+
+        @Override
+        protected void execute(@Nonnull CommandContext ctx, @Nonnull Store<EntityStore> store,
+                               @Nonnull Ref<EntityStore> ref, @Nonnull PlayerRef playerRef, @Nonnull World world) {
+            if (plugin.sessions().containsKey(playerRef.getUuid())) {
+                ctx.sendMessage(Message.raw("Сначала закончи бой (предметы в бою — кнопка «Предметы»)."));
+                return;
+            }
+            plugin.openBackpack(playerRef, ref, store);
+        }
+    }
+
+    static final class Follow extends Sub {
+        Follow(JrpgPlugin plugin) {
+            super(plugin, "follow", "Компаньоны ходят за тобой / остаются");
+        }
+
+        @Override
+        protected void execute(@Nonnull CommandContext ctx, @Nonnull Store<EntityStore> store,
+                               @Nonnull Ref<EntityStore> ref, @Nonnull PlayerRef playerRef, @Nonnull World world) {
+            boolean on = !plugin.flag(playerRef.getUuid(), CompanionFollowers.FLAG, true);
+            plugin.setFlag(playerRef.getUuid(), CompanionFollowers.FLAG, on);
+            ctx.sendMessage(Message.raw(on ? "Компаньоны идут за тобой." : "Компаньоны ждут тебя (в бою они всё равно рядом)."));
+        }
+    }
+
+    static final class Particles extends Sub {
+        private final RequiredArg<String> filterArg =
+                withRequiredArg("filter", "часть имени, например fire (или * — все)", ArgTypes.STRING);
+
+        Particles(JrpgPlugin plugin) {
+            super(plugin, "particles", "Найти системы частиц по части имени");
+        }
+
+        @Override
+        protected void execute(@Nonnull CommandContext ctx, @Nonnull Store<EntityStore> store,
+                               @Nonnull Ref<EntityStore> ref, @Nonnull PlayerRef playerRef, @Nonnull World world) {
+            String f = filterArg.get(ctx).toLowerCase(java.util.Locale.ROOT);
+            java.util.List<String> all = ParticleCatalog.ids();
+            java.util.List<String> hits = all.stream()
+                    .filter(id -> f.equals("*") || id.toLowerCase(java.util.Locale.ROOT).contains(f)).sorted().toList();
+            ctx.sendMessage(Message.raw(hits.isEmpty() ? "Частиц с «" + f + "» нет (всего " + all.size() + ")"
+                    : "Частицы (" + hits.size() + "): " + String.join(", ", hits.subList(0, Math.min(40, hits.size())))
+                    + (hits.size() > 40 ? " … (полный список в логе сервера)" : "")));
+            plugin.log("Частицы по запросу '" + f + "': " + String.join(", ", hits));
+            ctx.sendMessage(Message.raw("Сейчас для боя выбраны: " + ParticleCatalog.summary()));
+        }
     }
 
     static final class SquadCmd extends Sub {

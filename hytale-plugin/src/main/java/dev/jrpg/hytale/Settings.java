@@ -16,6 +16,28 @@ public final class Settings {
     /** Полоски HP/MP; false — только числа. */
     public boolean uiBars = true;
     public String turnRing = "", targetRing = "", hitFx = "";
+    /** Частицы эффектов боя по ключам {@link ParticleCatalog#KEYWORDS}; чего нет — подбирается само. */
+    public final Map<String, String> fx = new HashMap<>();
+    public final Reactions reactions = new Reactions();
+    public final Followers follow = new Followers();
+
+    /** Парирование и уклонение: окна в мс относительно момента удара врага. */
+    public static final class Reactions {
+        public boolean enabled = true;
+        /** Уклонение засчитывается с dodgeBefore мс до удара и до dodgeAfter после. */
+        public long dodgeBefore = 450, dodgeAfter = 150;
+        /** Парирование: окно короче. */
+        public long parryBefore = 220, parryAfter = 90;
+    }
+
+    /** Компаньоны, идущие за игроком вне боя. */
+    public static final class Followers {
+        public boolean enabled = true;
+        /** Скорость шага и бега, блоков в секунду; расстояние, с которого переходят на бег и на телепорт. */
+        public double walkSpeed = 4.3, runSpeed = 7.5, runFrom = 6, teleportFrom = 20;
+        /** На каком расстоянии за спиной держаться. */
+        public double distance = 2.6;
+    }
     /** Пауза в мс с учётом {@link #battleSpeed}. */
     public long ms(long base) {
         return Math.round(base / battleSpeed);
@@ -44,6 +66,10 @@ public final class Settings {
         public java.util.List<String> hurt = java.util.List.of("Hurt", "Damage", "Flinch");
         public java.util.List<String> death = java.util.List.of("Death", "Die");
         public java.util.List<String> victory = java.util.List.of("Cheer", "Celebrate", "Victory", "Wave", "Emote", "Roar");
+        /** Анимации героев и компаньонов по id (attack/cast/dodge/parry), если у их модели нет общих имён. */
+        public final Map<String, Map<String, java.util.List<String>>> heroes = new HashMap<>();
+        public java.util.List<String> dodge = java.util.List.of("RollBackward", "DashBackward", "Roll", "Dodge");
+        public java.util.List<String> parry = java.util.List.of("Block", "Parry", "Guard", "SwingWeaponAir", "Attack");
         /** Шаги подхода к цели (телепорт маленькими шагами) и пауза между ними, мс. */
         public int stepCount = 5;
         public long stepMs = 70;
@@ -112,6 +138,30 @@ public final class Settings {
             s.turnRing = Json.str(p, "turnRing", "");
             s.targetRing = Json.str(p, "targetRing", "");
             s.hitFx = Json.str(p, "hit", "");
+            for (String k : ParticleCatalog.KEYWORDS.keySet()) {
+                if (p.containsKey(k)) s.fx.put(k, Json.str(p, k, ""));
+            }
+        }
+        Object re = m.get("reactions");
+        if (re != null) {
+            Map<String, Object> r = Json.obj(re);
+            Reactions k = s.reactions;
+            k.enabled = Json.bool(r, "enabled", k.enabled);
+            k.dodgeBefore = (long) Json.num(r, "dodgeBeforeMs", k.dodgeBefore);
+            k.dodgeAfter = (long) Json.num(r, "dodgeAfterMs", k.dodgeAfter);
+            k.parryBefore = (long) Json.num(r, "parryBeforeMs", k.parryBefore);
+            k.parryAfter = (long) Json.num(r, "parryAfterMs", k.parryAfter);
+        }
+        Object fo = m.get("followers");
+        if (fo != null) {
+            Map<String, Object> f = Json.obj(fo);
+            Followers k = s.follow;
+            k.enabled = Json.bool(f, "enabled", k.enabled);
+            k.walkSpeed = Json.num(f, "walkSpeed", k.walkSpeed);
+            k.runSpeed = Json.num(f, "runSpeed", k.runSpeed);
+            k.runFrom = Json.num(f, "runFrom", k.runFrom);
+            k.teleportFrom = Json.num(f, "teleportFrom", k.teleportFrom);
+            k.distance = Json.num(f, "distance", k.distance);
         }
         s.actionDelayMs = (long) Json.num(m, "actionDelayMs", s.actionDelayMs);
         s.enemyThinkMs = (long) Json.num(m, "enemyThinkMs", s.enemyThinkMs);
@@ -130,6 +180,16 @@ public final class Settings {
             if (a.containsKey("hurt")) k.hurt = Json.strings(a, "hurt");
             if (a.containsKey("death")) k.death = Json.strings(a, "death");
             if (a.containsKey("victory")) k.victory = Json.strings(a, "victory");
+            if (a.containsKey("dodge")) k.dodge = Json.strings(a, "dodge");
+            if (a.containsKey("parry")) k.parry = Json.strings(a, "parry");
+            if (a.get("heroes") != null) {
+                Json.obj(a.get("heroes")).forEach((hero, v) -> {
+                    Map<String, java.util.List<String>> byKind = new HashMap<>();
+                    Map<String, Object> hm = Json.obj(v);
+                    for (String kind : hm.keySet()) byKind.put(kind, Json.strings(hm, kind));
+                    k.heroes.put(hero, byKind);
+                });
+            }
             k.stepCount = (int) Math.max(1, Json.num(a, "stepCount", k.stepCount));
             k.stepMs = (long) Math.max(10, Json.num(a, "stepMs", k.stepMs));
         }

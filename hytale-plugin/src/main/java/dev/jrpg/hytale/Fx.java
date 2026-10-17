@@ -264,6 +264,38 @@ public final class Fx {
         }
     }
 
+    private static final java.util.Random RND = new java.util.Random();
+
+    /**
+     * Анимация «со своим характером»: случайная из own (свои имена моба/героя, точные совпадения),
+     * чтобы удары не были одинаковыми; если ни одной нет у модели — первая подходящая из общего списка.
+     */
+    public static boolean animate(Store<EntityStore> store, Ref<EntityStore> ref, List<String> own, List<String> common) {
+        if (own != null && !own.isEmpty()) {
+            List<String> have = new java.util.ArrayList<>();
+            for (String want : own) {
+                String id = pickAnimation(store, ref, List.of(want));
+                if (id != null && id.equalsIgnoreCase(want) && !have.contains(id)) have.add(id);
+            }
+            if (!have.isEmpty()) {
+                String id = have.get(RND.nextInt(have.size()));
+                try {
+                    AnimationUtils.playAnimation(ref, AnimationSlot.Action, id, true, store);
+                    return true;
+                } catch (Throwable t) {
+                    warnOnce("Анимация " + id + " не сработала", t);
+                }
+            }
+        }
+        return animate(store, ref, common);
+    }
+
+    /** Частица на высоте груди бойца (pos — точка у ног). */
+    public static boolean particleAt(String name, Vector3d feet, double up, Ref<EntityStore> viewer, Store<EntityStore> store) {
+        if (feet == null) return false;
+        return particle(name, new Vector3d(feet.x, feet.y + up, feet.z), viewer, store);
+    }
+
     /** Поворот (yaw, радианы), чтобы смотреть из from в to. В Hytale yaw = 0 смотрит на -Z. */
     public static float yawTowards(Vector3d from, Vector3d to) {
         return (float) Math.atan2(-(to.x - from.x), -(to.z - from.z));

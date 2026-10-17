@@ -1,4 +1,4 @@
-"""Собирает разметку боевого меню (BattleMenu.ui) и круговой сетки навыков (Progression.ui).
+"""Собирает разметку боевого меню (BattleMenu.ui), круговой сетки навыков (Progression.ui) и рюкзака (Backpack.ui).
 
 Много однотипных слотов и узлов проще генерировать. Запуск из корня проекта: python3 tools/gen_battle_ui.py
 Используются только проверенные в игре конструкции: Group, Label, $C.@SecondaryTextButton,
@@ -439,6 +439,81 @@ def prebattle():
           "// Окно перед боем: «Сражаться / Сбежать». Собрано tools/gen_battle_ui.py — правь скрипт.\n\n" + root + "\n")
 
 
+# ---------- рюкзак ----------
+
+BAG_COLS, BAG_ROWS, CELL = 6, 4, 86
+BAG_TABS = ["Все", "Зелья", "Боевые", "Материалы"]
+BAG_SORTS = [("SortKind", "Тип"), ("SortName", "Имя"), ("SortCount", "Кол-во")]
+
+
+def bag_cell(i):
+    left, top = (i % BAG_COLS) * CELL, (i // BAG_COLS) * CELL
+    return group(f"S{i}", [f"Anchor: (Left: {left}, Top: {top}, Width: {CELL - 6}, Height: {CELL - 6});"], [
+        f"Group #S{i}Sel {{ Anchor: (Left: 0, Top: 0, Width: 80, Height: 80); Background: #e8c46a(0.35);\n"
+        f"  Group {{ Anchor: (Left: 2, Top: 2, Width: 76, Height: 76); Background: #fff0b0(0.45); }}\n}}",
+        f"Group #S{i}Back {{ Anchor: (Left: 4, Top: 4, Width: 72, Height: 72); Background: #1a2438; }}",
+        button(f"S{i}Btn", "", 64, 64, left=8, top=8),
+        f"Group #S{i}Icon {{ Anchor: (Left: 16, Top: 14, Width: 48, Height: 48); }}",
+        f'Label #S{i}Count {{ Text: ""; Anchor: (Left: 44, Top: 58, Width: 34, Height: 18); '
+        f"Style: (FontSize: 13, TextColor: #ffffff, RenderBold: true); }}",
+    ])
+
+
+def backpack():
+    tabs = group("Tabs", ["Anchor: (Height: 34);", "LayoutMode: Left;"],
+                 sum(([button(f"Tab{i}", t, 130, 32), spacer(w=6)] for i, t in enumerate(BAG_TABS)), [])
+                 + [spacer(flex=True), label("", "Сортировка:", 13, DIM, width=100, height=32)]
+                 + sum(([button(bid, t, 96, 32), spacer(w=4)] for bid, t in BAG_SORTS), []))
+    grid_w, grid_h = BAG_COLS * CELL, BAG_ROWS * CELL
+    grid = group("Grid", [f"Anchor: (Width: {grid_w}, Height: {grid_h});"], [bag_cell(i) for i in range(BAG_COLS * BAG_ROWS)])
+    left = group("GridCol", [f"Anchor: (Width: {grid_w + 20});", "LayoutMode: Top;", f"Background: {PANEL};",
+                             "Padding: (Full: 10);"], [
+        grid,
+        spacer(h=6),
+        group("", ["Anchor: (Height: 30);", "LayoutMode: Left;"], [
+            button("PrevPage", "<", 60, 28), spacer(w=6),
+            label("Page", "", 13, DIM, height=28, flex=True),
+            button("NextPage", ">", 60, 28),
+        ]),
+        label("Empty", "", 13, DIM, height=24),
+    ])
+    detail = group("DetailCol", ["FlexWeight: 1;", "LayoutMode: Top;", f"Background: {PANEL2};", "Padding: (Full: 12);"], [
+        group("", ["Anchor: (Height: 68);", "LayoutMode: Left;"], [
+            slot("SelIcon", 64),
+            spacer(w=10),
+            group("", ["FlexWeight: 1;", "LayoutMode: Top;"], [
+                label("SelName", "", 18, GOLD, True, height=26),
+                label("SelKind", "", 12, DIM, height=20),
+            ]),
+        ]),
+        spacer(h=8),
+        label("SelText", "", 13, TEXT, flex=True, wrap=True),
+        label("Message", "", 12, "#ffd27a", height=36, wrap=True),
+        button("Drop", "Выбросить 1", 300, 32),
+        spacer(h=6),
+        button("Close", "Закрыть", 300, 32, cancel=True),
+    ])
+    window = group("Window", ["Anchor: (Width: 1000);", "LayoutMode: Top;", "Background: #070b12(0.95);",
+                              "Padding: (Full: 12);"], [
+        group("", ["Anchor: (Height: 32);", "LayoutMode: Left;"], [
+            label("", "РЮКЗАК", 22, GOLD, True, height=30, flex=True),
+            label("Total", "", 13, DIM, width=360, height=30),
+        ]),
+        tabs,
+        spacer(h=8),
+        group("", [f"Anchor: (Height: {grid_h + 84});", "LayoutMode: Left;"], [left, spacer(w=10), detail]),
+    ])
+    root = group("", ["LayoutMode: Top;"], [
+        spacer(flex=True),
+        group("", [f"Anchor: (Height: {grid_h + 170});", "LayoutMode: Left;"], [spacer(flex=True), window, spacer(flex=True)]),
+        spacer(flex=True),
+    ])
+    write("Backpack.ui", '$C = "../Common.ui";\n\n'
+          "// Рюкзак: вкладки-фильтры #Tab0..3, сортировка #SortKind/#SortName/#SortCount, ячейки #S<n>\n"
+          "// (#S<n>Sel — выбрана, #S<n>Btn — кнопка, #S<n>Icon — иконка, #S<n>Count — количество).\n"
+          "// Собрано tools/gen_battle_ui.py — правь скрипт.\n\n" + root + "\n")
+
+
 def ring_dots(r):
     radius = RADII[r]
     n = int(2 * math.pi * radius / 18)
@@ -462,3 +537,4 @@ if __name__ == "__main__":
     battle()
     progression()
     prebattle()
+    backpack()

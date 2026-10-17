@@ -14,7 +14,7 @@ from PIL import Image, ImageDraw, ImageFilter
 OUT = os.path.join(os.path.dirname(__file__), "..", "hytale-plugin", "src", "main", "resources",
                    "Common", "UI", "Custom", "JrpgBattle", "Icons")
 SS = 4  # суперсэмплинг
-SIZES = {"s": 22, "m": 40, "l": 88}
+SIZES = {"s": 22, "m": 40, "g": 48, "l": 88}
 
 GOLD = (222, 184, 96)
 GOLD_D = (120, 88, 36)
@@ -271,6 +271,53 @@ def g_letter(d, S, ch, c=WHITE):
     d.text(((S - (bb[2] - bb[0])) / 2 - bb[0], (S - (bb[3] - bb[1])) / 2 - bb[1]), ch, font=f, fill=c)
 
 
+# ---------- добыча и рюкзак ----------
+
+def g_bone(d, S, c=(236, 228, 206)):
+    w = int(S * 0.12)
+    d.line(P(S, [(0.30, 0.70), (0.70, 0.30)]), fill=c, width=w)
+    for x, y in ((0.24, 0.68), (0.32, 0.78), (0.68, 0.22), (0.78, 0.32)):
+        d.ellipse(P(S, [(x - 0.08, y - 0.08), (x + 0.08, y + 0.08)]), fill=c)
+
+
+def g_scrap(d, S, c=(176, 160, 140)):
+    cx, cy, r1, r2 = 0.5, 0.5, 0.32, 0.22
+    pts = []
+    for k in range(16):
+        a = k / 16 * 2 * math.pi
+        r = r1 if k % 2 == 0 else r2
+        pts.append((cx + r * math.cos(a), cy + r * math.sin(a)))
+    d.polygon(P(S, pts), fill=c)
+    d.ellipse(P(S, [(0.40, 0.40), (0.60, 0.60)]), fill=(60, 50, 40))
+    d.line(P(S, [(0.22, 0.80), (0.40, 0.66)]), fill=(200, 120, 70), width=int(S * 0.05))
+
+
+def g_tusk(d, S, c=(244, 236, 214)):
+    pts = [(0.26 + 0.5 * t, 0.84 - 0.62 * math.sin(t * math.pi / 2)) for t in [i / 20 for i in range(21)]]
+    inner = [(x + 0.10 * (1 - i / 20), y + 0.04) for i, (x, y) in enumerate(pts)]
+    d.polygon(P(S, pts + inner[::-1]), fill=c)
+    d.ellipse(P(S, [(0.18, 0.76), (0.40, 0.92)]), fill=(150, 110, 80))
+
+
+def g_bag(d, S, c=(170, 120, 70)):
+    d.ellipse(P(S, [(0.18, 0.32), (0.82, 0.88)]), fill=c)
+    d.polygon(P(S, [(0.36, 0.34), (0.64, 0.34), (0.58, 0.22), (0.42, 0.22)]), fill=(140, 96, 56))
+    d.line(P(S, [(0.34, 0.34), (0.66, 0.34)]), fill=GOLD, width=int(S * 0.05))
+    d.ellipse(P(S, [(0.30, 0.46), (0.42, 0.58)]), fill=(255, 255, 255, 60))
+
+
+def g_dodge(d, S, c=(170, 235, 255)):
+    g_run(d, S, WHITE)
+    for y in (0.40, 0.55, 0.70):
+        d.line(P(S, [(0.06, y), (0.22, y)]), fill=c, width=int(S * 0.04))
+
+
+def g_parry(d, S):
+    g_sword(d, S, WHITE)
+    d.polygon(P(S, [(0.28, 0.18), (0.18, 0.18), (0.18, 0.28), (0.60, 0.70), (0.70, 0.60)]), fill=(200, 210, 230))
+    g_star(d, S, (255, 236, 120), 0.16, 0.06, 8, 0.5, 0.44)
+
+
 # ---------- портреты ----------
 
 def p_hero(d, S):
@@ -385,6 +432,15 @@ ICONS = {
     "flee": ("#4a5a6a", "#1a2028", g_run),
     "levelup": ("#c99a2a", "#4a3008", g_up),
     "info": ("#3a5a7a", "#121e2a", g_eye),
+    # добыча, рюкзак, ответ на удар
+    "bone": ("#6a6050", "#24201a", g_bone),
+    "silk": ("#5a5a70", "#1e1e28", lambda d, S: g_web(d, S, (245, 245, 255))),
+    "scrap": ("#5a4a3a", "#1e1810", g_scrap),
+    "tusk": ("#6a5a3a", "#241c10", g_tusk),
+    "gel": ("#2a7a7a", "#0a2a2a", lambda d, S: g_drop(d, S, (120, 230, 210))),
+    "bag": ("#6a4a2a", "#22160a", g_bag),
+    "dodge": ("#2a7aa8", "#0c2a3e", g_dodge),
+    "parry": ("#a87a2a", "#3e2a0c", g_parry),
     # статусы (круглые)
     "heart": ("#b0304a", "#3a0c18", g_heart),
     "star": ("#c9a227", "#4a3008", lambda d, S: g_star(d, S, (255, 236, 150), 0.38, 0.16, 5)),

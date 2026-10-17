@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Минимальный JSON-парсер (объекты → Map, массивы → List, числа → Double).
+ * Минимальный JSON-парсер (объекты → Map, массивы → List, числа → Double) и запись обратно ({@link #write}).
  * Свой, чтобы мод не зависел от версии Gson внутри сервера Hytale.
  */
 public final class Json {
@@ -158,5 +158,68 @@ public final class Json {
     public static boolean bool(Map<String, Object> m, String k, boolean def) {
         Object v = m.get(k);
         return v == null ? def : (Boolean) v;
+    }
+
+    // ---------- запись (сохранения) ----------
+
+    /** Map/List/String/Number/Boolean/null → JSON с отступами. */
+    public static String write(Object o) {
+        StringBuilder sb = new StringBuilder();
+        write(sb, o, "");
+        return sb.append('\n').toString();
+    }
+
+    private static void write(StringBuilder sb, Object o, String indent) {
+        String in = indent + "  ";
+        if (o == null) sb.append("null");
+        else if (o instanceof String str) quote(sb, str);
+        else if (o instanceof Boolean b) sb.append(b);
+        else if (o instanceof Number n) {
+            double d = n.doubleValue();
+            if (d == Math.rint(d) && Math.abs(d) < 1e15) sb.append((long) d);
+            else sb.append(d);
+        } else if (o instanceof Map<?, ?> m) {
+            if (m.isEmpty()) { sb.append("{}"); return; }
+            sb.append("{\n");
+            int k = 0;
+            for (Map.Entry<?, ?> e : m.entrySet()) {
+                sb.append(in);
+                quote(sb, String.valueOf(e.getKey()));
+                sb.append(": ");
+                write(sb, e.getValue(), in);
+                sb.append(++k < m.size() ? ",\n" : "\n");
+            }
+            sb.append(indent).append('}');
+        } else if (o instanceof Iterable<?> it) {
+            List<Object> l = new ArrayList<>();
+            it.forEach(l::add);
+            boolean flat = l.stream().allMatch(x -> !(x instanceof Map) && !(x instanceof Iterable));
+            if (l.isEmpty()) { sb.append("[]"); return; }
+            sb.append(flat ? "[" : "[\n");
+            for (int k = 0; k < l.size(); k++) {
+                if (!flat) sb.append(in);
+                write(sb, l.get(k), in);
+                if (k + 1 < l.size()) sb.append(flat ? ", " : ",\n");
+            }
+            sb.append(flat ? "]" : "\n" + indent + "]");
+        } else quote(sb, String.valueOf(o));
+    }
+
+    private static void quote(StringBuilder sb, String str) {
+        sb.append('"');
+        for (char c : str.toCharArray()) {
+            switch (c) {
+                case '"' -> sb.append("\\\"");
+                case '\\' -> sb.append("\\\\");
+                case '\n' -> sb.append("\\n");
+                case '\r' -> sb.append("\\r");
+                case '\t' -> sb.append("\\t");
+                default -> {
+                    if (c < 0x20) sb.append(String.format("\\u%04x", (int) c));
+                    else sb.append(c);
+                }
+            }
+        }
+        sb.append('"');
     }
 }
