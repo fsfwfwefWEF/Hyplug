@@ -26,6 +26,8 @@ star
 water
 bleed
 crack
+taunt
+st_taunt
 st_wet
 st_frozen
 st_armor_break
@@ -47,4 +49,7 @@ pt_spider
 pt_spiderling
 pt_spider_queen
 pt_slime
+pt_wolf
+pt_skeleton
+pt_trork
 pt_unknown

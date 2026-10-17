@@ -27,6 +27,7 @@ public final class GameData {
     private final Content content;
     private final Map<String, EnemyTemplate> enemies = new LinkedHashMap<>();
     private final Map<String, Encounter> encounters = new LinkedHashMap<>();
+    private Squads squads = new Squads();
 
     private GameData(Content content) {
         this.content = content;
@@ -43,7 +44,9 @@ public final class GameData {
             Encounter e = parseEncounter(Json.obj(o));
             d.encounters.put(e.id(), e);
         }
+        d.squads = Squads.parse(read(dataDir, "squads.json"));
         d.validate();
+        d.squads.validate(d);
         return d;
     }
 
@@ -144,6 +147,9 @@ public final class GameData {
     }
 
     public List<Encounter> encounters() { return List.copyOf(encounters.values()); }
+
+    /** Случайные отряды по миру (squads.json). */
+    public Squads squads() { return squads; }
 
     /** Собирает бой для встречи: враги по шаблонам, фазы, эксклюзивный скрипт, реплики, запрет бегства. */
     public Battle createBattle(Encounter e, List<Combatant> party, Map<String, Integer> inventory,

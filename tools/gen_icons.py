@@ -322,6 +322,44 @@ def p_slime(d, S):
     d.ellipse(P(S, [(0.30, 0.30), (0.40, 0.40)]), fill=(255, 255, 255, 150))
 
 
+def g_taunt(d, S):
+    g_shield(d, S, (230, 120, 90))
+    d.rectangle(P(S, [(0.46, 0.30), (0.54, 0.56)]), fill=WHITE)
+    d.ellipse(P(S, [(0.45, 0.62), (0.55, 0.72)]), fill=WHITE)
+
+
+def p_wolf(d, S):
+    fur = (150, 150, 165)
+    d.polygon(P(S, [(0.22, 0.18), (0.36, 0.40), (0.24, 0.46)]), fill=fur)
+    d.polygon(P(S, [(0.78, 0.18), (0.64, 0.40), (0.76, 0.46)]), fill=fur)
+    d.polygon(P(S, [(0.24, 0.36), (0.76, 0.36), (0.70, 0.66), (0.5, 0.88), (0.30, 0.66)]), fill=fur)
+    d.polygon(P(S, [(0.40, 0.62), (0.60, 0.62), (0.5, 0.86)]), fill=(200, 200, 210))
+    d.ellipse(P(S, [(0.45, 0.76), (0.55, 0.84)]), fill=INK)
+    d.polygon(P(S, [(0.33, 0.48), (0.45, 0.50), (0.38, 0.55)]), fill=(255, 210, 60))
+    d.polygon(P(S, [(0.67, 0.48), (0.55, 0.50), (0.62, 0.55)]), fill=(255, 210, 60))
+
+
+def p_skeleton(d, S):
+    bone = (230, 226, 210)
+    d.ellipse(P(S, [(0.26, 0.16), (0.74, 0.66)]), fill=bone)
+    d.rectangle(P(S, [(0.36, 0.60), (0.64, 0.82)]), fill=bone)
+    d.ellipse(P(S, [(0.33, 0.36), (0.47, 0.50)]), fill=INK)
+    d.ellipse(P(S, [(0.53, 0.36), (0.67, 0.50)]), fill=INK)
+    d.polygon(P(S, [(0.5, 0.52), (0.46, 0.60), (0.54, 0.60)]), fill=INK)
+    for x in (0.42, 0.5, 0.58):
+        d.line(P(S, [(x, 0.66), (x, 0.80)]), fill=INK, width=int(S * 0.02))
+
+
+def p_trork(d, S):
+    skin = (150, 120, 90)
+    d.ellipse(P(S, [(0.20, 0.20), (0.80, 0.80)]), fill=skin)
+    d.rectangle(P(S, [(0.28, 0.36), (0.72, 0.44)]), fill=(90, 70, 50))
+    d.ellipse(P(S, [(0.34, 0.44), (0.44, 0.54)]), fill=(255, 90, 60))
+    d.ellipse(P(S, [(0.56, 0.44), (0.66, 0.54)]), fill=(255, 90, 60))
+    d.polygon(P(S, [(0.34, 0.66), (0.40, 0.56), (0.42, 0.68)]), fill=WHITE)
+    d.polygon(P(S, [(0.66, 0.66), (0.60, 0.56), (0.58, 0.68)]), fill=WHITE)
+
+
 ICONS = {
     # способности и действия: (верх, низ, глиф)
     "sword": ("#5b6f8f", "#26304a", g_sword),
@@ -353,6 +391,8 @@ ICONS = {
     "water": ("#2a6ac8", "#0c2252", g_water),
     "bleed": ("#a02a2a", "#3a0a0a", lambda d, S: g_drop(d, S, (230, 50, 60))),
     "crack": ("#5a6a8a", "#1e2436", g_crack),
+    "taunt": ("#a8503a", "#3a1408", g_taunt),
+    "st_taunt": ("#a8503a", "#3a1408", g_taunt),
     "st_wet": ("#2a6ac8", "#0c2252", lambda d, S: g_drop(d, S, (110, 190, 255))),
     "st_frozen": ("#6ac0e8", "#14466a", g_snow),
     "st_armor_break": ("#5a6a8a", "#1e2436", g_crack),
@@ -375,6 +415,9 @@ ICONS = {
     "pt_spiderling": ("#4a3a4a", "#1a121a", lambda d, S: p_spider(d, S, (90, 80, 100), (255, 140, 140))),
     "pt_spider_queen": ("#7a1a3a", "#2a0614", lambda d, S: p_spider(d, S, (40, 30, 50), (255, 60, 60), True)),
     "pt_slime": ("#2a6a7a", "#0a222a", p_slime),
+    "pt_wolf": ("#3a4a5a", "#10161e", p_wolf),
+    "pt_skeleton": ("#4a4a3a", "#1a1a10", p_skeleton),
+    "pt_trork": ("#6a4a2a", "#22160a", p_trork),
     "pt_unknown": ("#4a4a5a", "#18181e", lambda d, S: g_letter(d, S, "?")),
 }
 

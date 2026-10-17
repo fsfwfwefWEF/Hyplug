@@ -1,0 +1,37 @@
+{
+  // Случайные отряды врагов по миру. Ручные встречи (encounters.json) и боссы работают как раньше:
+  // отряды не появляются ближе keepAwayFromEncounters блоков к ним и в зонах noSpawnZones.
+  // Выключить совсем: "enabled": false, затем /jrpg reload. Посмотреть отряды рядом: /jrpg squads.
+  "enabled": true,
+  // Раз в сколько секунд пробуем поставить отряд рядом с игроком и с каким шансом.
+  "spawnEverySeconds": 40,
+  "spawnChance": 0.6,
+  // Сколько отрядов одновременно вокруг одного игрока.
+  "maxPerPlayer": 2,
+  // На каком расстоянии от игрока появляется отряд (блоки) и когда исчезает (далеко или по времени).
+  "minDistance": 22,
+  "maxDistance": 40,
+  "despawnDistance": 90,
+  "lifetimeMinutes": 10,
+  // Подошёл ближе — окно «Сражаться / Сбежать».
+  "triggerRadius": 7,
+  "keepAwayFromEncounters": 40,
+  // В каких мирах ("*" — во всех).
+  "worlds": ["*"],
+  // Зоны без отрядов (город, точка появления и т.п.): { "world": "*", "x": 0, "z": 0, "radius": 60 }
+  "noSpawnZones": [],
+
+  // Шаблоны отрядов: враги из enemies.json (до 5), weight — как часто встречается, exp — опыт за победу.
+  "squads": [
+    { "id": "goblin_patrol", "name": "Патруль гоблинов", "enemies": ["goblin", "goblin", "slime"], "weight": 3, "exp": 35,
+      "loot": [ { "item": "potion", "count": 1, "chance": 0.4 } ] },
+    { "id": "spider_brood", "name": "Паучий выводок", "enemies": ["spiderling", "spider", "spiderling"], "weight": 2, "exp": 30,
+      "loot": [ { "item": "antidote", "count": 1, "chance": 0.5 } ] },
+    { "id": "wolf_pack", "name": "Волчья стая", "enemies": ["wolf", "wolf", "wolf"], "weight": 2, "exp": 40 },
+    { "id": "restless_dead", "name": "Неупокоенные", "enemies": ["skeleton", "skeleton"], "weight": 2, "exp": 35,
+      "loot": [ { "item": "ether", "count": 1, "chance": 0.3 } ] },
+    { "id": "trork_band", "name": "Банда трорков", "enemies": ["goblin", "trork", "goblin"], "weight": 1, "exp": 55,
+      "loot": [ { "item": "bomb", "count": 1, "chance": 0.5 } ] },
+    { "id": "slime_pond", "name": "Слизни у пруда", "enemies": ["slime", "slime"], "weight": 2, "exp": 25 }
+  ]
+}

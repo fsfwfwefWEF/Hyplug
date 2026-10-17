@@ -7,7 +7,7 @@ import java.util.Random;
 
 /**
  * Простой ИИ врага: лечит союзника при HP < 35%, иначе случайная доступная атакующая способность
- * (или обычная атака) по самому раненому герою. Позже — профили поведения в JSON.
+ * (или обычная атака) по самому раненому герою, а если кто-то провоцирует (танк) — по нему. Позже — профили поведения в JSON.
  */
 public final class EnemyAI {
     private final Content content;
@@ -33,8 +33,11 @@ public final class EnemyAI {
             }
         }
 
-        Combatant target = battle.alive(self.side.opposite()).stream()
-                .min(Comparator.comparingInt(c -> c.hp)).orElseThrow();
+        // Провокация танка: одиночные атаки идут только в него.
+        List<Combatant> foes = battle.alive(self.side.opposite());
+        Combatant target = foes.stream().filter(c -> c.statuses.stream()
+                        .anyMatch(s -> s.def.kind() == StatusDef.Kind.TAUNT)).findFirst()
+                .orElseGet(() -> foes.stream().min(Comparator.comparingInt(c -> c.hp)).orElseThrow());
         List<Ability> offensive = new ArrayList<>(usable.stream().filter(a -> a.damagePower() > 0).toList());
         if (!offensive.isEmpty() && random.nextDouble() < 0.6) {
             Ability a = offensive.get(random.nextInt(offensive.size()));

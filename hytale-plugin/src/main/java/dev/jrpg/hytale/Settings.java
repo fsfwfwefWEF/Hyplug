@@ -27,6 +27,27 @@ public final class Settings {
     /** Всплывающие цифры урона и названия эффектов над бойцами. */
     public boolean combatText = true;
     public boolean proximityTrigger = true;
+    /** Окно «Сражаться / Сбежать» перед боем (false — бой начинается сразу, как в 0.5). */
+    public boolean preBattlePrompt = true;
+    /** Облёт камеры вокруг арены перед первым ходом. */
+    public boolean introFlyby = true;
+    public final Animations anim = new Animations();
+
+    /**
+     * Имена анимаций моделей Hytale, из которых берётся первая существующая у модели.
+     * Реальные имена моделей мод пишет в лог сервера («Анимации модели ...») — по ним список можно поправить.
+     */
+    public static final class Animations {
+        public boolean enabled = true;
+        public java.util.List<String> attack = java.util.List.of("Attack", "Swing", "Slash", "Strike", "Punch", "Bite", "Melee", "Hit");
+        public java.util.List<String> cast = java.util.List.of("Cast", "Spell", "Magic", "Shoot", "Throw", "Roar", "Attack");
+        public java.util.List<String> hurt = java.util.List.of("Hurt", "Damage", "Flinch");
+        public java.util.List<String> death = java.util.List.of("Death", "Die");
+        public java.util.List<String> victory = java.util.List.of("Cheer", "Celebrate", "Victory", "Wave", "Emote", "Roar");
+        /** Шаги подхода к цели (телепорт маленькими шагами) и пауза между ними, мс. */
+        public int stepCount = 5;
+        public long stepMs = 70;
+    }
 
     /** Камера: углы в градусах, расстояния в блоках. */
     public static final class Camera {
@@ -97,6 +118,21 @@ public final class Settings {
         s.battleSpeed = Math.max(0.1, Json.num(m, "battleSpeed", s.battleSpeed));
         s.combatText = Json.bool(m, "combatText", s.combatText);
         s.proximityTrigger = Json.bool(m, "proximityTrigger", true);
+        s.preBattlePrompt = Json.bool(m, "preBattlePrompt", s.preBattlePrompt);
+        s.introFlyby = Json.bool(m, "introFlyby", s.introFlyby);
+        Object an = m.get("animations");
+        if (an != null) {
+            Map<String, Object> a = Json.obj(an);
+            Animations k = s.anim;
+            k.enabled = Json.bool(a, "enabled", k.enabled);
+            if (a.containsKey("attack")) k.attack = Json.strings(a, "attack");
+            if (a.containsKey("cast")) k.cast = Json.strings(a, "cast");
+            if (a.containsKey("hurt")) k.hurt = Json.strings(a, "hurt");
+            if (a.containsKey("death")) k.death = Json.strings(a, "death");
+            if (a.containsKey("victory")) k.victory = Json.strings(a, "victory");
+            k.stepCount = (int) Math.max(1, Json.num(a, "stepCount", k.stepCount));
+            k.stepMs = (long) Math.max(10, Json.num(a, "stepMs", k.stepMs));
+        }
         return s;
     }
 }

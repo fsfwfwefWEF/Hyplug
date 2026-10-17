@@ -7,7 +7,15 @@ import com.hypixel.hytale.math.vector.Rotation3f;
 import com.hypixel.hytale.server.core.entity.entities.Player;
 import com.hypixel.hytale.protocol.Color;
 import com.hypixel.hytale.protocol.CombatTextUpdate;
+import com.hypixel.hytale.protocol.AnimationSlot;
+import com.hypixel.hytale.server.core.entity.AnimationUtils;
+import com.hypixel.hytale.server.core.entity.Frozen;
 import com.hypixel.hytale.server.core.entity.nameplate.Nameplate;
+import com.hypixel.hytale.server.core.modules.entity.component.Invulnerable;
+import com.hypixel.hytale.server.npc.NPCPlugin;
+import com.hypixel.hytale.server.npc.entities.NPCEntity;
+import it.unimi.dsi.fastutil.Pair;
+import com.hypixel.hytale.server.core.modules.entity.component.ModelComponent;
 import com.hypixel.hytale.server.core.modules.entity.tracker.EntityTrackerSystems;
 import com.hypixel.hytale.server.core.modules.entity.component.TransformComponent;
 import com.hypixel.hytale.server.core.modules.entity.teleport.Teleport;
@@ -101,6 +109,120 @@ public final class Fx {
             v.queueUpdate(target, new CombatTextUpdate(0f, text, c));
         } catch (Throwable t) {
             warnOnce("Всплывающий текст не сработал", t);
+        }
+    }
+
+    /** Роль можно задать списком через «|»: берётся первая, которая есть в игре, иначе fallbackRole. */
+    public static String resolveRole(String spec, String who) {
+        if (spec == null || spec.isBlank()) return null;
+        NPCPlugin npcs = NPCPlugin.get();
+        for (String r : spec.split("\\|")) {
+            String role = r.trim();
+            if (!role.isEmpty() && npcs.getIndex(role) >= 0) return role;
+        }
+        String fb = JrpgPlugin.get().settings().fallbackRole;
+        warnOnce("Роль NPC не найдена: " + spec + " (" + who + "). Показываю как " + fb
+                + ". Список ролей: /jrpg roles <часть имени>", null);
+        return fb != null && !fb.isBlank() && npcs.getIndex(fb) >= 0 ? fb : null;
+    }
+
+    /**
+     * NPC-«кукла»: стоит на месте (Frozen), неуязвима, смотрит по yaw. Своего ИИ у неё нет — бой ведёт мод.
+     * null — роль не нашлась или спавн не удался (причина в логе).
+     */
+    public static Ref<EntityStore> spawnPuppet(Store<EntityStore> store, String roleSpec, String who, Vector3d pos, float yaw) {
+        try {
+            String role = resolveRole(roleSpec, who);
+            if (role == null || pos == null) return null;
+            NPCPlugin npcs = NPCPlugin.get();
+            Pair<Ref<EntityStore>, NPCEntity> spawned = npcs.spawnEntity(store, npcs.getIndex(role), pos,
+                    new Rotation3f(0, yaw, 0), null, null);
+            if (spawned == null) return null;
+            Ref<EntityStore> ref = spawned.first();
+            store.putComponent(ref, Frozen.getComponentType(), Frozen.get());
+            store.putComponent(ref, Invulnerable.getComponentType(), Invulnerable.INSTANCE);
+            try {
+                // Куклы не сохраняются в мир: если сервер упадёт посреди боя, они не останутся стоять.
+                store.putComponent(ref, EntityStore.REGISTRY.getNonSerializedComponentType(),
+                        com.hypixel.hytale.component.NonSerialized.get());
+            } catch (Throwable t) {
+                warnOnce("Не удалось пометить NPC как временного", t);
+            }
+            // Поворот ещё раз телепортом: при спавне NPC иногда разворачивается сам.
+            teleport(store, ref, pos, yaw);
+            return ref;
+        } catch (Throwable t) {
+            JrpgPlugin.get().warn("Не удалось заспавнить " + who + " (роль " + roleSpec + ")", t);
+            return null;
+        }
+    }
+
+    /** Убрать сущность из мира (куклу или NPC отряда). */
+    public static void remove(Store<EntityStore> store, Ref<EntityStore> ref) {
+        try {
+            if (ref != null && ref.isValid()) store.removeEntity(ref, com.hypixel.hytale.component.RemoveReason.REMOVE);
+        } catch (Throwable t) {
+            warnOnce("Не удалось убрать сущность", t);
+        }
+    }
+
+    /**
+     * Высота земли (y блока над поверхностью) по карте высот чанка; null — чанк не загружен.
+     * Нужна, чтобы ставить отряды на землю, а не в воздух или под землю.
+     */
+    public static Double groundY(com.hypixel.hytale.server.core.universe.world.World world, double x, double z) {
+        try {
+            var chunks = world.getChunkStore();
+            Ref<com.hypixel.hytale.server.core.universe.world.storage.ChunkStore> chunk =
+                    chunks.getChunkReference(com.hypixel.hytale.math.util.ChunkUtil.indexChunkFromBlock(x, z));
+            if (chunk == null || !chunk.isValid()) return null;
+            var hm = chunks.getStore().getComponent(chunk,
+                    com.hypixel.hytale.server.core.universe.world.chunk.heightmap.HeightmapColumn.getComponentType());
+            if (hm == null) return null;
+            int h = hm.getHeight((int) Math.floor(x), (int) Math.floor(z));
+            return h == Integer.MIN_VALUE ? null : (double) (h + 1);
+        } catch (Throwable t) {
+            warnOnce("Не удалось узнать высоту земли", t);
+            return null;
+        }
+    }
+
+    /** Какие модели уже записаны в лог со списком анимаций (чтобы подобрать имена в settings.json). */
+    private static final Set<String> loggedModels = new HashSet<>();
+
+    /**
+     * Анимация из списка кандидатов, которая есть у модели сущности: сначала точное совпадение имени,
+     * потом имя, содержащее кандидата («Attack» найдёт «AttackSwing»). null — подходящей нет.
+     */
+    public static String pickAnimation(Store<EntityStore> store, Ref<EntityStore> ref, List<String> candidates) {
+        try {
+            if (ref == null || !ref.isValid() || candidates == null || candidates.isEmpty()) return null;
+            ModelComponent mc = store.getComponent(ref, ModelComponent.getComponentType());
+            if (mc == null || mc.getModel() == null) return null;
+            Set<String> ids = mc.getModel().getAnimationSetMap().keySet();
+            String model = mc.getModel().getModelAssetId();
+            if (loggedModels.add(model)) JrpgPlugin.get().log("Анимации модели " + model + ": " + ids);
+            for (String want : candidates) for (String id : ids) if (id.equalsIgnoreCase(want)) return id;
+            for (String want : candidates) {
+                String w = want.toLowerCase();
+                for (String id : ids) if (id.toLowerCase().contains(w)) return id;
+            }
+        } catch (Throwable t) {
+            warnOnce("Не удалось прочитать анимации модели", t);
+        }
+        return null;
+    }
+
+    /** Проиграть анимацию (из кандидатов) в слоте Action. true — нашлась и отправлена. */
+    public static boolean animate(Store<EntityStore> store, Ref<EntityStore> ref, List<String> candidates) {
+        String id = pickAnimation(store, ref, candidates);
+        if (id == null) return false;
+        try {
+            AnimationUtils.playAnimation(ref, AnimationSlot.Action, id, true, store);
+            return true;
+        } catch (Throwable t) {
+            warnOnce("Анимация " + id + " не сработала", t);
+            return false;
         }
     }
 

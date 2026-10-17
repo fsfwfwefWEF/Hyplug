@@ -1,0 +1,202 @@
+$C = "../Common.ui";
+
+// Окно перед боем: «Сражаться / Сбежать». Собрано tools/gen_battle_ui.py — правь скрипт.
+
+Group {
+  LayoutMode: Top;
+
+  Group { FlexWeight: 1; }
+  Group {
+    Anchor: (Height: 300);
+    LayoutMode: Left;
+
+    Group { FlexWeight: 1; }
+    Group #Window {
+      Anchor: (Width: 640);
+      LayoutMode: Top;
+      Background: #070b12(0.94);
+      Padding: (Full: 16);
+
+      Label #Title {
+        Text: "";
+        Anchor: (Height: 30);
+        Style: (FontSize: 22, TextColor: #e8c46a, RenderBold: true);
+      }
+      Label #Sub {
+        Text: "";
+        Anchor: (Height: 36);
+        Style: (FontSize: 13, TextColor: #e9eef6, Wrap: true);
+      }
+      Group { Anchor: (Height: 6); }
+      Group #Enemies {
+        Anchor: (Height: 74);
+        LayoutMode: Left;
+
+        Group { FlexWeight: 1; }
+        Group #En0 {
+          Anchor: (Width: 112);
+          LayoutMode: Top;
+
+          Group {
+            Anchor: (Height: 42);
+            LayoutMode: Left;
+
+            Group { Anchor: (Width: 34); }
+            Group #En0Icon { Anchor: (Width: 40, Height: 40); }
+          }
+          Label #En0Name {
+            Text: "";
+            Anchor: (Height: 16);
+            Style: (FontSize: 12, TextColor: #ffb3a6, RenderBold: true);
+          }
+          Label #En0Hp {
+            Text: "";
+            Anchor: (Height: 14);
+            Style: (FontSize: 11, TextColor: #9fb0c6);
+          }
+        }
+        Group { Anchor: (Width: 4); }
+        Group #En1 {
+          Anchor: (Width: 112);
+          LayoutMode: Top;
+
+          Group {
+            Anchor: (Height: 42);
+            LayoutMode: Left;
+
+            Group { Anchor: (Width: 34); }
+            Group #En1Icon { Anchor: (Width: 40, Height: 40); }
+          }
+          Label #En1Name {
+            Text: "";
+            Anchor: (Height: 16);
+            Style: (FontSize: 12, TextColor: #ffb3a6, RenderBold: true);
+          }
+          Label #En1Hp {
+            Text: "";
+            Anchor: (Height: 14);
+            Style: (FontSize: 11, TextColor: #9fb0c6);
+          }
+        }
+        Group { Anchor: (Width: 4); }
+        Group #En2 {
+          Anchor: (Width: 112);
+          LayoutMode: Top;
+
+          Group {
+            Anchor: (Height: 42);
+            LayoutMode: Left;
+
+            Group { Anchor: (Width: 34); }
+            Group #En2Icon { Anchor: (Width: 40, Height: 40); }
+          }
+          Label #En2Name {
+            Text: "";
+            Anchor: (Height: 16);
+            Style: (FontSize: 12, TextColor: #ffb3a6, RenderBold: true);
+          }
+          Label #En2Hp {
+            Text: "";
+            Anchor: (Height: 14);
+            Style: (FontSize: 11, TextColor: #9fb0c6);
+          }
+        }
+        Group { Anchor: (Width: 4); }
+        Group #En3 {
+          Anchor: (Width: 112);
+          LayoutMode: Top;
+
+          Group {
+            Anchor: (Height: 42);
+            LayoutMode: Left;
+
+            Group { Anchor: (Width: 34); }
+            Group #En3Icon { Anchor: (Width: 40, Height: 40); }
+          }
+          Label #En3Name {
+            Text: "";
+            Anchor: (Height: 16);
+            Style: (FontSize: 12, TextColor: #ffb3a6, RenderBold: true);
+          }
+          Label #En3Hp {
+            Text: "";
+            Anchor: (Height: 14);
+            Style: (FontSize: 11, TextColor: #9fb0c6);
+          }
+        }
+        Group { Anchor: (Width: 4); }
+        Group #En4 {
+          Anchor: (Width: 112);
+          LayoutMode: Top;
+
+          Group {
+            Anchor: (Height: 42);
+            LayoutMode: Left;
+
+            Group { Anchor: (Width: 34); }
+            Group #En4Icon { Anchor: (Width: 40, Height: 40); }
+          }
+          Label #En4Name {
+            Text: "";
+            Anchor: (Height: 16);
+            Style: (FontSize: 12, TextColor: #ffb3a6, RenderBold: true);
+          }
+          Label #En4Hp {
+            Text: "";
+            Anchor: (Height: 14);
+            Style: (FontSize: 11, TextColor: #9fb0c6);
+          }
+        }
+        Group { Anchor: (Width: 4); }
+        Group { FlexWeight: 1; }
+      }
+      Group { Anchor: (Height: 8); }
+      Label #Chance {
+        Text: "";
+        Anchor: (Height: 38);
+        Style: (FontSize: 13, TextColor: #e9eef6, Wrap: true);
+      }
+      Group { Anchor: (Height: 8); }
+      Group {
+        Anchor: (Height: 50);
+        LayoutMode: Left;
+
+        Group { FlexWeight: 1; }
+        Group #FightBox {
+          Anchor: (Width: 244, Height: 48);
+
+          Group #FightBoxGlow {
+            Anchor: (Left: 0, Top: 0, Width: 244, Height: 48);
+            Background: #e8c46a(0.22);
+            Group { Anchor: (Left: 1, Top: 1, Width: 242, Height: 46); Background: #fff0b0(0.22); }
+          }
+          Group {
+            Anchor: (Left: 4, Top: 4, Width: 236, Height: 40);
+            LayoutMode: Left;
+
+            $C.@SecondaryTextButton #Fight { @Text = "Сражаться"; Anchor: (Width: 236, Height: 40); }
+          }
+        }
+        Group { Anchor: (Width: 18); }
+        Group #FleeBox {
+          Anchor: (Width: 244, Height: 48);
+
+          Group #FleeBoxGlow {
+            Anchor: (Left: 0, Top: 0, Width: 244, Height: 48);
+            Background: #e8c46a(0.22);
+            Group { Anchor: (Left: 1, Top: 1, Width: 242, Height: 46); Background: #fff0b0(0.22); }
+          }
+          Group {
+            Anchor: (Left: 4, Top: 4, Width: 236, Height: 40);
+            LayoutMode: Left;
+
+            $C.@CancelTextButton #Flee { @Text = "Сбежать"; Anchor: (Width: 236, Height: 40); }
+          }
+        }
+        Group { FlexWeight: 1; }
+      }
+    }
+    Group { FlexWeight: 1; }
+  }
+  Group { FlexWeight: 1; }
+}

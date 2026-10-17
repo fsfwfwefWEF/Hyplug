@@ -2,6 +2,7 @@ package dev.jrpg.hytale;
 
 import com.hypixel.hytale.server.core.plugin.JavaPlugin;
 import com.hypixel.hytale.server.core.plugin.JavaPluginInit;
+import dev.jrpg.battle.Battle;
 import dev.jrpg.battle.Content;
 import dev.jrpg.battle.GameData;
 import dev.jrpg.battle.Progression;
@@ -27,12 +28,12 @@ import java.util.logging.Level;
  * здесь связь с Hytale: команда /jrpg, боевые сессии, автостарт у встреч.
  */
 public final class JrpgPlugin extends JavaPlugin {
-    private static final String[] DATA_FILES = {"enemies.json", "encounters.json", "settings.json"};
+    private static final String[] DATA_FILES = {"enemies.json", "encounters.json", "settings.json", "squads.json"};
     /**
      * Версия встроенных файлов данных. Если копия в папке мода старее, она сохраняется в backup-vN/
      * и заменяется новой (иначе новые враги/настройки не появятся у тех, кто уже запускал мод).
      */
-    private static final int DATA_VERSION = 3;
+    private static final int DATA_VERSION = 4;
     private static JrpgPlugin instance;
 
     private final Content content = Content.demo();
@@ -50,6 +51,11 @@ public final class JrpgPlugin extends JavaPlugin {
     });
     private GameData data;
     private Settings settings;
+    private final SquadSpawner squads = new SquadSpawner(this);
+    /** У кого сейчас открыто окно «Сражаться / Сбежать» (чтобы не открывать его каждую секунду). */
+    private final java.util.Set<UUID> prompting = ConcurrentHashMap.newKeySet();
+    /** Удачные побеги: игрок+встреча → до какого времени встреча его не трогает. */
+    private final ConcurrentHashMap<String, Long> dodged = new ConcurrentHashMap<>();
 
     public JrpgPlugin(@Nonnull JavaPluginInit init) {
         super(init);
@@ -68,6 +74,7 @@ public final class JrpgPlugin extends JavaPlugin {
     @Override
     protected void shutdown() {
         for (BattleSession s : sessions.values()) s.abort("сервер останавливается");
+        clearSquads();
         scheduler.shutdownNow();
     }
 
@@ -125,6 +132,61 @@ public final class JrpgPlugin extends JavaPlugin {
 
     public Progression.Party partyOf(UUID player) {
         return parties.computeIfAbsent(player, k -> new Progression.Party(content));
+    }
+
+    /**
+     * Показать окно перед боем (вызывать в потоке мира). Если окно выключено в настройках — бой сразу.
+     */
+    public void openPrompt(PlayerRef playerRef, Ref<EntityStore> ref, Store<EntityStore> store, PreBattlePage.Setup setup) {
+        if (!settings.preBattlePrompt) {
+            if (setup.beforeBattle() != null) setup.beforeBattle().run();
+            String err = BattleSession.start(this, setup.encounter(), playerRef, ref, store,
+                    store.getExternalData().getWorld(), setup.center(), Battle.Opening.NORMAL, setup.dir());
+            if (err != null) warn("Автостарт " + setup.encounter().id() + ": " + err, null);
+            return;
+        }
+        Player p = store.getComponent(ref, Player.getComponentType());
+        if (p == null || !prompting.add(playerRef.getUuid())) return;
+        try {
+            p.getPageManager().openCustomPage(ref, store, new PreBattlePage(playerRef, this, setup));
+        } catch (Throwable t) {
+            prompting.remove(playerRef.getUuid());
+            warn("Окно перед боем не открылось", t);
+        }
+    }
+
+    public boolean isPrompting(UUID player) { return prompting.contains(player); }
+    public void endPrompt(UUID player) { prompting.remove(player); }
+
+    /** После удачного побега встреча/отряд не трогает игрока 40 секунд. */
+    public void dodge(UUID player, String encounterId) {
+        dodged.put(player + "|" + encounterId, System.currentTimeMillis() + 40_000);
+    }
+
+    public boolean dodged(UUID player, String encounterId) {
+        Long until = dodged.get(player + "|" + encounterId);
+        return until != null && until > System.currentTimeMillis();
+    }
+
+    SquadSpawner squads() { return squads; }
+
+    /** Убрать отряды всех игроков (перезагрузка данных, выключение). */
+    void clearSquads() {
+        for (UUID id : squads.players()) {
+            for (SquadSpawner.Squad sq : squads.squadsOf(id)) {
+                Ref<EntityStore> any = sq.npcs.stream().filter(Ref::isValid).findFirst().orElse(null);
+                if (any == null) {
+                    squads.remove(id, sq, null);
+                    continue;
+                }
+                Store<EntityStore> st = any.getStore();
+                try {
+                    st.getExternalData().getWorld().execute(() -> squads.remove(id, sq, st));
+                } catch (Throwable t) {
+                    warn("Не удалось убрать отряд", t);
+                }
+            }
+        }
     }
 
     /** Открыть меню прокачки (вызывать в потоке мира). heroId — какая вкладка открыта (null — первая). */

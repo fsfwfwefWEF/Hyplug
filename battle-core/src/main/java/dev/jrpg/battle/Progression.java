@@ -12,6 +12,8 @@ import java.util.Set;
  *
  * У каждого героя своя сетка из {@link Grid#SIZE} узлов: в центре старт, вокруг три кольца.
  * Узел даёт прибавку к характеристике, новую способность или пассивное умение.
+ * Сетка поделена на три сектора ролей ({@link Role}: защитник, целитель, боец) с мостами-гибридами между ними;
+ * узлы «родной» роли героя стоят дешевле, но в чужие сектора тоже можно уйти (Лира-танк — пожалуйста).
  * Открыть можно только узел, соседний с уже открытым; внешние кольца требуют уровня.
  * Очки сетки даются за уровни ({@link #POINTS_PER_LEVEL}), характеристики ещё и растут сами ({@link HeroDef#growth()}).
  */
@@ -23,8 +25,22 @@ public final class Progression {
     private Progression() {
     }
 
+    /** Роль в бою и сектор сетки. */
+    public enum Role {
+        TANK("Защитник", "принимает удары на себя: провокация, защита, здоровье"),
+        HEALER("Целитель", "лечит и снимает статусы, мана и магия"),
+        DPS("Боец", "наносит урон: криты, кровотечение, казнь");
+
+        public final String label, about;
+
+        Role(String label, String about) {
+            this.label = label;
+            this.about = about;
+        }
+    }
+
     /** Описание героя партии. growth — прибавка к характеристикам за каждый уровень после первого. */
-    public record HeroDef(String id, String name, String title, Stats base, Stats growth,
+    public record HeroDef(String id, String name, String title, Role role, Stats base, Stats growth,
                           List<String> startAbilities, List<GridNode> grid) {
         public HeroDef {
             if (grid.size() != Grid.SIZE) throw new IllegalArgumentException("Сетка " + id + ": нужно " + Grid.SIZE + " узлов");
@@ -58,6 +74,10 @@ public final class Progression {
      * Геометрия сетки (одна на всех героев, чтобы интерфейс был общим):
      * 0 — центр; 1..6 — первое кольцо (6 узлов, от верхнего по часовой); 7..18 — второе (12 узлов);
      * 19..24 — внешнее (6 узлов, между лучами первого кольца).
+     *
+     * Сектора ролей по углу: защитник сверху справа (1, 2, 7, 8, 9, 19), целитель снизу справа
+     * (3, 4, 11, 12, 13, 21), боец слева (5, 6, 15, 16, 17, 23). Узлы на границах — мосты-гибриды:
+     * 10 и 20 (защитник + целитель), 14 и 22 (целитель + боец), 18 и 24 (боец + защитник).
      */
     public static final class Grid {
         public static final int SIZE = 25;
@@ -107,6 +127,18 @@ public final class Progression {
             return out;
         }
 
+        /** Роли сектора узла: одна для обычного узла, две для моста, пусто для центра. */
+        public static List<Role> sector(int i) {
+            if (i == 0) return List.of();
+            double a = Math.floorMod((int) Math.round(angleDeg(i)) + 120, 360); // 0..360, 0 = граница боец|защитник
+            if (Math.abs(a % 120) < 1e-6) {
+                int k = (int) (a / 120);
+                Role[] after = {Role.TANK, Role.HEALER, Role.DPS};
+                return List.of(after[(k + 2) % 3], after[k % 3]);
+            }
+            return List.of(new Role[]{Role.TANK, Role.HEALER, Role.DPS}[(int) (a / 120)]);
+        }
+
         public static int minLevel(int i) {
             return switch (ring(i)) {
                 case 2 -> 3;
@@ -122,6 +154,12 @@ public final class Progression {
                 case 2 -> n.kind() == NodeKind.STAT ? 1 : 2;
                 default -> 3;
             };
+        }
+
+        /** Цена для героя: узлы его родной роли (и мосты с ней) во внешних кольцах на 1 очко дешевле. */
+        public static int cost(int i, GridNode n, Role heroRole) {
+            int base = cost(i, n);
+            return ring(i) >= 2 && sector(i).contains(heroRole) ? Math.max(1, base - 1) : base;
         }
     }
 
@@ -197,6 +235,10 @@ public final class Progression {
             return ups;
         }
 
+        public int cost(int i) {
+            return Grid.cost(i, node(i), def.role());
+        }
+
         public boolean reachable(int i) {
             for (int nb : Grid.neighbors(i)) if (unlocked.contains(nb)) return true;
             return false;
@@ -208,7 +250,7 @@ public final class Progression {
             if (unlocked.contains(i)) return "уже открыто";
             if (!reachable(i)) return "сначала открой соседний узел";
             if (level < Grid.minLevel(i)) return "нужен " + Grid.minLevel(i) + " уровень";
-            int cost = Grid.cost(i, node(i));
+            int cost = cost(i);
             if (points < cost) return "нужно очков: " + cost;
             return null;
         }
@@ -216,14 +258,14 @@ public final class Progression {
         public String unlock(int i) {
             String why = whyCantUnlock(i);
             if (why != null) return why;
-            points -= Grid.cost(i, node(i));
+            points -= cost(i);
             unlocked.add(i);
             return null;
         }
 
         /** Вернуть все очки (тестовая кнопка «Сброс»). */
         public void respec() {
-            for (int i : unlocked) points += Grid.cost(i, node(i));
+            for (int i : unlocked) points += cost(i);
             unlocked.clear();
             unlocked.add(0);
         }

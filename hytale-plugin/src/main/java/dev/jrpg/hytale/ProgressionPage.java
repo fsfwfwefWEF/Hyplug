@@ -181,7 +181,7 @@ public final class ProgressionPage extends InteractiveCustomUIPage<BattleMenuPag
     private void fillHero(UICommandBuilder cmd, Progression.Hero h) {
         Stats st = h.stats();
         cmd.set("#HeroName.Text", h.def.name());
-        cmd.set("#HeroTitle.Text", h.def.title());
+        cmd.set("#HeroTitle.Text", h.def.title() + " · роль: " + h.def.role().label);
         cmd.set("#HeroLevel.Text", "Уровень " + h.level + "   опыт " + h.exp + " / " + Progression.expToNext(h.level));
         cmd.set("#Points.Text", "Очки сетки: " + h.points);
         icon(cmd, "#HeroIcon", "pt_" + h.def.id(), "l");
@@ -224,7 +224,8 @@ public final class ProgressionPage extends InteractiveCustomUIPage<BattleMenuPag
     private void fillDetail(UICommandBuilder cmd, Progression.Hero h) {
         GridNode n = h.node(selected);
         cmd.set("#SelTitle.Text", Describe.nodeTitle(content, h, n));
-        cmd.set("#SelKind.Text", Describe.nodeKind(n) + (selected == 0 ? "" : "   кольцо " + Grid.ring(selected)));
+        cmd.set("#SelKind.Text", Describe.nodeKind(n) + (selected == 0 ? "" : "   " + Describe.sector(selected)
+                + ", кольцо " + Grid.ring(selected)));
         cmd.set("#SelText.Text", Describe.node(content, h, selected));
         icon(cmd, "#SelIcon", BattleMenuPage.iconKey(Describe.nodeIcon(content, h, n)), "m");
         cmd.set("#Learn.Visible", h.whyCantUnlock(selected) == null);

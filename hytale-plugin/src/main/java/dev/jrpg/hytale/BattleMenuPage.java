@@ -64,14 +64,18 @@ public final class BattleMenuPage extends InteractiveCustomUIPage<BattleMenuPage
         for (int i = 0; i < BUTTONS; i++) {
             bind(evt, CustomUIEventBindingType.Activating, "#Opt" + i, "opt", i);
             bind(evt, CustomUIEventBindingType.MouseEntered, "#Opt" + i, "hover", i);
+            bind(evt, CustomUIEventBindingType.MouseExited, "#Opt" + i, "unhover", i);
         }
+        // Наведение на «?» только показывает описание и подсвечивает карточку; клик — выбор цели или осмотр.
         for (int i = 0; i < ENEMIES; i++) {
             bind(evt, CustomUIEventBindingType.Activating, "#E" + i + "Info", "enemy", i);
-            bind(evt, CustomUIEventBindingType.MouseEntered, "#E" + i + "Info", "enemy", i);
+            bind(evt, CustomUIEventBindingType.MouseEntered, "#E" + i + "Info", "peekEnemy", i);
+            bind(evt, CustomUIEventBindingType.MouseExited, "#E" + i + "Info", "unpeek", i);
         }
         for (int i = 0; i < PARTY; i++) {
             bind(evt, CustomUIEventBindingType.Activating, "#P" + i + "Info", "ally", i);
-            bind(evt, CustomUIEventBindingType.MouseEntered, "#P" + i + "Info", "ally", i);
+            bind(evt, CustomUIEventBindingType.MouseEntered, "#P" + i + "Info", "peekAlly", i);
+            bind(evt, CustomUIEventBindingType.MouseExited, "#P" + i + "Info", "unpeek", i);
         }
         bind(evt, CustomUIEventBindingType.Activating, "#Back", "back", -1);
         fill(cmd);
@@ -89,6 +93,10 @@ public final class BattleMenuPage extends InteractiveCustomUIPage<BattleMenuPage
             case "back" -> session.onBack();
             case "opt" -> session.onOption(i);
             case "hover" -> session.onHover(i);
+            case "unhover" -> session.onUnhover(i);
+            case "peekEnemy" -> { if (i >= 0 && i < ENEMIES) session.onPeek(enemyIds[i]); }
+            case "peekAlly" -> { if (i >= 0 && i < PARTY) session.onPeek(partyIds[i]); }
+            case "unpeek" -> session.onUnpeek();
             case "enemy" -> { if (i >= 0 && i < ENEMIES) session.onInspect(enemyIds[i]); }
             case "ally" -> { if (i >= 0 && i < PARTY) session.onInspect(partyIds[i]); }
             default -> { }
@@ -115,6 +123,7 @@ public final class BattleMenuPage extends InteractiveCustomUIPage<BattleMenuPage
         fillParty(cmd, b);
         fillMenu(cmd, session.menu());
         fillInfo(cmd);
+        fillGlow(cmd, session.menu());
         String banner = session.banner(), sub = session.bannerSub();
         cmd.set("#BannerBox.Visible", !banner.isEmpty() || !sub.isEmpty());
         cmd.set("#Banner.Text", banner);
@@ -188,6 +197,21 @@ public final class BattleMenuPage extends InteractiveCustomUIPage<BattleMenuPage
             icon(cmd, "#Opt" + i + "Icon", iconKey(o.icon()), "s");
         }
         cmd.set("#Back.Visible", m.canGoBack());
+    }
+
+    /**
+     * Подсветка-аура: пункт меню под мышью, а на экране выбора цели — ещё и карточка этой цели;
+     * карточка, над чьей «?» мышь.
+     */
+    private void fillGlow(UICommandBuilder cmd, BattleMenu m) {
+        int hover = session.hoverIndex();
+        String card = session.peekId();
+        if (card == null && hover >= 0 && m.screen() == BattleMenu.Screen.TARGET && hover < m.targets().size()) {
+            card = m.targets().get(hover).id;
+        }
+        for (int i = 0; i < BUTTONS; i++) cmd.set("#Row" + i + "Glow.Visible", i == hover);
+        for (int i = 0; i < ENEMIES; i++) cmd.set("#E" + i + "Glow.Visible", card != null && card.equals(enemyIds[i]));
+        for (int i = 0; i < PARTY; i++) cmd.set("#P" + i + "Glow.Visible", card != null && card.equals(partyIds[i]));
     }
 
     private void fillInfo(UICommandBuilder cmd) {

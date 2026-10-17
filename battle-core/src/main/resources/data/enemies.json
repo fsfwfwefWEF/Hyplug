@@ -14,5 +14,15 @@
   { "id": "spider_queen", "role": "Spider", "name": "Королева пауков Арахна", "boss": true, "model": "JRPG_SpiderQueen",
     "immunities": ["stun", "slow"],
     "stats": { "maxHp": 380, "maxMp": 0, "atk": 19, "mag": 14, "def": 12, "spd": 10 },
-    "abilities": ["venom_bite", "web"] }
+    "abilities": ["venom_bite", "web"] },
+  { "id": "wolf", "role": "Wolf_Black|Wolf_White|Wolf|Fox", "name": "Волк", "model": "Wolf",
+    "stats": { "maxHp": 75, "maxMp": 0, "atk": 16, "mag": 0, "def": 5, "spd": 16 },
+    "abilities": ["rend", "howl"] },
+  { "id": "skeleton", "role": "Skeleton|Skeleton_Soldier|Skeleton_Fighter|Skeleton_Archer", "name": "Скелет", "model": "Skeleton",
+    "immunities": ["poison", "bleed"],
+    "stats": { "maxHp": 95, "maxMp": 0, "atk": 15, "mag": 0, "def": 12, "spd": 9 },
+    "abilities": ["bone_crush"] },
+  { "id": "trork", "role": "Trork_Warrior|Trork_Brawler|Trork_Chieftain", "name": "Трорк-громила", "model": "Trork_Warrior",
+    "stats": { "maxHp": 140, "maxMp": 0, "atk": 20, "mag": 0, "def": 10, "spd": 7 },
+    "abilities": ["trork_smash"] }
 ]

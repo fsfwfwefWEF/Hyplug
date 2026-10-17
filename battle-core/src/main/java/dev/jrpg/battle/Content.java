@@ -91,6 +91,7 @@ public final class Content {
         c.add(new StatusDef("frozen", "Заморозка", StatusDef.Trigger.TURN_START, StatusDef.Kind.SKIP_TURN, 0, false, 1));
         c.add(new StatusDef("armor_break", "Пробитая броня", StatusDef.Trigger.PASSIVE, StatusDef.Kind.DAMAGE_TAKEN_MULT, 1.35, false, 1));
         c.add(new StatusDef("bleed", "Кровотечение", StatusDef.Trigger.TURN_END, StatusDef.Kind.DOT_FLAT, 5, true, 3));
+        c.add(new StatusDef("taunt", "Провокация", StatusDef.Trigger.PASSIVE, StatusDef.Kind.TAUNT, 0, false, 1));
 
         // Базовые действия: атака даёт +1 AP (как в Expedition 33), защита — тоже.
         c.add(dmg(ATTACK, "Атака", 0, 0, TargetType.SINGLE_ENEMY, 1.0, false, List.of(), 1, 100));
@@ -178,6 +179,26 @@ public final class Content {
         c.add(dmg("goo_spit", "Слизистый плевок", 0, 0, TargetType.SINGLE_ENEMY, 0.6, false,
                 List.of(new StatusApply("wet", 1.0, 3)), 0, 100));
 
+        // Враги отрядов (0.6)
+        c.add(dmg("rend", "Разрыв", 0, 0, TargetType.SINGLE_ENEMY, 1.1, false,
+                List.of(new StatusApply("bleed", 0.6, 3)), 0, 100));
+        c.add(support("howl", "Вой", 2, 0, TargetType.ALL_ALLIES, 0, 0, List.of(),
+                List.of(new StatusApply("haste", 1.0, 2))));
+        c.add(dmg("bone_crush", "Дробящий удар", 0, 0, TargetType.SINGLE_ENEMY, 1.2, false,
+                List.of(new StatusApply("armor_break", 0.4, 2)), 0, 110));
+        c.add(dmg("trork_smash", "Удар дубиной", 2, 0, TargetType.SINGLE_ENEMY, 1.4, false,
+                List.of(new StatusApply("stun", 0.25, 1)), 0, 120));
+
+        // Роли (0.6): защитник держит врагов на себе, целитель снимает статусы и лечит всех
+        c.add(support("provoke", "Провокация", 1, 0, TargetType.SELF, 0, 0, List.of(),
+                List.of(new StatusApply("taunt", 1.0, 2), new StatusApply("guard", 1.0, 1))));
+        c.add(support("bulwark", "Несокрушимый", 4, 0, TargetType.SELF, 0.2, 0, List.of(),
+                List.of(new StatusApply("taunt", 1.0, 3), new StatusApply("guard", 1.0, 3))));
+        c.add(support("purify", "Очищение", 1, 10, TargetType.SINGLE_ALLY, 0.1, 0,
+                List.of("poison", "burn", "bleed", "slow", "stun", "frozen", "armor_break", "wet"), List.of()));
+        c.add(support("sanctuary", "Святилище", 3, 24, TargetType.ALL_ALLIES, 0.25, 0, List.of(),
+                List.of(new StatusApply("regen", 1.0, 3))));
+
         demoElements(c);
         demoCombos(c);
         demoPassives(c);
@@ -209,7 +230,15 @@ public final class Content {
         c.flavor("execute", "Сокрушительный удар по одной цели.");
         c.flavor("thunder", "Разряд молнии, иногда оглушает.");
         c.flavor("barrier", "Магический щит на всю партию.");
-        c.flavor("iron_wall", "Брам прикрывает союзника собой.");
+        c.flavor("iron_wall", "Прикрыть союзника собой: он получает вдвое меньше урона.");
+        c.flavor("rend", "Волк рвёт клыками: рана кровоточит.");
+        c.flavor("howl", "Вой стаи: все волки ускоряются.");
+        c.flavor("bone_crush", "Тяжёлый удар костяной булавой, может пробить броню.");
+        c.flavor("trork_smash", "Трорк лупит дубиной так, что звенит в ушах.");
+        c.flavor("provoke", "Вызов на себя: враги бьют только тебя 2 хода, а ты в защите.");
+        c.flavor("bulwark", "Стать скалой: провокация и защита на 3 хода, немного лечения.");
+        c.flavor("purify", "Снимает с союзника яд, огонь, кровь, лёд, оглушение и прочие беды.");
+        c.flavor("sanctuary", "Свет лечит всю партию и даёт Реген на 3 хода.");
         c.flavor("earthquake", "Удар по земле сотрясает всех врагов.");
         c.flavor("potion", "Восстанавливает здоровье.");
         c.flavor("ether", "Восстанавливает ману.");
@@ -238,6 +267,14 @@ public final class Content {
         c.icon("ice_lance", "ice");
         c.icon("ground_slam", "quake");
         c.icon(DEFEND, "shield");
+        c.icon("provoke", "taunt");
+        c.icon("rend", "bleed");
+        c.icon("howl", "haste");
+        c.icon("bone_crush", "crack");
+        c.icon("trork_smash", "stun");
+        c.icon("bulwark", "taunt");
+        c.icon("purify", "antidote");
+        c.icon("sanctuary", "heal");
         c.icon("potion", "potion");
         c.icon("ether", "ether");
         c.icon("antidote", "antidote");
@@ -294,6 +331,11 @@ public final class Content {
         c.add(new PassiveDef(Passives.MANA_FLOW, "Поток маны", "+3 MP в начале каждого хода."));
         c.add(new PassiveDef(Passives.FIRST_STRIKE, "Первый удар", "Начинает бой с +2 AP."));
         c.add(new PassiveDef(Passives.THICK_SKIN, "Толстая кожа", "Начинает бой под Защитой (половина урона до первого хода)."));
+        c.add(new PassiveDef(Passives.GUARDIAN, "Страж", "Получает на 15% меньше урона."));
+        c.add(new PassiveDef(Passives.HEALER_GRACE, "Благодать", "Лечение сильнее на 25%."));
+        c.add(new PassiveDef(Passives.PALADIN, "Паладин", "Гибрид защитника и целителя: начинает бой с Регеном (3 хода) и Защитой."));
+        c.add(new PassiveDef(Passives.BATTLE_MAGE, "Боевой маг", "Гибрид целителя и бойца: магический урон и лечение +20%."));
+        c.add(new PassiveDef(Passives.BERSERKER, "Берсерк", "Гибрид бойца и защитника: +35% урона, пока у себя меньше половины HP."));
     }
 
     /**
@@ -301,39 +343,38 @@ public final class Content {
      * Порядок узлов: центр, 6 узлов первого кольца (сверху по часовой), 12 второго, 6 внешних (см. Progression.Grid).
      */
     private static void demoHeroes(Content c) {
-        c.add(new Progression.HeroDef("hero", "Герой", "Мечник", new Stats(120, 20, 22, 8, 12, 12),
+        // Сетка: 1-6 кольцо 1, 7-18 кольцо 2, 19-24 внешнее. Сектора: защитник 1,2,7,8,9,19; целитель 3,4,11,12,13,21;
+        // боец 5,6,15,16,17,23; мосты 10/20 (защ.+цел.), 14/22 (цел.+боец), 18/24 (боец+защ.).
+        c.add(new Progression.HeroDef("hero", "Герой", "Мечник", Progression.Role.DPS, new Stats(120, 20, 22, 8, 12, 12),
                 new Stats(12, 2, 3, 1, 2, 1), List.of("fire_slash", "shield_bash", "focus"), grid(
-                        // кольцо 1
-                        st(Progression.Stat.ATK, 3), st(Progression.Stat.HP, 20), ab("bleeding_cut"),
-                        st(Progression.Stat.DEF, 2), pa(Passives.KEEN_EYE), st(Progression.Stat.SPD, 1),
-                        // кольцо 2
-                        ab("whirlwind"), st(Progression.Stat.ATK, 3), st(Progression.Stat.HP, 25), ab("armor_pierce"),
-                        st(Progression.Stat.MP, 5), pa(Passives.BLOODTHIRST), st(Progression.Stat.ATK, 3),
-                        st(Progression.Stat.DEF, 3), pa(Passives.PYROMANIAC), st(Progression.Stat.HP, 25),
-                        st(Progression.Stat.SPD, 1), st(Progression.Stat.MAG, 2),
-                        // внешнее кольцо
-                        ab("execute"), pa(Passives.EXECUTIONER), ab("storm_blade"), st(Progression.Stat.ATK, 6),
-                        pa(Passives.COMBO_MASTER), st(Progression.Stat.HP, 60))));
-        c.add(new Progression.HeroDef("lyra", "Лира", "Чародейка", new Stats(85, 70, 9, 24, 7, 14),
+                        // кольцо 1: защ., защ., цел., цел., боец, боец
+                        st(Progression.Stat.DEF, 2), ab("provoke"), st(Progression.Stat.MAG, 2), ab("cure"),
+                        st(Progression.Stat.ATK, 3), ab("bleeding_cut"),
+                        // кольцо 2: 7-9 защ., 10 мост, 11-13 цел., 14 мост, 15-17 боец, 18 мост
+                        st(Progression.Stat.HP, 25), pa(Passives.GUARDIAN), ab("iron_wall"), ab("second_wind"),
+                        st(Progression.Stat.MP, 8), pa(Passives.HEALER_GRACE), ab("purify"), pa(Passives.COMBO_MASTER),
+                        pa(Passives.KEEN_EYE), pa(Passives.EXECUTIONER), ab("storm_blade"), ab("whirlwind"),
+                        // внешнее: защ., мост, цел., мост, боец, мост
+                        ab("bulwark"), pa(Passives.PALADIN), ab("rally"), pa(Passives.BATTLE_MAGE),
+                        ab("execute"), pa(Passives.BERSERKER))));
+        c.add(new Progression.HeroDef("lyra", "Лира", "Чародейка", Progression.Role.HEALER, new Stats(85, 70, 9, 24, 7, 14),
                 new Stats(7, 8, 1, 3, 1, 1), List.of("fireball", "blizzard", "cure", "haste_spell"), grid(
-                        st(Progression.Stat.MAG, 3), st(Progression.Stat.MP, 10), ab("water_jet"),
-                        st(Progression.Stat.HP, 12), pa(Passives.MANA_FLOW), st(Progression.Stat.SPD, 1),
-                        ab("thunder"), st(Progression.Stat.MAG, 3), st(Progression.Stat.MP, 10), ab("ice_lance"),
-                        st(Progression.Stat.HP, 15), pa(Passives.ELEMENTALIST), st(Progression.Stat.MAG, 3),
-                        st(Progression.Stat.DEF, 2), ab("renew"), st(Progression.Stat.MP, 10),
-                        st(Progression.Stat.SPD, 1), pa(Passives.PYROMANIAC),
-                        ab("chain_lightning"), pa(Passives.COMBO_MASTER), ab("barrier"), st(Progression.Stat.MAG, 6),
-                        pa(Passives.FIRST_STRIKE), st(Progression.Stat.MP, 25))));
-        c.add(new Progression.HeroDef("bram", "Брам", "Страж", new Stats(160, 15, 18, 6, 18, 8),
+                        st(Progression.Stat.HP, 12), ab("barrier"), st(Progression.Stat.MAG, 3), ab("renew"),
+                        st(Progression.Stat.MAG, 3), ab("water_jet"),
+                        st(Progression.Stat.DEF, 2), pa(Passives.THICK_SKIN), ab("provoke"), pa(Passives.MANA_FLOW),
+                        st(Progression.Stat.MP, 10), pa(Passives.HEALER_GRACE), ab("purify"), ab("thunder"),
+                        pa(Passives.ELEMENTALIST), pa(Passives.COMBO_MASTER), ab("ice_lance"), pa(Passives.FIRST_STRIKE),
+                        ab("bulwark"), pa(Passives.PALADIN), ab("sanctuary"), pa(Passives.BATTLE_MAGE),
+                        ab("chain_lightning"), pa(Passives.BERSERKER))));
+        c.add(new Progression.HeroDef("bram", "Брам", "Страж", Progression.Role.TANK, new Stats(160, 15, 18, 6, 18, 8),
                 new Stats(16, 1, 2, 1, 3, 0), List.of("cleave", "rally"), grid(
-                        st(Progression.Stat.DEF, 3), st(Progression.Stat.HP, 30), ab("iron_wall"),
-                        st(Progression.Stat.ATK, 2), pa(Passives.THICK_SKIN), st(Progression.Stat.SPD, 1),
-                        ab("sunder"), st(Progression.Stat.DEF, 3), st(Progression.Stat.HP, 30), ab("ground_slam"),
-                        st(Progression.Stat.ATK, 3), pa(Passives.BLOODTHIRST), st(Progression.Stat.DEF, 3),
-                        st(Progression.Stat.MP, 5), ab("second_wind"), st(Progression.Stat.HP, 30),
-                        st(Progression.Stat.ATK, 3), pa(Passives.FIRST_STRIKE),
-                        ab("earthquake"), pa(Passives.COMBO_MASTER), st(Progression.Stat.HP, 80),
-                        st(Progression.Stat.DEF, 6), pa(Passives.KEEN_EYE), st(Progression.Stat.ATK, 6))));
+                        st(Progression.Stat.DEF, 3), ab("provoke"), st(Progression.Stat.MP, 5), ab("second_wind"),
+                        st(Progression.Stat.ATK, 3), ab("ground_slam"),
+                        st(Progression.Stat.HP, 30), pa(Passives.GUARDIAN), ab("iron_wall"), pa(Passives.THICK_SKIN),
+                        st(Progression.Stat.MAG, 2), pa(Passives.HEALER_GRACE), ab("purify"), pa(Passives.FIRST_STRIKE),
+                        pa(Passives.BLOODTHIRST), pa(Passives.KEEN_EYE), ab("sunder"), ab("armor_pierce"),
+                        ab("bulwark"), pa(Passives.PALADIN), ab("sanctuary"), pa(Passives.BATTLE_MAGE),
+                        ab("earthquake"), pa(Passives.BERSERKER))));
     }
 
     private static List<Progression.GridNode> grid(Progression.GridNode... nodes) {

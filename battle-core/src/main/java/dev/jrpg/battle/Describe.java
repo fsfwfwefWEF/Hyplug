@@ -81,6 +81,7 @@ public final class Describe {
             case DAMAGE_TAKEN_MULT -> "получает " + pct(s.power()) + " урона";
             case NEXT_ACTION_MULT -> "следующая атака x" + num(s.power());
             case MARKER -> "особая метка для комбо стихий";
+            case TAUNT -> "враги бьют только его";
         };
     }
 
@@ -164,6 +165,7 @@ public final class Describe {
                 case "bleed" -> { return "bleed"; }
                 case "armor_break" -> { return "crack"; }
                 case "frozen" -> { return "ice"; }
+                case "taunt" -> { return "taunt"; }
                 default -> { }
             }
         }
@@ -212,19 +214,32 @@ public final class Describe {
         };
     }
 
+    /** Сектор узла: «Защитник», «Защитник + Целитель» (мост) или пусто для центра. */
+    public static String sector(int index) {
+        return String.join(" + ", Progression.Grid.sector(index).stream().map(r -> r.label).toList());
+    }
+
     /** Описание узла сетки: что даёт, сколько стоит, почему нельзя открыть. */
     public static String node(Content content, Progression.Hero hero, int index) {
         Progression.GridNode n = hero.node(index);
         List<String> lines = new ArrayList<>();
         switch (n.kind()) {
-            case START -> lines.add("Центр сетки. Открывай соседние узлы, чтобы двигаться к внешним кольцам.");
+            case START -> {
+                lines.add("Центр сетки. Открывай соседние узлы, чтобы двигаться к внешним кольцам.");
+                lines.add("");
+                lines.add("Роль героя: " + hero.def.role().label + " (" + hero.def.role().about + "). "
+                        + "Узлы своей роли во 2 и 3 кольце на 1 очко дешевле.");
+                for (Progression.Role r : Progression.Role.values()) lines.add(r.label + ": " + r.about);
+            }
             case STAT -> lines.add("Навсегда повышает характеристику «" + n.stat().label + "» на " + n.value() + ".");
             case ABILITY -> lines.add(ability(content, content.ability(n.ref())));
             case PASSIVE -> lines.add(content.passive(n.ref()).text());
         }
         if (index != 0) {
             lines.add("");
-            lines.add("Цена: " + Progression.Grid.cost(index, n) + " очк.   Уровень: " + Progression.Grid.minLevel(index) + "+");
+            boolean own = Progression.Grid.sector(index).contains(hero.def.role());
+            lines.add("Сектор: " + sector(index) + (own ? " (роль героя)" : ""));
+            lines.add("Цена: " + hero.cost(index) + " очк.   Уровень: " + Progression.Grid.minLevel(index) + "+");
             String why = hero.whyCantUnlock(index);
             lines.add(hero.unlocked.contains(index) ? "Открыто" : why == null ? "Можно открыть" : "Нельзя: " + why);
         }

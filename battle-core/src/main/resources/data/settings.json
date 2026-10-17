@@ -40,6 +40,23 @@
   // Всплывающие цифры урона, лечения и названия эффектов над бойцами.
   "combatText": true,
 
-  // Автостарт боя, когда игрок подходит к встрече из encounters.json.
-  "proximityTrigger": true
+  // Анимации атак: берётся первое имя из списка, которое есть у модели NPC (настоящие имена мод пишет
+  // в лог сервера строкой «Анимации модели ...»). stepCount/stepMs — плавность подхода к цели.
+  "animations": {
+    "enabled": true,
+    "attack": ["Attack", "Swing", "Slash", "Strike", "Punch", "Bite", "Melee", "Hit"],
+    "cast": ["Cast", "Spell", "Magic", "Shoot", "Throw", "Roar", "Attack"],
+    "hurt": ["Hurt", "Damage", "Flinch"],
+    "death": ["Death", "Die"],
+    "victory": ["Cheer", "Celebrate", "Victory", "Wave", "Emote", "Roar"],
+    "stepCount": 5,
+    "stepMs": 70
+  },
+
+  // Автостарт боя, когда игрок подходит к встрече из encounters.json или к отряду из squads.json.
+  "proximityTrigger": true,
+  // Окно «Сражаться / Сбежать» перед боем (false — бой сразу).
+  "preBattlePrompt": true,
+  // Облёт камеры вокруг арены перед первым ходом.
+  "introFlyby": true
 }

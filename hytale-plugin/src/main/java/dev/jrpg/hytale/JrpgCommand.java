@@ -24,6 +24,8 @@ import javax.annotation.Nonnull;
  * /jrpg particle <имя> — показать частицу под ногами (проверка имён)
  * /jrpg party — меню прокачки партии
  * /jrpg roles <часть имени> — какие роли NPC есть в игре (для enemies.json / settings.json)
+ * /jrpg squad <id|random> — поставить отряд из squads.json в 12-16 блоках (проверка)
+ * /jrpg squads — отряды вокруг игрока
  */
 public final class JrpgCommand extends AbstractCommandCollection {
 
@@ -37,6 +39,55 @@ public final class JrpgCommand extends AbstractCommandCollection {
         addSubCommand(new Particle(plugin));
         addSubCommand(new Party(plugin));
         addSubCommand(new Roles(plugin));
+        addSubCommand(new SquadCmd(plugin));
+        addSubCommand(new SquadsCmd(plugin));
+    }
+
+    static final class SquadCmd extends Sub {
+        private final RequiredArg<String> idArg =
+                withRequiredArg("id", "id отряда из squads.json или random", ArgTypes.STRING);
+
+        SquadCmd(JrpgPlugin plugin) {
+            super(plugin, "squad", "Поставить отряд рядом (проверка)");
+        }
+
+        @Override
+        protected void execute(@Nonnull CommandContext ctx, @Nonnull Store<EntityStore> store,
+                               @Nonnull Ref<EntityStore> ref, @Nonnull PlayerRef playerRef, @Nonnull World world) {
+            String id = idArg.get(ctx);
+            SquadSpawner.Squad s = plugin.squads().spawnNear(playerRef, store, world, Fx.position(store, ref),
+                    id.equalsIgnoreCase("random") ? null : id, 12, 16, false);
+            if (s == null) {
+                ctx.sendMessage(Message.raw("Не получилось: нет такого отряда (" + String.join(", ",
+                        plugin.data().squads().templates.stream().map(t -> t.id()).toList())
+                        + ") или рядом не загружена земля."));
+            } else {
+                ctx.sendMessage(Message.raw("Отряд «" + s.template.name() + "» стоит в "
+                        + Math.round(Math.hypot(s.pos.x - Fx.position(store, ref).x, s.pos.z - Fx.position(store, ref).z))
+                        + " блоках. Подойди ближе."));
+            }
+        }
+    }
+
+    static final class SquadsCmd extends Sub {
+        SquadsCmd(JrpgPlugin plugin) {
+            super(plugin, "squads", "Отряды вокруг");
+        }
+
+        @Override
+        protected void execute(@Nonnull CommandContext ctx, @Nonnull Store<EntityStore> store,
+                               @Nonnull Ref<EntityStore> ref, @Nonnull PlayerRef playerRef, @Nonnull World world) {
+            var list = plugin.squads().squadsOf(playerRef.getUuid());
+            if (list.isEmpty()) {
+                ctx.sendMessage(Message.raw("Рядом отрядов нет" + (plugin.data().squads().enabled ? "." : " (отряды выключены в squads.json).")));
+                return;
+            }
+            var me = Fx.position(store, ref);
+            for (var s : list) {
+                ctx.sendMessage(Message.raw(String.format("%s @ %.0f %.0f %.0f (%.0f бл.)", s.template.name(),
+                        s.pos.x, s.pos.y, s.pos.z, Math.hypot(s.pos.x - me.x, s.pos.z - me.z))));
+            }
+        }
     }
 
     private abstract static class Sub extends AbstractPlayerCommand {
@@ -126,6 +177,7 @@ public final class JrpgCommand extends AbstractCommandCollection {
         @Override
         protected void execute(@Nonnull CommandContext ctx, @Nonnull Store<EntityStore> store,
                                @Nonnull Ref<EntityStore> ref, @Nonnull PlayerRef playerRef, @Nonnull World world) {
+            plugin.clearSquads();
             ctx.sendMessage(Message.raw(plugin.reloadData()));
         }
     }

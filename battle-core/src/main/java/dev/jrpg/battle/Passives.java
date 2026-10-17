@@ -23,4 +23,14 @@ public final class Passives {
 
     private Passives() {
     }
+    /** Танк: -15% входящего урона. */
+    public static final String GUARDIAN = "guardian";
+    /** Хил: лечение +25%. */
+    public static final String HEALER_GRACE = "healer_grace";
+    /** Гибрид танк+хил: в начале боя Реген на 3 хода и Защита на 1 ход. */
+    public static final String PALADIN = "paladin";
+    /** Гибрид хил+дамагер: магический урон и лечение +20%. */
+    public static final String BATTLE_MAGE = "battle_mage";
+    /** Гибрид дамагер+танк: урон +35%, пока у себя меньше половины HP. */
+    public static final String BERSERKER = "berserker";
 }

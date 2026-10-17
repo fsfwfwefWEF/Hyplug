@@ -26,6 +26,8 @@ public record StatusDef(String id, String name, Trigger trigger, Kind kind, doub
         /** Множитель урона следующей способности, снимается после неё. */
         NEXT_ACTION_MULT,
         /** Своего действия нет: метка для комбо стихий (Промок — молния бьёт сильнее и т.п.). */
-        MARKER
+        MARKER,
+        /** Провокация: враги бьют одиночными атаками только этого бойца. */
+        TAUNT
     }
 }

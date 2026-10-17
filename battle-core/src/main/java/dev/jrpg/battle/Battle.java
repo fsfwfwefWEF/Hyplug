@@ -56,6 +56,10 @@ public final class Battle {
             c.ap = c.side == Side.PARTY && opening == Opening.PARTY_ADVANTAGE ? 2 : 1;
             if (c.passives.contains(Passives.FIRST_STRIKE)) c.ap += 2;
             if (c.passives.contains(Passives.THICK_SKIN)) applyStatus(c, content.status("guard"), 1, false);
+            if (c.passives.contains(Passives.PALADIN)) {
+                applyStatus(c, content.status("regen"), 3, false);
+                applyStatus(c, content.status("guard"), 1, false);
+            }
         }
         listener.onBattleStart(this);
         script.onBattleStart(this);
@@ -292,13 +296,18 @@ public final class Battle {
                 raw *= t.multiplier(StatusDef.Kind.DAMAGE_TAKEN_MULT) * comboMult;
                 if (actor.passives.contains(Passives.PYROMANIAC) && t.status("burn") != null) raw *= 1.25;
                 if (actor.passives.contains(Passives.EXECUTIONER) && t.hp < t.stats.maxHp() * 0.3) raw *= 1.4;
+                if (actor.passives.contains(Passives.BATTLE_MAGE) && ab.magical()) raw *= 1.2;
+                if (actor.passives.contains(Passives.BERSERKER) && actor.hp < actor.stats.maxHp() * 0.5) raw *= 1.35;
+                if (t.passives.contains(Passives.GUARDIAN)) raw *= 0.85;
                 damage = Math.min(t.hp, Math.max(1, (int) Math.round(raw + comboBonus)));
                 t.hp -= damage;
                 if (actor.passives.contains(Passives.BLOODTHIRST)) lifesteal += (int) Math.round(damage * 0.15);
             }
             int heal = 0;
             if (ab.healPower() > 0 && t.isAlive()) {
-                heal = Math.min(t.stats.maxHp() - t.hp, (int) Math.round(t.stats.maxHp() * ab.healPower()));
+                double healMult = (actor.passives.contains(Passives.HEALER_GRACE) ? 1.25 : 1.0)
+                        * (actor.passives.contains(Passives.BATTLE_MAGE) ? 1.2 : 1.0);
+                heal = Math.min(t.stats.maxHp() - t.hp, (int) Math.round(t.stats.maxHp() * ab.healPower() * healMult));
                 t.hp += heal;
             }
             int mpBack = 0;

@@ -76,6 +76,17 @@ def group(id_, props, children):
     return head + "\n" + indent(body, 2) + "\n}"
 
 
+def aura(id_, w, h, props, children, inset=2):
+    """Обёртка с «аурой» для подсветки при наведении: #<id>Glow (мягкое золотое свечение) под содержимым.
+    Свечение включает/выключает плагин (.Visible). Дети обёртки стоят по Anchor (Left/Top)."""
+    glow = (f"Group #{id_}Glow {{\n"
+            f"  Anchor: (Left: 0, Top: 0, Width: {w}, Height: {h});\n  Background: #e8c46a(0.22);\n"
+            f"  Group {{ Anchor: (Left: 1, Top: 1, Width: {w - 2}, Height: {h - 2}); Background: #fff0b0(0.22); }}\n}}")
+    content = group("", [f"Anchor: (Left: {inset}, Top: {inset}, Width: {w - 2 * inset}, Height: {h - 2 * inset});"]
+                    + props, children)
+    return group(id_, [f"Anchor: (Width: {w}, Height: {h});"], [glow, content])
+
+
 def button(id_, text, w, h, cancel=False, left=None, top=None):
     kind = "CancelTextButton" if cancel else "SecondaryTextButton"
     anchor = ([f"Left: {left}", f"Top: {top}"] if left is not None else []) + [f"Width: {w}", f"Height: {h}"]
@@ -102,8 +113,7 @@ def queue_slot(i):
 
 
 def enemy_card(i):
-    return group(f"E{i}", [
-        "Anchor: (Width: 196, Height: 66);",
+    return aura(f"E{i}", 200, 70, [
         "LayoutMode: Top;",
         f"Background: {PANEL};",
         "Padding: (Full: 5);",
@@ -124,8 +134,7 @@ def enemy_card(i):
 
 
 def party_row(i):
-    return group(f"P{i}", [
-        "Anchor: (Height: 62);",
+    return aura(f"P{i}", 438, 64, [
         "LayoutMode: Left;",
         f"Background: {PANEL2};",
         "Padding: (Full: 4);",
@@ -150,7 +159,7 @@ def party_row(i):
 
 
 def option_row(i):
-    return group(f"Row{i}", ["Anchor: (Height: 30);", "LayoutMode: Left;"], [
+    return aura(f"Row{i}", 318, 32, ["LayoutMode: Left;"], [
         slot(f"Opt{i}Icon", 22),
         spacer(w=6),
         button(f"Opt{i}", "", 200, 28),
@@ -160,8 +169,8 @@ def option_row(i):
 
 
 def battle():
-    enemy_row = group("EnemyRow", ["Anchor: (Height: 66);", "LayoutMode: Left;"],
-                      [spacer(flex=True)] + sum(([enemy_card(i), spacer(w=6)] for i in range(ENEMIES)), [])
+    enemy_row = group("EnemyRow", ["Anchor: (Height: 70);", "LayoutMode: Left;"],
+                      [spacer(flex=True)] + sum(([enemy_card(i), spacer(w=4)] for i in range(ENEMIES)), [])
                       + [spacer(flex=True)])
     banner = group("BannerRow", ["Anchor: (Height: 60);", "LayoutMode: Left;"], [
         spacer(flex=True),
@@ -182,7 +191,7 @@ def battle():
     ])
     party = group("PartyPanel", ["Anchor: (Width: 450);", "LayoutMode: Top;", f"Background: {PANEL};",
                                  "Padding: (Full: 6);"],
-                  sum(([party_row(i), spacer(h=4)] for i in range(PARTY)), []))
+                  sum(([party_row(i), spacer(h=3)] for i in range(PARTY)), []))
     menu = group("MenuPanel", ["Anchor: (Width: 330);", "LayoutMode: Top;", f"Background: {PANEL};",
                                "Padding: (Full: 6);"], [
         group("", ["Anchor: (Height: 26);", "LayoutMode: Left;"], [
@@ -216,7 +225,10 @@ def battle():
 GRID = 640
 CENTER = GRID // 2
 RADII = {0: 0, 1: 110, 2: 202, 3: 280}
-NODE = 68      # контейнер узла
+NODE = 72      # контейнер узла
+# Цвета секторов ролей (как в Progression.Grid.sector): защитник, целитель, боец; мосты — серые.
+SECTOR_LOCK = {"T": "#16243c(0.96)", "H": "#14301c(0.96)", "D": "#341616(0.96)", "X": "#262630(0.96)"}
+SECTOR_DOT = {"T": "#3a5f9a(0.9)", "H": "#3a8a4e(0.9)", "D": "#9a3a3a(0.9)"}
 TABS = 3
 
 
@@ -244,6 +256,19 @@ def neighbors(i):
     return [7 + 2 * (i - 19) + 1]
 
 
+def sector(i):
+    """Сектор узла: T/H/D или X для мостов (как Progression.Grid.sector)."""
+    a = (round(angle(i)) + 120) % 360
+    if a % 120 == 0:
+        return "X"
+    return "THD"[a // 120]
+
+
+def sector_at(deg):
+    a = (deg + 120) % 360
+    return "THD"[int(a // 120) % 3]
+
+
 def pos(i):
     a = math.radians(angle(i))
     r = RADII[ring(i)]
@@ -258,7 +283,7 @@ def edges():
     return out
 
 
-def edge_dots(a, b, color, step=11, gap=34):
+def edge_dots(a, b, color, step=11, gap=36):
     (x1, y1), (x2, y2) = pos(a), pos(b)
     length = math.hypot(x2 - x1, y2 - y1)
     n = max(1, int((length - 2 * gap) / step))
@@ -277,15 +302,23 @@ def full(id_, children):
 def node(i):
     x, y = pos(i)
     left, top = int(x) - NODE // 2, int(y) - NODE // 2
+    lock = SECTOR_LOCK[sector(i)] if i else SECTOR_LOCK["X"]
     return group(f"G{i}", [f"Anchor: (Left: {left}, Top: {top}, Width: {NODE}, Height: {NODE});"], [
-        f"Group #G{i}Sel {{ Anchor: (Left: 0, Top: 0, Width: 68, Height: 68); Background: #ffffff(0.9); }}",
-        f"Group #G{i}Lock {{ Anchor: (Left: 2, Top: 2, Width: 64, Height: 64); Background: #1a2030(0.95); }}",
-        f"Group #G{i}Avail {{ Anchor: (Left: 2, Top: 2, Width: 64, Height: 64); Background: #3d7bd9; }}",
-        f"Group #G{i}Open {{ Anchor: (Left: 2, Top: 2, Width: 64, Height: 64); Background: {GOLD}; }}",
+        # выбранный узел — золотая аура вокруг
+        f"Group #G{i}Sel {{ Anchor: (Left: 0, Top: 0, Width: 72, Height: 72); Background: #e8c46a(0.30);\n"
+        f"  Group {{ Anchor: (Left: 2, Top: 2, Width: 68, Height: 68); Background: #fff0b0(0.55); }}\n}}",
+        f"Group #G{i}Lock {{ Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: {lock}; }}",
+        f"Group #G{i}Avail {{ Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: #3d7bd9; }}",
+        f"Group #G{i}Open {{ Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: {GOLD}; }}",
         # кнопка шире иконки: край кнопки вокруг иконки всегда кликается
-        button(f"G{i}Btn", "", 58, 58, left=5, top=5),
-        f"Group #G{i}Icon {{ Anchor: (Left: 14, Top: 14, Width: 40, Height: 40); }}",
+        button(f"G{i}Btn", "", 52, 52, left=10, top=10),
+        f"Group #G{i}Icon {{ Anchor: (Left: 16, Top: 16, Width: 40, Height: 40); }}",
     ])
+
+
+def sector_label(text, color, left, top, width=170):
+    return (f'Label {{ Text: "{text}"; Anchor: (Left: {left}, Top: {top}, Width: {width}, Height: 22); '
+            f'Style: (FontSize: 14, TextColor: {color}, RenderBold: true); }}')
 
 
 def progression():
@@ -315,8 +348,14 @@ def progression():
     off = full("EdgesOff", sum((edge_dots(a, b, "#4a5a78(0.8)") for a, b in edge_list), []))
     on = [full(f"Edge{k}", edge_dots(a, b, GOLD)) for k, (a, b) in enumerate(edge_list)]
     rings = full("Rings", sum((ring_dots(r) for r in (1, 2, 3)), []))
+    labels = full("Sectors", [
+        sector_label("ЗАЩИТНИК", "#8fbaff", GRID - 150, 8),
+        sector_label("ЦЕЛИТЕЛЬ", "#8fe0a0", GRID - 150, GRID - 30),
+        sector_label("БОЕЦ", "#ff9a8a", 12, 8),
+        sector_label("мосты — гибриды", "#9fb0c6", 12, GRID - 30),
+    ])
     grid = group("Grid", [f"Anchor: (Width: {GRID}, Height: {GRID});", f"Background: {PANEL};"],
-                 [rings, off] + on + [node(i) for i in range(25)])
+                 [rings, labels, off] + on + [node(i) for i in range(25)])
     detail = group("DetailCol", ["FlexWeight: 1;", "LayoutMode: Top;", f"Background: {PANEL2};", "Padding: (Full: 10);"], [
         group("", ["Anchor: (Height: 44);", "LayoutMode: Left;"], [
             slot("SelIcon", 40),
@@ -364,6 +403,42 @@ def progression():
     print("edges:", edge_list)
 
 
+# ---------- окно перед боем ----------
+
+def prebattle():
+    enemies = group("Enemies", ["Anchor: (Height: 74);", "LayoutMode: Left;"], [spacer(flex=True)] + sum((
+        [group(f"En{i}", ["Anchor: (Width: 112);", "LayoutMode: Top;"], [
+            group("", ["Anchor: (Height: 42);", "LayoutMode: Left;"], [spacer(w=34), slot(f"En{i}Icon", 40)]),
+            label(f"En{i}Name", "", 12, "#ffb3a6", True, height=16),
+            label(f"En{i}Hp", "", 11, DIM, height=14),
+        ]), spacer(w=4)] for i in range(ENEMIES)), []) + [spacer(flex=True)])
+    buttons = group("", ["Anchor: (Height: 50);", "LayoutMode: Left;"], [
+        spacer(flex=True),
+        aura("FightBox", 244, 48, ["LayoutMode: Left;"], [button("Fight", "Сражаться", 236, 40)], inset=4),
+        spacer(w=18),
+        aura("FleeBox", 244, 48, ["LayoutMode: Left;"], [button("Flee", "Сбежать", 236, 40, cancel=True)], inset=4),
+        spacer(flex=True),
+    ])
+    window = group("Window", ["Anchor: (Width: 640);", "LayoutMode: Top;", "Background: #070b12(0.94);",
+                              "Padding: (Full: 16);"], [
+        label("Title", "", 22, GOLD, True, height=30),
+        label("Sub", "", 13, TEXT, height=36, wrap=True),
+        spacer(h=6),
+        enemies,
+        spacer(h=8),
+        label("Chance", "", 13, TEXT, height=38, wrap=True),
+        spacer(h=8),
+        buttons,
+    ])
+    root = group("", ["LayoutMode: Top;"], [
+        spacer(flex=True),
+        group("", ["Anchor: (Height: 300);", "LayoutMode: Left;"], [spacer(flex=True), window, spacer(flex=True)]),
+        spacer(flex=True),
+    ])
+    write("PreBattle.ui", '$C = "../Common.ui";\n\n'
+          "// Окно перед боем: «Сражаться / Сбежать». Собрано tools/gen_battle_ui.py — правь скрипт.\n\n" + root + "\n")
+
+
 def ring_dots(r):
     radius = RADII[r]
     n = int(2 * math.pi * radius / 18)
@@ -371,7 +446,8 @@ def ring_dots(r):
     for k in range(n):
         a = 2 * math.pi * k / n
         x, y = CENTER + radius * math.cos(a), CENTER + radius * math.sin(a)
-        dots.append(f"Group {{ Anchor: (Left: {int(x) - 1}, Top: {int(y) - 1}, Width: 2, Height: 2); Background: #2c3a52(0.9); }}")
+        color = SECTOR_DOT[sector_at(math.degrees(a))]
+        dots.append(f"Group {{ Anchor: (Left: {int(x) - 1}, Top: {int(y) - 1}, Width: 3, Height: 3); Background: {color}; }}")
     return dots
 
 
@@ -385,3 +461,4 @@ def write(name, text):
 if __name__ == "__main__":
     battle()
     progression()
+    prebattle()

@@ -34,17 +34,34 @@ class ProgressionTest {
         Content c = Content.demo();
         Progression.Hero lyra = new Progression.Party(c).hero("lyra");
         assertNotNull(lyra.whyCantUnlock(7), "второе кольцо не соседствует с центром");
-        assertNull(lyra.unlock(3), "узел первого кольца за 1 очко");
+        assertNull(lyra.unlock(6), "узел первого кольца за 1 очко");
         assertTrue(lyra.abilities().contains("water_jet"));
-        assertNotNull(lyra.whyCantUnlock(11), "второе кольцо требует 3 уровень");
+        assertNotNull(lyra.whyCantUnlock(17), "второе кольцо требует 3 уровень");
         lyra.addExp(1000);
-        assertNull(lyra.unlock(11), "узел 11 соседствует с узлом 3 (кольцо 1)");
-        assertNull(lyra.unlock(10), "узел 10 — сосед 11 по кольцу");
+        int before = lyra.points;
+        assertNull(lyra.unlock(17), "узел 17 соседствует с узлом 6 (кольцо 1)");
+        assertEquals(before - 2, lyra.points, "способность бойца для целителя — полная цена");
+        assertNull(lyra.unlock(16), "узел 16 — сосед 17 по кольцу");
         assertTrue(lyra.abilities().contains("ice_lance"));
         int pts = lyra.points;
         lyra.respec();
-        assertEquals(pts + 1 + 1 + 2, lyra.points);
+        assertEquals(pts + 1 + 2 + 2, lyra.points);
         assertEquals(java.util.Set.of(0), lyra.unlocked);
+    }
+
+    @Test
+    void rolesSplitTheGridAndDiscountOwnSector() {
+        assertEquals(java.util.List.of(Progression.Role.TANK), Progression.Grid.sector(8));
+        assertEquals(java.util.List.of(Progression.Role.HEALER), Progression.Grid.sector(12));
+        assertEquals(java.util.List.of(Progression.Role.DPS), Progression.Grid.sector(16));
+        assertEquals(2, Progression.Grid.sector(20).size(), "внешний мост — гибрид двух ролей");
+        Content c = Content.demo();
+        Progression.Party party = new Progression.Party(c);
+        Progression.Hero bram = party.hero("bram"), lyra = party.hero("lyra");
+        assertEquals(1, bram.cost(8), "пассивка своей роли во 2 кольце дешевле");
+        assertEquals(2, lyra.cost(8), "чужая роль — полная цена");
+        assertEquals(1, lyra.cost(12), "Лира — целитель: пассивка целителя дешевле");
+        assertEquals(1, party.hero("hero").cost(1), "первое кольцо всегда 1 очко");
     }
 
     @Test
@@ -52,13 +69,17 @@ class ProgressionTest {
         Content c = Content.demo();
         Progression.Party party = new Progression.Party(c);
         Progression.Hero bram = party.hero("bram");
+        bram.addExp(1000);
         int def = bram.stats().def();
         bram.points = 10;
         assertNull(bram.unlock(1));  // Защита +3
-        assertNull(bram.unlock(5));  // Толстая кожа
+        assertNull(bram.unlock(2));  // Провокация
+        assertNull(bram.unlock(7));  // Здоровье +30
+        assertNull(bram.unlock(8));  // Страж
         Combatant inBattle = party.buildParty(c).stream().filter(x -> x.id.equals("bram")).findFirst().orElseThrow();
         assertEquals(def + 3, inBattle.stats.def());
-        assertTrue(inBattle.passives.contains(Passives.THICK_SKIN));
+        assertTrue(inBattle.passives.contains(Passives.GUARDIAN));
+        assertTrue(inBattle.abilities.contains("provoke"));
     }
 
     @Test

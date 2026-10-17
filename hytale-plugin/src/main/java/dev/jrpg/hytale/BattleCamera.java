@@ -55,6 +55,18 @@ public final class BattleCamera {
         shot("overview", arenaMid(1.0), s.overviewSide, s.overviewPitch, s.overviewDistance);
     }
 
+    /**
+     * Облёт арены перед боем: кадр k из n. Камера идёт по дуге от «из-за спин врагов» к обычному
+     * общему плану (правило 180° тут нарочно нарушается — это заставка), медленнее обычного.
+     */
+    public void flyby(int k, int n) {
+        double t = n <= 1 ? 1 : k / (double) (n - 1);
+        double side = 215 + (s.overviewSide - 215) * t;
+        double dist = s.overviewDistance * (0.75 + 0.25 * t);
+        double pitch = -20 + (s.overviewPitch + 20) * t;
+        shot("flyby:" + k, arenaMid(1.0), side, pitch, dist, Math.min(s.lerp, 0.05f));
+    }
+
     /** Кадр выбора цели: враги крупнее, чем на общем плане, но видны все. */
     public void targets(boolean enemies) {
         Vector3d c = enemies ? enemyCenter : partyCenter;
@@ -88,6 +100,10 @@ public final class BattleCamera {
     }
 
     private void shot(String id, Vector3d look, double sideDeg, double pitchDeg, double dist) {
+        shot(id, look, sideDeg, pitchDeg, dist, s.lerp);
+    }
+
+    private void shot(String id, Vector3d look, double sideDeg, double pitchDeg, double dist, float lerp) {
         if (!s.enabled) return;
         lastShot = id;
         try {
@@ -107,8 +123,8 @@ public final class BattleCamera {
             c.isFirstPerson = false;
             c.eyeOffset = false;
             c.displayCursor = true;
-            c.positionLerpSpeed = s.lerp;
-            c.rotationLerpSpeed = s.lerp;
+            c.positionLerpSpeed = lerp;
+            c.rotationLerpSpeed = lerp;
             c.distance = 0f;
             c.positionDistanceOffsetType = PositionDistanceOffsetType.None;
             c.attachedToType = AttachedToType.None;
