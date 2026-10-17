@@ -148,7 +148,8 @@ public final class JrpgPlugin extends JavaPlugin {
         Player p = store.getComponent(ref, Player.getComponentType());
         if (p == null || !prompting.add(playerRef.getUuid())) return;
         try {
-            p.getPageManager().openCustomPage(ref, store, new PreBattlePage(playerRef, this, setup));
+            Pages.open(this, playerRef, ref, store, new PreBattlePage(playerRef, this, setup), null,
+                    () -> prompting.remove(playerRef.getUuid()));
         } catch (Throwable t) {
             prompting.remove(playerRef.getUuid());
             warn("Окно перед боем не открылось", t);
@@ -191,9 +192,7 @@ public final class JrpgPlugin extends JavaPlugin {
 
     /** Открыть меню прокачки (вызывать в потоке мира). heroId — какая вкладка открыта (null — первая). */
     public void openProgression(PlayerRef playerRef, Ref<EntityStore> ref, Store<EntityStore> store, String heroId) {
-        Player p = store.getComponent(ref, Player.getComponentType());
-        if (p == null) return;
-        p.getPageManager().openCustomPage(ref, store, new ProgressionPage(playerRef, this, partyOf(playerRef.getUuid()), heroId));
+        Pages.open(this, playerRef, ref, store, new ProgressionPage(playerRef, this, partyOf(playerRef.getUuid()), heroId));
     }
 
     public static JrpgPlugin get() { return instance; }

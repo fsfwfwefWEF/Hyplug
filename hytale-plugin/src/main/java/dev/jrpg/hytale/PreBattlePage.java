@@ -126,7 +126,7 @@ public final class PreBattlePage extends InteractiveCustomUIPage<BattleMenuPage.
     private void refresh() {
         UICommandBuilder cmd = new UICommandBuilder();
         fill(cmd);
-        sendUpdate(cmd, false);
+        Pages.update(this, playerRef, cmd);
     }
 
     private void tryFlee(Ref<EntityStore> ref, Store<EntityStore> store) {
@@ -148,15 +148,18 @@ public final class PreBattlePage extends InteractiveCustomUIPage<BattleMenuPage.
         if (decided) return;
         decided = true;
         plugin.endPrompt(playerRef.getUuid());
-        closeQuietly();
         World world = store.getExternalData().getWorld();
-        // Бой открывает своё меню — на следующем тике, когда это окно уже закрыто.
+        // Это окно не закрываем: меню боя сразу встанет на его место. Если закрыть окно и тут же
+        // открыть другое, клиент не подтверждает закрытие и сервер перестаёт принимать нажатия (0.6.0).
         world.execute(() -> {
             if (!ref.isValid()) return;
             if (setup.beforeBattle() != null) setup.beforeBattle().run();
             String err = BattleSession.start(plugin, setup.encounter(), playerRef, ref, store, world,
                     setup.center(), opening, setup.dir());
-            if (err != null) playerRef.sendMessage(Message.raw(err));
+            if (err != null) {
+                playerRef.sendMessage(Message.raw(err));
+                closeQuietly();
+            }
         });
     }
 
@@ -179,7 +182,7 @@ public final class PreBattlePage extends InteractiveCustomUIPage<BattleMenuPage.
 
     private void closeQuietly() {
         try {
-            close();
+            Pages.close(this, playerRef);
         } catch (Throwable t) {
             plugin.warn("Не удалось закрыть окно перед боем", t);
         }

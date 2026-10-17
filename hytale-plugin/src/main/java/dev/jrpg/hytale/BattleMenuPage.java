@@ -105,13 +105,20 @@ public final class BattleMenuPage extends InteractiveCustomUIPage<BattleMenuPage
 
     /** Обновить содержимое без пересборки страницы. */
     public void refresh() {
+        if (!Pages.isOpen(this, playerRef)) return;
         UICommandBuilder cmd = new UICommandBuilder();
         fill(cmd);
-        sendUpdate(cmd, false);
+        Pages.update(this, playerRef, cmd);
     }
 
     public void closePage() {
-        close();
+        Pages.close(this, playerRef);
+    }
+
+    /** Esc или замена другим окном: бой не прерывается, сессия вернёт меню. */
+    @Override
+    public void onDismiss(@Nonnull Ref<EntityStore> ref, @Nonnull Store<EntityStore> store) {
+        session.onMenuDismissed(this);
     }
 
     // ---------- заполнение ----------

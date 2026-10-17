@@ -124,14 +124,22 @@ public final class ProgressionPage extends InteractiveCustomUIPage<BattleMenuPag
                 message = "Очки " + h.def.name() + " возвращены";
             }
             case "close" -> {
-                close();
+                Pages.close(this, playerRef);
                 return;
             }
             default -> { }
         }
         UICommandBuilder cmd = new UICommandBuilder();
         fill(cmd);
-        sendUpdate(cmd, false);
+        Pages.update(this, playerRef, cmd);
+    }
+
+    /** Закрыли прокачку посреди боя — вернуть меню боя. */
+    @Override
+    public void onDismiss(@Nonnull Ref<EntityStore> ref, @Nonnull Store<EntityStore> store) {
+        BattleSession s = plugin.sessions().get(playerRef.getUuid());
+        if (s == null || s.isClosed()) return;
+        store.getExternalData().getWorld().execute(s::reopenMenuIfFree);
     }
 
     private void learn(Progression.Hero h) {

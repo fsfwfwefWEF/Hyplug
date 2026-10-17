@@ -7,6 +7,7 @@ import com.hypixel.hytale.math.vector.Rotation3f;
 import com.hypixel.hytale.server.core.Message;
 import com.hypixel.hytale.server.core.entity.Frozen;
 import com.hypixel.hytale.server.core.entity.entities.Player;
+import com.hypixel.hytale.server.core.entity.entities.player.pages.PageManager;
 import com.hypixel.hytale.server.core.modules.entity.component.Invulnerable;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.hypixel.hytale.server.core.universe.world.World;
@@ -42,6 +43,10 @@ public final class BattleSession implements BattleListener {
     private static final long FLYBY_STEP_MS = 650;
     /** Пауза между всплывающими надписями над одним бойцом, мс. */
     private static final long POP_STEP_MS = 450;
+    /** Через сколько вернуть меню, закрытое Esc, мс. */
+    private static final long REOPEN_MS = 350;
+    /** Сколько ждать, не наведут ли мышь на соседнюю кнопку, прежде чем гасить подсветку, мс. */
+    private static final long UNHOVER_MS = 150;
 
     private final JrpgPlugin plugin;
     private final Encounter encounter;
@@ -69,6 +74,9 @@ public final class BattleSession implements BattleListener {
     private String inspectId;
     /** Над чьей кнопкой «?» сейчас мышь (подсветка карточки и описание, без выбора цели). */
     private String peekId;
+    /** Номер последнего события мыши: уход с кнопки гасит подсветку, только если за ним не было нового наведения. */
+    private int mouseSeq;
+    private boolean escHintShown;
     /** Через сколько мс начнётся показ текущего действия (чтобы павшие исчезали не раньше удара). */
     private long presentDelay;
     private Battle.Opening opening = Battle.Opening.NORMAL;
@@ -243,8 +251,14 @@ public final class BattleSession implements BattleListener {
     void onOption(int index) {
         if (closed) return;
         if (menu.screen() == BattleMenu.Screen.ENDED) {
-            finish();
-            if (index == 1) plugin.openProgression(player, playerEntity, store, null);
+            if (index == 1) {
+                // Окно прокачки сразу заменяет меню боя: закрыть и тут же открыть другое окно нельзя.
+                cleanup(false);
+                say("Бой окончен.");
+                plugin.openProgression(player, playerEntity, store, null);
+            } else {
+                finish();
+            }
             return;
         }
         if (battle.phase() != Battle.Phase.AWAIT_COMMAND) return;
@@ -272,6 +286,7 @@ public final class BattleSession implements BattleListener {
     /** Мышь над пунктом меню: описание в окне описаний; на экране целей — камера на цель. */
     void onHover(int index) {
         if (closed) return;
+        mouseSeq++;
         hoverIndex = index;
         hoverScreen = menu.screen();
         inspectId = null;
@@ -287,12 +302,13 @@ public final class BattleSession implements BattleListener {
     void onUnhover(int index) {
         if (closed || hoverIndex != index) return;
         hoverIndex = -1;
-        refresh();
+        refreshUnlessHovered();
     }
 
     /** Мышь над «?» на карточке: описание бойца и подсветка, но цель не выбирается. */
     void onPeek(String combatantId) {
         if (closed || combatantId == null || combatantId.equals(peekId)) return;
+        mouseSeq++;
         peekId = combatantId;
         refresh();
     }
@@ -300,7 +316,18 @@ public final class BattleSession implements BattleListener {
     void onUnpeek() {
         if (closed || peekId == null) return;
         peekId = null;
-        refresh();
+        refreshUnlessHovered();
+    }
+
+    /**
+     * Мышь ушла с кнопки: обычно следом она наводится на соседнюю, и одно обновление окна вместо двух.
+     * Каждое обновление окна ждёт ответа клиента, и пока ответа нет, сервер не принимает нажатия.
+     */
+    private void refreshUnlessHovered() {
+        int seq = ++mouseSeq;
+        later(UNHOVER_MS, () -> {
+            if (seq == mouseSeq) refresh();
+        });
     }
 
     int hoverIndex() { return hoverScreen == menu.screen() ? hoverIndex : -1; }
@@ -349,10 +376,31 @@ public final class BattleSession implements BattleListener {
 
     public void openMenu() {
         if (closed) return;
-        Player p = store.getComponent(playerEntity, Player.getComponentType());
-        if (p == null) return;
-        page = new BattleMenuPage(player, this);
-        p.getPageManager().openCustomPage(playerEntity, store, page);
+        BattleMenuPage next = new BattleMenuPage(player, this);
+        page = next;
+        Pages.open(plugin, player, playerEntity, store, next, () -> !closed && page == next, null);
+    }
+
+    /**
+     * Меню закрыли (Esc) или его сменило другое окно. Бой идёт дальше; если через миг никакого
+     * окна нет — меню возвращается. Окно прокачки поверх боя не трогаем: после него меню вернётся само.
+     */
+    void onMenuDismissed(BattleMenuPage dismissed) {
+        if (closed || dismissed != page) return;
+        later(REOPEN_MS, () -> {
+            if (page != dismissed || !reopenMenuIfFree() || escHintShown) return;
+            escHintShown = true;
+            say("Меню боя не закрывается. Уйти из боя: «Бегство» или /jrpg stop.");
+        });
+    }
+
+    /** Вернуть меню боя, если у игрока сейчас не открыто другое окно. */
+    boolean reopenMenuIfFree() {
+        if (closed) return false;
+        PageManager pm = Pages.manager(store, playerEntity);
+        if (pm == null || pm.getCustomPage() != null) return false;
+        openMenu();
+        return true;
     }
 
     private void refresh() {
@@ -675,12 +723,17 @@ public final class BattleSession implements BattleListener {
     }
 
     private void cleanup() {
+        cleanup(true);
+    }
+
+    /** closeMenu = false — меню сейчас заменит другое окно, закрывать его отдельно не надо. */
+    private void cleanup(boolean closeMenu) {
         closed = true;
         plugin.sessions().remove(player.getUuid(), this);
         plugin.markBattleEnded(player.getUuid());
         despawnPuppets();
         if (camera != null) camera.reset();
-        if (page != null) {
+        if (closeMenu && page != null) {
             try {
                 page.closePage();
             } catch (Throwable t) {
