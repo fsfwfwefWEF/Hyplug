@@ -1,0 +1,4 @@
+Group {
+  Anchor: (Width: 22, Height: 22);
+  Background: (TexturePath: "st_guard.png");
+}

@@ -1,0 +1,369 @@
+$C = "../Common.ui";
+
+// Меню прокачки партии (тестовое). Собрано tools/gen_battle_ui.py — правь скрипт.
+
+Group {
+  LayoutMode: Top;
+
+  Group { FlexWeight: 1; }
+  Group {
+    Anchor: (Height: 760);
+    LayoutMode: Left;
+
+    Group { FlexWeight: 1; }
+    Group #Window {
+      Anchor: (Width: 1120);
+      LayoutMode: Top;
+      Background: #070b12(0.94);
+      Padding: (Full: 14);
+
+      Group {
+        Anchor: (Height: 40);
+        LayoutMode: Left;
+
+        Label {
+          Text: "ПРОКАЧКА ПАРТИИ";
+          Anchor: (Height: 38);
+          FlexWeight: 1;
+          Style: (FontSize: 24, TextColor: #e8c46a, RenderBold: true);
+        }
+        Label {
+          Text: "тестовая версия";
+          Anchor: (Width: 160, Height: 38);
+          Style: (FontSize: 13, TextColor: #9fb0c6);
+        }
+      }
+      Group #Tabs {
+        Anchor: (Height: 42);
+        LayoutMode: Left;
+
+        $C.@SecondaryTextButton #Tab0 { @Text = ""; Anchor: (Width: 220, Height: 38); }
+        Group { Anchor: (Width: 8); }
+        $C.@SecondaryTextButton #Tab1 { @Text = ""; Anchor: (Width: 220, Height: 38); }
+        Group { Anchor: (Width: 8); }
+        $C.@SecondaryTextButton #Tab2 { @Text = ""; Anchor: (Width: 220, Height: 38); }
+        Group { Anchor: (Width: 8); }
+      }
+      Group { Anchor: (Height: 8); }
+      Group {
+        FlexWeight: 1;
+        LayoutMode: Left;
+
+        Group #HeroCol {
+          Anchor: (Width: 400);
+          LayoutMode: Top;
+          Background: #141d2e(0.92);
+          Padding: (Full: 10);
+
+          Group {
+            Anchor: (Height: 92);
+            LayoutMode: Left;
+
+            Group #HeroIcon { Anchor: (Width: 88, Height: 88); }
+            Group { Anchor: (Width: 10); }
+            Group {
+              FlexWeight: 1;
+              LayoutMode: Top;
+
+              Label #HeroName {
+                Text: "";
+                Anchor: (Height: 30);
+                Style: (FontSize: 22, TextColor: #e9eef6, RenderBold: true);
+              }
+              Label #HeroTitle {
+                Text: "";
+                Anchor: (Height: 20);
+                Style: (FontSize: 14, TextColor: #e8c46a);
+              }
+              Label #HeroLevel {
+                Text: "";
+                Anchor: (Height: 36);
+                Style: (FontSize: 14, TextColor: #9fb0c6, Wrap: true);
+              }
+            }
+          }
+          Group #ExpBack {
+            Anchor: (Width: 370, Height: 8);
+            LayoutMode: Left;
+            Background: #2a2410;
+            Group #ExpFill { Anchor: (Width: 370, Height: 8); Background: #e8c46a; }
+          }
+          Group { Anchor: (Height: 8); }
+          Label #Points {
+            Text: "";
+            Anchor: (Height: 40);
+            Style: (FontSize: 14, TextColor: #e8c46a, RenderBold: true, Wrap: true);
+          }
+          Label {
+            Text: "ХАРАКТЕРИСТИКИ";
+            Anchor: (Height: 22);
+            Style: (FontSize: 13, TextColor: #9fb0c6, RenderBold: true);
+          }
+          Group #StatRow0 {
+            Anchor: (Height: 36);
+            LayoutMode: Left;
+
+            Label #Stat0 {
+              Text: "";
+              Anchor: (Height: 34);
+              FlexWeight: 1;
+              Style: (FontSize: 15, TextColor: #e9eef6);
+            }
+            $C.@SecondaryTextButton #StatPlus0 { @Text = "+"; Anchor: (Width: 44, Height: 32); }
+          }
+          Group #StatRow1 {
+            Anchor: (Height: 36);
+            LayoutMode: Left;
+
+            Label #Stat1 {
+              Text: "";
+              Anchor: (Height: 34);
+              FlexWeight: 1;
+              Style: (FontSize: 15, TextColor: #e9eef6);
+            }
+            $C.@SecondaryTextButton #StatPlus1 { @Text = "+"; Anchor: (Width: 44, Height: 32); }
+          }
+          Group #StatRow2 {
+            Anchor: (Height: 36);
+            LayoutMode: Left;
+
+            Label #Stat2 {
+              Text: "";
+              Anchor: (Height: 34);
+              FlexWeight: 1;
+              Style: (FontSize: 15, TextColor: #e9eef6);
+            }
+            $C.@SecondaryTextButton #StatPlus2 { @Text = "+"; Anchor: (Width: 44, Height: 32); }
+          }
+          Group #StatRow3 {
+            Anchor: (Height: 36);
+            LayoutMode: Left;
+
+            Label #Stat3 {
+              Text: "";
+              Anchor: (Height: 34);
+              FlexWeight: 1;
+              Style: (FontSize: 15, TextColor: #e9eef6);
+            }
+            $C.@SecondaryTextButton #StatPlus3 { @Text = "+"; Anchor: (Width: 44, Height: 32); }
+          }
+          Group #StatRow4 {
+            Anchor: (Height: 36);
+            LayoutMode: Left;
+
+            Label #Stat4 {
+              Text: "";
+              Anchor: (Height: 34);
+              FlexWeight: 1;
+              Style: (FontSize: 15, TextColor: #e9eef6);
+            }
+            $C.@SecondaryTextButton #StatPlus4 { @Text = "+"; Anchor: (Width: 44, Height: 32); }
+          }
+          Group #StatRow5 {
+            Anchor: (Height: 36);
+            LayoutMode: Left;
+
+            Label #Stat5 {
+              Text: "";
+              Anchor: (Height: 34);
+              FlexWeight: 1;
+              Style: (FontSize: 15, TextColor: #e9eef6);
+            }
+            $C.@SecondaryTextButton #StatPlus5 { @Text = "+"; Anchor: (Width: 44, Height: 32); }
+          }
+          Group { Anchor: (Height: 6); }
+          Label #Known {
+            Text: "";
+            FlexWeight: 1;
+            Style: (FontSize: 12, TextColor: #9fb0c6, Wrap: true);
+          }
+        }
+        Group { Anchor: (Width: 12); }
+        Group #TreeCol {
+          FlexWeight: 1;
+          LayoutMode: Top;
+          Background: #0b111c(0.88);
+          Padding: (Full: 10);
+
+          Label {
+            Text: "ДЕРЕВО НАВЫКОВ";
+            Anchor: (Height: 26);
+            Style: (FontSize: 15, TextColor: #e8c46a, RenderBold: true);
+          }
+          Label {
+            Text: "Очки навыков даются за уровень. Навыки открываются по порядку.";
+            Anchor: (Height: 20);
+            Style: (FontSize: 12, TextColor: #9fb0c6);
+          }
+          Group #Node0 {
+            Anchor: (Height: 86);
+            LayoutMode: Left;
+            Background: #141d2e(0.92);
+            Padding: (Full: 6);
+
+            Group #Node0Icon { Anchor: (Width: 40, Height: 40); }
+            Group { Anchor: (Width: 8); }
+            Group {
+              FlexWeight: 1;
+              LayoutMode: Top;
+
+              Label #Node0Name {
+                Text: "";
+                Anchor: (Height: 22);
+                Style: (FontSize: 16, TextColor: #e8c46a, RenderBold: true);
+              }
+              Label #Node0Text {
+                Text: "";
+                FlexWeight: 1;
+                Style: (FontSize: 12, TextColor: #e9eef6, Wrap: true);
+              }
+            }
+            Group { Anchor: (Width: 8); }
+            Group {
+              Anchor: (Width: 150);
+              LayoutMode: Top;
+
+              Label #Node0State {
+                Text: "";
+                Anchor: (Height: 30);
+                Style: (FontSize: 12, TextColor: #9fb0c6, Wrap: true);
+              }
+              $C.@SecondaryTextButton #Learn0 { @Text = "Изучить"; Anchor: (Height: 34); }
+            }
+          }
+          Group { Anchor: (Height: 6); }
+          Group #Node1 {
+            Anchor: (Height: 86);
+            LayoutMode: Left;
+            Background: #141d2e(0.92);
+            Padding: (Full: 6);
+
+            Group #Node1Icon { Anchor: (Width: 40, Height: 40); }
+            Group { Anchor: (Width: 8); }
+            Group {
+              FlexWeight: 1;
+              LayoutMode: Top;
+
+              Label #Node1Name {
+                Text: "";
+                Anchor: (Height: 22);
+                Style: (FontSize: 16, TextColor: #e8c46a, RenderBold: true);
+              }
+              Label #Node1Text {
+                Text: "";
+                FlexWeight: 1;
+                Style: (FontSize: 12, TextColor: #e9eef6, Wrap: true);
+              }
+            }
+            Group { Anchor: (Width: 8); }
+            Group {
+              Anchor: (Width: 150);
+              LayoutMode: Top;
+
+              Label #Node1State {
+                Text: "";
+                Anchor: (Height: 30);
+                Style: (FontSize: 12, TextColor: #9fb0c6, Wrap: true);
+              }
+              $C.@SecondaryTextButton #Learn1 { @Text = "Изучить"; Anchor: (Height: 34); }
+            }
+          }
+          Group { Anchor: (Height: 6); }
+          Group #Node2 {
+            Anchor: (Height: 86);
+            LayoutMode: Left;
+            Background: #141d2e(0.92);
+            Padding: (Full: 6);
+
+            Group #Node2Icon { Anchor: (Width: 40, Height: 40); }
+            Group { Anchor: (Width: 8); }
+            Group {
+              FlexWeight: 1;
+              LayoutMode: Top;
+
+              Label #Node2Name {
+                Text: "";
+                Anchor: (Height: 22);
+                Style: (FontSize: 16, TextColor: #e8c46a, RenderBold: true);
+              }
+              Label #Node2Text {
+                Text: "";
+                FlexWeight: 1;
+                Style: (FontSize: 12, TextColor: #e9eef6, Wrap: true);
+              }
+            }
+            Group { Anchor: (Width: 8); }
+            Group {
+              Anchor: (Width: 150);
+              LayoutMode: Top;
+
+              Label #Node2State {
+                Text: "";
+                Anchor: (Height: 30);
+                Style: (FontSize: 12, TextColor: #9fb0c6, Wrap: true);
+              }
+              $C.@SecondaryTextButton #Learn2 { @Text = "Изучить"; Anchor: (Height: 34); }
+            }
+          }
+          Group { Anchor: (Height: 6); }
+          Group #Node3 {
+            Anchor: (Height: 86);
+            LayoutMode: Left;
+            Background: #141d2e(0.92);
+            Padding: (Full: 6);
+
+            Group #Node3Icon { Anchor: (Width: 40, Height: 40); }
+            Group { Anchor: (Width: 8); }
+            Group {
+              FlexWeight: 1;
+              LayoutMode: Top;
+
+              Label #Node3Name {
+                Text: "";
+                Anchor: (Height: 22);
+                Style: (FontSize: 16, TextColor: #e8c46a, RenderBold: true);
+              }
+              Label #Node3Text {
+                Text: "";
+                FlexWeight: 1;
+                Style: (FontSize: 12, TextColor: #e9eef6, Wrap: true);
+              }
+            }
+            Group { Anchor: (Width: 8); }
+            Group {
+              Anchor: (Width: 150);
+              LayoutMode: Top;
+
+              Label #Node3State {
+                Text: "";
+                Anchor: (Height: 30);
+                Style: (FontSize: 12, TextColor: #9fb0c6, Wrap: true);
+              }
+              $C.@SecondaryTextButton #Learn3 { @Text = "Изучить"; Anchor: (Height: 34); }
+            }
+          }
+          Group { Anchor: (Height: 6); }
+          Group { FlexWeight: 1; }
+          Label #Message {
+            Text: "";
+            Anchor: (Height: 24);
+            Style: (FontSize: 14, TextColor: #ffd27a);
+          }
+        }
+      }
+      Group { Anchor: (Height: 10); }
+      Group {
+        Anchor: (Height: 40);
+        LayoutMode: Left;
+
+        $C.@SecondaryTextButton #AddExp { @Text = "+100 опыта (тест)"; Anchor: (Width: 230, Height: 36); }
+        Group { Anchor: (Width: 8); }
+        $C.@SecondaryTextButton #Respec { @Text = "Сбросить очки"; Anchor: (Width: 200, Height: 36); }
+        Group { FlexWeight: 1; }
+        $C.@CancelTextButton #Close { @Text = "Закрыть"; Anchor: (Width: 160, Height: 36); }
+      }
+    }
+    Group { FlexWeight: 1; }
+  }
+  Group { FlexWeight: 1; }
+}

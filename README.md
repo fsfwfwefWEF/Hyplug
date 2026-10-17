@@ -7,3 +7,6 @@
 - Консольный прототип: `play.bat` / `sh play.sh`
 
 Подробности: [DEVLOG.md](DEVLOG.md) (как устроено и как переносить), [DESIGN.md](DESIGN.md) (дизайн).
+
+Команды в игре: `/jrpg list`, `/jrpg start <id>`, `/jrpg menu`, `/jrpg stop`, `/jrpg party` (прокачка), `/jrpg roles <фильтр>`, `/jrpg reload`.
+Генераторы интерфейса и иконок: `tools/gen_battle_ui.py`, `tools/gen_icons.py`.

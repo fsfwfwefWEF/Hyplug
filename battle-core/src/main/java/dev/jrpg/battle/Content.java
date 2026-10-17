@@ -15,10 +15,25 @@ public final class Content {
     private final Map<String, StatusDef> statuses = new HashMap<>();
     private final Map<String, Ability> abilities = new HashMap<>();
     private final Map<String, Item> items = new HashMap<>();
+    private final Map<String, String> flavors = new HashMap<>();
+    private final Map<String, String> icons = new HashMap<>();
+    private final Map<String, Progression.HeroDef> heroes = new java.util.LinkedHashMap<>();
 
     public void add(StatusDef s) { statuses.put(s.id(), s); }
     public void add(Ability a) { abilities.put(a.id(), a); }
     public void add(Item i) { items.put(i.id(), i); }
+    public void add(Progression.HeroDef h) { heroes.put(h.id(), h); }
+
+    /** Художественное описание способности/предмета для окна описаний ("" если нет). */
+    public String flavor(String id) { return flavors.getOrDefault(id, ""); }
+    public void flavor(String id, String text) { flavors.put(id, text); }
+
+    /** Явная иконка способности/предмета (иначе выбирается по эффекту, см. {@link Describe}). */
+    public String icon(String id) { return icons.get(id); }
+    public void icon(String id, String key) { icons.put(id, key); }
+
+    public java.util.Collection<Progression.HeroDef> heroes() { return heroes.values(); }
+    public Progression.HeroDef hero(String id) { return require(heroes, id, "герой"); }
 
     public StatusDef status(String id) { return require(statuses, id, "статус"); }
     public Ability ability(String id) { return require(abilities, id, "способность"); }
@@ -103,18 +118,85 @@ public final class Content {
         // Уникальный лут с босса
         c.add(new Item("queen_fang", "Клык королевы", dmg("item_queen_fang", "Клык королевы", 0, 0,
                 TargetType.SINGLE_ENEMY, 2.5, false, List.of(new StatusApply("poison", 1.0, 4)), 0, 100)));
+
+        // Способности, которые открываются прокачкой (дерево навыков в Progression)
+        c.add(dmg("whirlwind", "Вихрь клинков", 4, 0, TargetType.ALL_ENEMIES, 1.1, false, List.of(), 0, 120));
+        c.add(dmg("execute", "Казнь", 5, 0, TargetType.SINGLE_ENEMY, 2.6, false, List.of(), 0, 120));
+        c.add(dmg("thunder", "Молния", 1, 14, TargetType.SINGLE_ENEMY, 1.5, true,
+                List.of(new StatusApply("stun", 0.3, 1)), 0, 100));
+        c.add(support("barrier", "Барьер", 3, 16, TargetType.ALL_ALLIES, 0, 0, List.of(),
+                List.of(new StatusApply("guard", 1.0, 2))));
+        c.add(support("iron_wall", "Железная стена", 2, 0, TargetType.SINGLE_ALLY, 0, 0, List.of(),
+                List.of(new StatusApply("guard", 1.0, 2))));
+        c.add(dmg("earthquake", "Землетрясение", 5, 0, TargetType.ALL_ENEMIES, 1.2, false,
+                List.of(new StatusApply("slow", 0.3, 2)), 0, 130));
+
+        demoFlavor(c);
+        demoHeroes(c);
         return c;
     }
 
-    /** Стартовая партия из 3 персонажей. */
+    private static void demoFlavor(Content c) {
+        c.flavor(ATTACK, "Обычный удар оружием. Копит очки действия (AP) для способностей.");
+        c.flavor(DEFEND, "Встать в защиту до своего следующего хода.");
+        c.flavor("fire_slash", "Клинок, объятый пламенем, оставляет горящую рану.");
+        c.flavor("shield_bash", "Тяжёлый удар щитом, может оглушить.");
+        c.flavor("focus", "Сосредоточиться: следующий удар будет мощнее.");
+        c.flavor("fireball", "Классика магии огня.");
+        c.flavor("blizzard", "Ледяной вихрь накрывает всех врагов и сковывает движения.");
+        c.flavor("cure", "Исцеляющий свет, заодно выводит яд.");
+        c.flavor("haste_spell", "Ускоряет союзника: он ходит чаще.");
+        c.flavor("cleave", "Широкий взмах по всем врагам.");
+        c.flavor("rally", "Боевой клич: союзники понемногу восстанавливают здоровье.");
+        c.flavor("venom_bite", "Укус с ядом.");
+        c.flavor("web", "Липкая паутина замедляет цель.");
+        c.flavor("goblin_frenzy", "Гоблин впадает в ярость и бьёт со всей силы.");
+        c.flavor("acid_rain", "Кислота льётся на всю партию.");
+        c.flavor("queen_frenzy", "Королева бросается на одну цель.");
+        c.flavor("cocoon", "Королева заматывает цель в кокон: та пропускает ходы.");
+        c.flavor("goo_mend", "Слизень латает союзника своей слизью.");
+        c.flavor("whirlwind", "Вращение с клинком задевает всех врагов.");
+        c.flavor("execute", "Сокрушительный удар по одной цели.");
+        c.flavor("thunder", "Разряд молнии, иногда оглушает.");
+        c.flavor("barrier", "Магический щит на всю партию.");
+        c.flavor("iron_wall", "Брам прикрывает союзника собой.");
+        c.flavor("earthquake", "Удар по земле сотрясает всех врагов.");
+        c.flavor("potion", "Восстанавливает здоровье.");
+        c.flavor("ether", "Восстанавливает ману.");
+        c.flavor("antidote", "Выводит яд.");
+        c.flavor("bomb", "Взрывается и поджигает всех врагов.");
+        c.flavor("queen_fang", "Ядовитый клык поверженной королевы.");
+        c.icon(ATTACK, "sword");
+        c.icon(DEFEND, "shield");
+        c.icon("potion", "potion");
+        c.icon("ether", "ether");
+        c.icon("antidote", "antidote");
+        c.icon("bomb", "bomb");
+        c.icon("queen_fang", "fang");
+        c.icon("thunder", "thunder");
+        c.icon("earthquake", "quake");
+    }
+
+    /** Герои партии: базовые характеристики, рост за уровень и дерево навыков. */
+    private static void demoHeroes(Content c) {
+        c.add(new Progression.HeroDef("hero", "Герой", "Мечник", new Stats(120, 20, 22, 8, 12, 12),
+                new Stats(12, 2, 3, 1, 2, 1), List.of("fire_slash", "shield_bash", "focus"),
+                List.of(new Progression.SkillNode("whirlwind", 1, 2, null),
+                        new Progression.SkillNode("execute", 2, 4, "whirlwind"))));
+        c.add(new Progression.HeroDef("lyra", "Лира", "Чародейка", new Stats(85, 70, 9, 24, 7, 14),
+                new Stats(7, 8, 1, 3, 1, 1), List.of("fireball", "blizzard", "cure", "haste_spell"),
+                List.of(new Progression.SkillNode("thunder", 1, 2, null),
+                        new Progression.SkillNode("barrier", 2, 4, "thunder"))));
+        c.add(new Progression.HeroDef("bram", "Брам", "Страж", new Stats(160, 15, 18, 6, 18, 8),
+                new Stats(16, 1, 2, 1, 3, 0), List.of("cleave", "rally"),
+                List.of(new Progression.SkillNode("iron_wall", 1, 2, null),
+                        new Progression.SkillNode("earthquake", 2, 4, "iron_wall"))));
+    }
+
+    /** Стартовая партия из 3 персонажей (1 уровень, без прокачки). */
     public static List<Combatant> demoParty() {
-        return List.of(
-                new Combatant("hero", "Герой", Side.PARTY, new Stats(120, 20, 22, 8, 12, 12),
-                        List.of("fire_slash", "shield_bash", "focus")),
-                new Combatant("lyra", "Лира", Side.PARTY, new Stats(85, 70, 9, 24, 7, 14),
-                        List.of("fireball", "blizzard", "cure", "haste_spell")),
-                new Combatant("bram", "Брам", Side.PARTY, new Stats(160, 15, 18, 6, 18, 8),
-                        List.of("cleave", "rally")));
+        Content c = demo();
+        return new Progression.Party(c).buildParty(c);
     }
 
     public static List<Combatant> demoEnemies() {

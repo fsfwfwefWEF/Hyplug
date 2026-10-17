@@ -3,7 +3,6 @@ package dev.jrpg.hytale;
 import com.hypixel.hytale.component.RemoveReason;
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
-import org.joml.Vector3d;
 import com.hypixel.hytale.math.vector.Rotation3f;
 import com.hypixel.hytale.server.core.Message;
 import com.hypixel.hytale.server.core.entity.Frozen;
@@ -16,6 +15,7 @@ import com.hypixel.hytale.server.npc.NPCPlugin;
 import com.hypixel.hytale.server.npc.entities.NPCEntity;
 import dev.jrpg.battle.*;
 import it.unimi.dsi.fastutil.Pair;
+import org.joml.Vector3d;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
@@ -28,12 +28,15 @@ import java.util.concurrent.TimeUnit;
  * Один бой одного игрока в мире Hytale: арена, NPC-«куклы», меню, камера, паузы между ходами.
  * Правила боя целиком в {@link Battle}; здесь только показ и ввод.
  *
+ * Как показывается ход: начало хода — камера наезжает на того, кто ходит; герой выбирает команду
+ * в меню (враг «думает» enemyThinkMs); затем кадр «атакующий + цель», баннер с названием приёма,
+ * атакующий подходит к цели; через actionDelayMs всё возвращается и начинается следующий ход.
+ *
  * Потоки: всё, что трогает мир/ECS/Battle, выполняется в потоке мира (world.execute).
  */
 public final class BattleSession implements BattleListener {
-    private static final float FACE_ENEMIES = 0f;
-    private static final float FACE_PARTY = (float) Math.PI;
     private static final double[] PARTY_X = {0, -2.5, 2.5, -5, 5};
+    private static final long INTRO_MS = 1600;
 
     private final JrpgPlugin plugin;
     private final Encounter encounter;
@@ -48,8 +51,17 @@ public final class BattleSession implements BattleListener {
     private Battle battle;
     private BattleMenu menu;
     private BattleMenuPage page;
+    private BattleCamera camera;
+    private Vector3d enemyCenter;
     private boolean closed;
     private int summonSlot;
+    private String banner = "";
+    /** Окно описаний: на что навели мышь в меню (номер пункта) или кого «осматривают» кнопкой «?». */
+    private int hoverIndex = -1;
+    private BattleMenu.Screen hoverScreen;
+    private String inspectId;
+    /** Через сколько мс начнётся показ текущего действия (чтобы павшие исчезали не раньше удара). */
+    private long presentDelay;
 
     private BattleSession(JrpgPlugin plugin, Encounter encounter, PlayerRef player, Ref<EntityStore> playerEntity,
                           Store<EntityStore> store, World world, Vector3d center) {
@@ -80,51 +92,81 @@ public final class BattleSession implements BattleListener {
     }
 
     private void begin() {
-        List<Combatant> party = Content.demoParty();
+        Content content = plugin.content();
+        List<Combatant> party = plugin.partyOf(player.getUuid()).buildParty(content);
         battle = plugin.data().createBattle(encounter, party,
                 plugin.inventoryOf(player.getUuid()), this, System.nanoTime());
         menu = new BattleMenu(battle);
 
-        // Арена: партия в линию на месте игрока, враги напротив (по +Z).
-        for (int i = 0; i < party.size(); i++) {
-            Combatant c = party.get(i);
-            Vector3d pos = new Vector3d(center.x + PARTY_X[i], center.y, center.z);
-            homes.put(c.id, pos);
-            if (c.id.equals("hero")) {
-                puppets.put(c.id, playerEntity);
-                Fx.teleportPlayer(store, playerEntity, pos, FACE_ENEMIES);
-            } else {
-                spawnPuppet(c, plugin.settings().companionRoles.get(c.id), pos, FACE_ENEMIES);
-            }
-        }
+        // Арена: партия в линию на месте игрока, враги напротив (по +Z), все лицом друг к другу.
         int n = 0;
+        double ex = 0, ez = 0;
         for (Combatant c : battle.combatants()) {
             if (c.side != Side.ENEMY) continue;
             Encounter.Spot spot = encounter.enemies().get(n++);
             Vector3d pos = new Vector3d(center.x + spot.x(), center.y, center.z + spot.z());
             homes.put(c.id, pos);
-            spawnPuppet(c, plugin.data().enemy(c.templateId).role(), pos, FACE_PARTY);
+            ex += pos.x;
+            ez += pos.z;
+        }
+        enemyCenter = n == 0 ? new Vector3d(center.x, center.y, center.z + 6) : new Vector3d(ex / n, center.y, ez / n);
+        for (int i = 0; i < party.size(); i++) {
+            Combatant c = party.get(i);
+            Vector3d pos = new Vector3d(center.x + PARTY_X[i % PARTY_X.length], center.y, center.z);
+            homes.put(c.id, pos);
+            float yaw = Fx.yawTowards(pos, enemyCenter);
+            if (c.id.equals("hero")) {
+                puppets.put(c.id, playerEntity);
+                Fx.teleportPlayer(store, playerEntity, pos, yaw);
+            } else {
+                spawnPuppet(c, plugin.settings().companionRoles.get(c.id), pos, yaw);
+            }
+        }
+        for (Combatant c : battle.combatants()) {
+            if (c.side == Side.ENEMY) spawnPuppet(c, plugin.data().enemy(c.templateId).role(), homes.get(c.id), faceParty(c.id));
         }
 
-        Fx.battleCamera(player, plugin.settings());
+        camera = new BattleCamera(player, plugin.settings().camera, center, enemyCenter);
+        camera.setPlayerPos(homes.get("hero"));
+        camera.overview();
+        banner = encounter.name();
         say("Бой: " + encounter.name());
         openMenu();
-        battle.start(Battle.Opening.NORMAL);
-        refresh();
+        // Небольшая заставка общим планом, потом первый ход.
+        later(INTRO_MS, () -> {
+            banner = "";
+            battle.start(Battle.Opening.NORMAL);
+            refresh();
+        });
+    }
+
+    private float faceParty(String id) {
+        Vector3d pos = homes.get(id);
+        return pos == null ? 0f : Fx.yawTowards(pos, center);
     }
 
     // ---------- NPC-куклы ----------
 
-    private void spawnPuppet(Combatant c, String role, Vector3d pos, float yaw) {
-        if (role == null || role.isBlank()) return;
+    /** Роль можно задать списком через «|»: берётся первая, которая есть в игре, иначе fallbackRole. */
+    private String resolveRole(String spec, Combatant c) {
+        if (spec == null || spec.isBlank()) return null;
+        NPCPlugin npcs = NPCPlugin.get();
+        for (String r : spec.split("\\|")) {
+            String role = r.trim();
+            if (!role.isEmpty() && npcs.getIndex(role) >= 0) return role;
+        }
+        String fb = plugin.settings().fallbackRole;
+        Fx.warnOnce("Роль NPC не найдена: " + spec + " (" + c.name + "). Показываю как " + fb
+                + ". Список ролей: /jrpg roles <часть имени>", null);
+        return fb != null && !fb.isBlank() && npcs.getIndex(fb) >= 0 ? fb : null;
+    }
+
+    private void spawnPuppet(Combatant c, String roleSpec, Vector3d pos, float yaw) {
         try {
+            String role = resolveRole(roleSpec, c);
+            if (role == null || pos == null) return;
             NPCPlugin npcs = NPCPlugin.get();
-            int roleIndex = npcs.getIndex(role);
-            if (roleIndex < 0) {
-                plugin.warn("Роль NPC не найдена: " + role + " (" + c.name + "), поправь enemies.json/settings.json", null);
-                return;
-            }
-            Pair<Ref<EntityStore>, NPCEntity> spawned = npcs.spawnEntity(store, roleIndex, pos,
+            Pair<Ref<EntityStore>, NPCEntity> spawned = npcs.spawnEntity(store, npcs.getIndex(role), pos,
                     new Rotation3f(0, yaw, 0), null, null);
             if (spawned == null) return;
             Ref<EntityStore> ref = spawned.first();
@@ -132,21 +174,25 @@ public final class BattleSession implements BattleListener {
             store.putComponent(ref, Invulnerable.getComponentType(), Invulnerable.INSTANCE);
             puppets.put(c.id, ref);
             Fx.nameplate(store, ref, BattleText.nameplate(c, false));
+            // Поворот ещё раз телепортом: при спавне NPC иногда разворачивается сам.
+            Fx.teleport(store, ref, pos, yaw);
         } catch (Throwable t) {
-            plugin.warn("Не удалось заспавнить " + c.name + " (роль " + role + ")", t);
+            plugin.warn("Не удалось заспавнить " + c.name + " (роль " + roleSpec + ")", t);
+        }
+    }
+
+    private void despawn(String id) {
+        Ref<EntityStore> ref = puppets.remove(id);
+        if (ref == null || ref == playerEntity || !ref.isValid()) return;
+        try {
+            store.removeEntity(ref, RemoveReason.REMOVE);
+        } catch (Throwable t) {
+            plugin.warn("Не удалось убрать NPC " + id, t);
         }
     }
 
     private void despawnPuppets() {
-        for (Map.Entry<String, Ref<EntityStore>> e : puppets.entrySet()) {
-            Ref<EntityStore> ref = e.getValue();
-            if (ref == playerEntity || ref == null || !ref.isValid()) continue;
-            try {
-                store.removeEntity(ref, RemoveReason.REMOVE);
-            } catch (Throwable t) {
-                plugin.warn("Не удалось убрать NPC " + e.getKey(), t);
-            }
-        }
+        for (String id : List.copyOf(puppets.keySet())) despawn(id);
         puppets.clear();
     }
 
@@ -159,15 +205,23 @@ public final class BattleSession implements BattleListener {
         }
     }
 
+    private float yawOf(Combatant c) {
+        Vector3d pos = homes.get(c.id);
+        if (pos == null) return 0f;
+        return c.side == Side.PARTY ? Fx.yawTowards(pos, enemyCenter) : Fx.yawTowards(pos, center);
+    }
+
     // ---------- ввод из меню ----------
 
     void onOption(int index) {
         if (closed) return;
         if (menu.screen() == BattleMenu.Screen.ENDED) {
             finish();
+            if (index == 1) plugin.openProgression(player, playerEntity, store, null);
             return;
         }
         if (battle.phase() != Battle.Phase.AWAIT_COMMAND) return;
+        clearInfo();
         BattleAction action = menu.click(index);
         if (action != null) {
             try {
@@ -182,13 +236,43 @@ public final class BattleSession implements BattleListener {
 
     void onBack() {
         if (closed) return;
+        clearInfo();
         menu.back();
+        if (battle.phase() == Battle.Phase.AWAIT_COMMAND) camera.focus(homes.get(battle.current().id), true);
         refresh();
     }
 
-    /** На экране выбора цели — кольца под всеми возможными целями. */
+    /** Мышь над пунктом меню: описание в окне описаний; на экране целей — камера на цель. */
+    void onHover(int index) {
+        if (closed) return;
+        hoverIndex = index;
+        hoverScreen = menu.screen();
+        inspectId = null;
+        if (hoverScreen == BattleMenu.Screen.TARGET && index >= 0 && index < menu.targets().size()) {
+            Combatant t = menu.targets().get(index);
+            camera.action(homes.get(battle.current().id), homes.get(t.id), true);
+            Fx.particle(plugin.settings().targetRing, homes.get(t.id), playerEntity, store);
+        }
+        refresh();
+    }
+
+    /** Кнопка «?» на карточке бойца: его характеристики, статусы и способности. */
+    void onInspect(String combatantId) {
+        if (closed || combatantId == null) return;
+        inspectId = combatantId;
+        hoverIndex = -1;
+        refresh();
+    }
+
+    private void clearInfo() {
+        hoverIndex = -1;
+        inspectId = null;
+    }
+
+    /** На экране выбора цели — кольца под всеми возможными целями и общий план. */
     private void highlightTargets() {
         if (menu.screen() != BattleMenu.Screen.TARGET) return;
+        camera.overview();
         for (Combatant t : menu.targets()) {
             Vector3d pos = homes.get(t.id);
             if (pos != null) Fx.particle(plugin.settings().targetRing, pos, playerEntity, store);
@@ -213,13 +297,34 @@ public final class BattleSession implements BattleListener {
         }
     }
 
-    record View(String party, String enemies, String queue, String log, String title, String error,
-                List<BattleMenu.Option> options, boolean canGoBack) {}
+    // ---------- данные для меню ----------
 
-    View view() {
-        return new View(BattleText.side(battle, Side.PARTY), BattleText.side(battle, Side.ENEMY),
-                battle.phase() == Battle.Phase.ENDED ? "" : BattleText.queue(battle),
-                String.join("\n", log), menu.title(), menu.error(), menu.options(), menu.canGoBack());
+    record Info(String title, String text, String icon) {}
+
+    Battle battle() { return battle; }
+    BattleMenu menu() { return menu; }
+    Settings settings() { return plugin.settings(); }
+    String banner() { return banner; }
+    List<String> logLines() { return List.copyOf(log); }
+
+    Info info() {
+        Content k = battle.content();
+        if (inspectId != null) {
+            Combatant c = battle.byId(inspectId);
+            if (c != null) return new Info(c.name, Describe.combatant(k, c), "portrait:" + Describe.portrait(c));
+        }
+        List<BattleMenu.Option> opts = menu.options();
+        if (hoverIndex >= 0 && hoverScreen == menu.screen() && hoverIndex < opts.size()) {
+            BattleMenu.Option o = opts.get(hoverIndex);
+            if (!o.info().isEmpty()) return new Info(o.label(), o.info(), o.icon());
+        }
+        Combatant c = battle.current();
+        if (battle.phase() == Battle.Phase.ENDED) {
+            return new Info(menu.title(), String.join("\n", log), "levelup");
+        }
+        if (c == null) return new Info(encounter.name(), "Наведи мышь на команду или нажми «?» на карточке, "
+                + "чтобы прочитать описание.", "info");
+        return new Info(c.name, Describe.combatant(k, c), "portrait:" + Describe.portrait(c));
     }
 
     // ---------- события ядра ----------
@@ -227,7 +332,9 @@ public final class BattleSession implements BattleListener {
     @Override
     public void onTurnStart(Combatant actor, List<Combatant> forecast) {
         Vector3d pos = homes.get(actor.id);
+        camera.focus(pos, actor.side == Side.PARTY);
         if (pos != null) Fx.particle(plugin.settings().turnRing, pos, playerEntity, store);
+        clearInfo();
     }
 
     @Override
@@ -241,6 +348,11 @@ public final class BattleSession implements BattleListener {
     }
 
     @Override
+    public void onStatusExpired(Combatant t, StatusInstance s) {
+        addLog(t.name + ": " + s.def.name() + " прошло");
+    }
+
+    @Override
     public void onTurnSkipped(Combatant actor, String reason) {
         addLog(actor.name + " пропускает ход (" + reason + ")");
     }
@@ -248,29 +360,40 @@ public final class BattleSession implements BattleListener {
     @Override
     public void onActionExecuted(ActionResult r) {
         addLog(BattleText.describe(r));
-        // «Выход вперёд» к цели и удар: кукла подходит к первой цели-врагу, потом возвращается.
-        Ref<EntityStore> actorRef = puppets.get(r.actor().id);
+        presentDelay = r.actor().side == Side.ENEMY ? plugin.settings().enemyThinkMs : 0;
+        if (presentDelay > 0) {
+            refresh();
+            later(presentDelay, () -> present(r));
+        } else {
+            present(r);
+        }
+    }
+
+    /** Показ действия: баннер, кадр камеры, выход к цели, частицы; потом возврат и следующий ход. */
+    private void present(ActionResult r) {
+        Combatant actor = r.actor();
+        banner = r.actionName();
+        Ref<EntityStore> actorRef = puppets.get(actor.id);
         Combatant firstTarget = r.hits().isEmpty() ? null : r.hits().get(0).target();
-        boolean lunge = actorRef != null && actorRef != playerEntity && firstTarget != null
-                && firstTarget.side != r.actor().side;
+        Vector3d home = homes.get(actor.id);
+        Vector3d targetPos = firstTarget == null ? null : homes.get(firstTarget.id);
+        camera.action(home, targetPos, actor.side == Side.PARTY);
+
+        boolean lunge = actorRef != null && firstTarget != null && firstTarget.side != actor.side
+                && home != null && targetPos != null;
         if (lunge) {
-            Vector3d t = homes.get(firstTarget.id);
-            Vector3d home = homes.get(r.actor().id);
-            if (t != null && home != null) {
-                Vector3d near = new Vector3d(t.x + (home.x - t.x) * 0.3, t.y, t.z + (home.z - t.z) * 0.3);
-                Fx.teleport(store, actorRef, near, r.actor().side == Side.PARTY ? FACE_ENEMIES : FACE_PARTY);
-            }
+            Vector3d near = new Vector3d(targetPos.x + (home.x - targetPos.x) * 0.3, targetPos.y,
+                    targetPos.z + (home.z - targetPos.z) * 0.3);
+            Fx.teleport(store, actorRef, near, Fx.yawTowards(near, targetPos));
         }
         for (ActionResult.Hit h : r.hits()) {
             Vector3d pos = homes.get(h.target().id);
             if (pos != null && h.damage() > 0) Fx.particle(plugin.settings().hitFx, pos, playerEntity, store);
         }
-        long delay = plugin.settings().actionDelayMs;
-        later(delay, () -> {
-            if (lunge) {
-                Fx.teleport(store, actorRef, homes.get(r.actor().id),
-                        r.actor().side == Side.PARTY ? FACE_ENEMIES : FACE_PARTY);
-            }
+        refresh();
+        later(plugin.settings().actionDelayMs, () -> {
+            if (lunge) Fx.teleport(store, actorRef, home, yawOf(actor));
+            banner = "";
             if (battle.phase() == Battle.Phase.PRESENTING) battle.acknowledge();
             refresh();
         });
@@ -279,14 +402,11 @@ public final class BattleSession implements BattleListener {
     @Override
     public void onCombatantDown(Combatant c) {
         addLog(c.name + " повержен!");
-        Ref<EntityStore> ref = puppets.remove(c.id);
-        if (ref != null && ref != playerEntity && ref.isValid()) {
-            try {
-                store.removeEntity(ref, RemoveReason.REMOVE);
-            } catch (Throwable t) {
-                plugin.warn("Не удалось убрать павшего " + c.name, t);
-            }
-        }
+        // Убираем куклу, когда удар уже показан.
+        later(presentDelay + plugin.settings().actionDelayMs / 2, () -> {
+            despawn(c.id);
+            refresh();
+        });
     }
 
     @Override
@@ -296,7 +416,7 @@ public final class BattleSession implements BattleListener {
                 center.z + 4 + summonSlot / 2 * 2);
         summonSlot++;
         homes.put(c.id, pos);
-        spawnPuppet(c, plugin.data().enemy(c.templateId).role(), pos, FACE_PARTY);
+        spawnPuppet(c, plugin.data().enemy(c.templateId).role(), pos, faceParty(c.id));
     }
 
     @Override
@@ -309,10 +429,12 @@ public final class BattleSession implements BattleListener {
     @Override
     public void onPhaseChange(Combatant boss, String phaseName) {
         addLog("!!! " + boss.name + " — " + phaseName);
+        banner = boss.name + ": " + phaseName;
     }
 
     @Override
     public void onBattleEnd(Battle.Outcome outcome) {
+        camera.overview();
         if (outcome == Battle.Outcome.VICTORY) {
             plugin.progress().markCleared(encounter, System.currentTimeMillis());
             Map<String, Integer> loot = plugin.data().rollLoot(encounter, new java.util.Random());
@@ -321,6 +443,13 @@ public final class BattleSession implements BattleListener {
             loot.forEach((item, cnt) -> sb.append(", ").append(plugin.content().item(item).name()).append(" x").append(cnt));
             addLog(sb.toString());
             say(sb.toString());
+            for (String msg : plugin.partyOf(player.getUuid()).addExp(encounter.exp())) {
+                addLog(msg);
+                say(msg + " Открой прокачку: /jrpg party");
+            }
+            banner = "ПОБЕДА!";
+        } else {
+            banner = outcome == Battle.Outcome.FLED ? "Партия сбежала" : "Поражение…";
         }
         refresh();
     }
@@ -346,7 +475,7 @@ public final class BattleSession implements BattleListener {
         plugin.sessions().remove(player.getUuid(), this);
         plugin.markBattleEnded(player.getUuid());
         despawnPuppets();
-        Fx.resetCamera(player);
+        if (camera != null) camera.reset();
         if (page != null) {
             try {
                 page.closePage();
@@ -369,13 +498,13 @@ public final class BattleSession implements BattleListener {
             } catch (Throwable t) {
                 plugin.warn("Ошибка в ходе боя", t);
             }
-        }), ms, TimeUnit.MILLISECONDS);
+        }), Math.max(0, ms), TimeUnit.MILLISECONDS);
     }
 
     private void addLog(String line) {
         for (String l : line.split("\n")) {
             log.addLast(l);
-            while (log.size() > 9) log.removeFirst();
+            while (log.size() > 7) log.removeFirst();
         }
     }
 

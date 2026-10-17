@@ -14,7 +14,15 @@ import java.util.Map;
 public final class BattleMenu {
     public enum Screen { MAIN, SKILLS, ITEMS, TARGET, WAITING, ENDED }
 
-    public record Option(String label, boolean enabled, String hint) {}
+    /**
+     * Пункт меню. hint — короткая подпись справа (стоимость), icon — ключ иконки (см. {@link Describe}),
+     * info — полное описание для окна описаний (наведение мыши).
+     */
+    public record Option(String label, boolean enabled, String hint, String icon, String info) {
+        public Option(String label, boolean enabled, String hint) {
+            this(label, enabled, hint, "", "");
+        }
+    }
 
     private final Battle battle;
     private Screen screen = Screen.WAITING;
@@ -66,31 +74,47 @@ public final class BattleMenu {
         List<Option> out = new ArrayList<>();
         switch (screen()) {
             case MAIN -> {
-                out.add(new Option("Атака", true, "+1 AP"));
-                out.add(new Option("Способности", !c.abilities.isEmpty(), ""));
-                out.add(new Option("Предметы", battle.inventory().values().stream().anyMatch(n -> n > 0), ""));
-                out.add(new Option("Защита", true, "урон -50%, +1 AP"));
-                out.add(new Option("Бегство", battle.fleeAllowed(), battle.fleeAllowed() ? "" : "нельзя"));
+                Content k = battle.content();
+                Ability atk = k.ability(Content.ATTACK), def = k.ability(Content.DEFEND);
+                out.add(new Option("Атака", true, "+1 AP", "sword", Describe.ability(k, atk)));
+                out.add(new Option("Способности", !c.abilities.isEmpty(), "", "magic",
+                        "Особые приёмы персонажа. Тратят AP или MP."));
+                out.add(new Option("Предметы", battle.inventory().values().stream().anyMatch(n -> n > 0), "", "potion",
+                        "Расходуемые предметы партии."));
+                out.add(new Option("Защита", true, "+1 AP", "shield", Describe.ability(k, def)));
+                out.add(new Option("Бегство", battle.fleeAllowed(), battle.fleeAllowed() ? "" : "нельзя", "flee",
+                        battle.fleeAllowed() ? "Попытаться сбежать из боя (шанс зависит от скорости)."
+                                : "От этого боя не сбежать!"));
             }
             case SKILLS -> {
+                Content k = battle.content();
                 for (String id : skillIds()) {
-                    Ability a = battle.content().ability(id);
+                    Ability a = k.ability(id);
                     String cost = (a.apCost() > 0 ? a.apCost() + " AP " : "") + (a.mpCost() > 0 ? a.mpCost() + " MP" : "");
-                    out.add(new Option(a.name() + (cost.isBlank() ? "" : "  [" + cost.trim() + "]"),
-                            battle.canAfford(c, a), ""));
+                    out.add(new Option(a.name(), battle.canAfford(c, a), cost.trim(),
+                            Describe.abilityIcon(k, a), Describe.ability(k, a)));
                 }
             }
             case ITEMS -> {
+                Content k = battle.content();
                 for (String id : itemIds()) {
-                    out.add(new Option(battle.content().item(id).name() + "  x" + battle.inventory().get(id), true, ""));
+                    Item item = k.item(id);
+                    out.add(new Option(item.name(), true, "x" + battle.inventory().get(id),
+                            Describe.itemIcon(k, item), Describe.ability(k, item.effect())));
                 }
             }
             case TARGET -> {
                 for (Combatant t : targets()) {
-                    out.add(new Option(t.name + "  " + t.hp + "/" + t.stats.maxHp() + " HP", true, ""));
+                    out.add(new Option(t.name, true, t.hp + "/" + t.stats.maxHp() + " HP",
+                            "portrait:" + Describe.portrait(t), Describe.combatant(battle.content(), t)));
                 }
             }
-            case ENDED -> out.add(new Option("Закрыть", true, ""));
+            case ENDED -> {
+                out.add(new Option("Закрыть", true, "", "", ""));
+                if (battle.outcome() == Battle.Outcome.VICTORY) {
+                    out.add(new Option("Прокачка", true, "", "levelup", "Открыть меню прокачки партии."));
+                }
+            }
             case WAITING -> { }
         }
         return out;

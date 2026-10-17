@@ -22,6 +22,8 @@ import javax.annotation.Nonnull;
  * /jrpg stop — прервать бой
  * /jrpg reload — перечитать json из папки мода
  * /jrpg particle <имя> — показать частицу под ногами (проверка имён)
+ * /jrpg party — меню прокачки партии
+ * /jrpg roles <часть имени> — какие роли NPC есть в игре (для enemies.json / settings.json)
  */
 public final class JrpgCommand extends AbstractCommandCollection {
 
@@ -33,6 +35,8 @@ public final class JrpgCommand extends AbstractCommandCollection {
         addSubCommand(new Stop(plugin));
         addSubCommand(new Reload(plugin));
         addSubCommand(new Particle(plugin));
+        addSubCommand(new Party(plugin));
+        addSubCommand(new Roles(plugin));
     }
 
     private abstract static class Sub extends AbstractPlayerCommand {
@@ -140,6 +144,43 @@ public final class JrpgCommand extends AbstractCommandCollection {
             String name = nameArg.get(ctx);
             boolean ok = Fx.particle(name, Fx.position(store, ref), ref, store);
             ctx.sendMessage(Message.raw(ok ? "Частица " + name + " отправлена" : "Не удалось: см. лог сервера"));
+        }
+    }
+
+    static final class Party extends Sub {
+        Party(JrpgPlugin plugin) {
+            super(plugin, "party", "Меню прокачки партии");
+        }
+
+        @Override
+        protected void execute(@Nonnull CommandContext ctx, @Nonnull Store<EntityStore> store,
+                               @Nonnull Ref<EntityStore> ref, @Nonnull PlayerRef playerRef, @Nonnull World world) {
+            if (plugin.sessions().containsKey(playerRef.getUuid())) {
+                ctx.sendMessage(Message.raw("Сначала закончи бой."));
+                return;
+            }
+            plugin.openProgression(playerRef, ref, store, null);
+        }
+    }
+
+    static final class Roles extends Sub {
+        private final RequiredArg<String> filterArg =
+                withRequiredArg("filter", "часть имени роли, например spider", ArgTypes.STRING);
+
+        Roles(JrpgPlugin plugin) {
+            super(plugin, "roles", "Найти роли NPC по части имени");
+        }
+
+        @Override
+        protected void execute(@Nonnull CommandContext ctx, @Nonnull Store<EntityStore> store,
+                               @Nonnull Ref<EntityStore> ref, @Nonnull PlayerRef playerRef, @Nonnull World world) {
+            String f = filterArg.get(ctx).toLowerCase(java.util.Locale.ROOT);
+            java.util.List<String> all = com.hypixel.hytale.server.npc.NPCPlugin.get().getRoleTemplateNames(true);
+            java.util.List<String> hits = all.stream().filter(r -> r.toLowerCase(java.util.Locale.ROOT).contains(f))
+                    .sorted().limit(40).toList();
+            ctx.sendMessage(Message.raw(hits.isEmpty() ? "Ролей с «" + f + "» нет (всего ролей " + all.size() + ")"
+                    : "Роли (" + hits.size() + "): " + String.join(", ", hits)));
+            plugin.log("Роли по запросу '" + f + "': " + String.join(", ", hits));
         }
     }
 }

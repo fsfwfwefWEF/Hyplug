@@ -5,28 +5,71 @@ import dev.jrpg.battle.Json;
 import java.util.HashMap;
 import java.util.Map;
 
-/** Настройки отображения боя (settings.json): камера, частицы, роли NPC, паузы. */
+/** Настройки отображения боя (settings.json): камера, интерфейс, частицы, роли NPC, паузы. */
 public final class Settings {
     public final Map<String, String> companionRoles = new HashMap<>();
-    public boolean cameraEnabled = true;
-    public float cameraDistance = 13f, cameraPitch = -35f, cameraYaw = 0f, cameraLerp = 0.08f;
+    /** Роль NPC, если роль врага/компаньона не найдена в игре. */
+    public String fallbackRole = "Trork_Warrior";
+    public final Camera camera = new Camera();
+    /** Иконки (картинки) в меню; false — только текст (на случай, если картинки не грузятся). */
+    public boolean uiIcons = true;
+    /** Полоски HP/MP; false — только числа. */
+    public boolean uiBars = true;
     public String turnRing = "", targetRing = "", hitFx = "";
-    public long actionDelayMs = 1400, enemyThinkMs = 700;
+    public long actionDelayMs = 1400, enemyThinkMs = 900;
     public boolean proximityTrigger = true;
+
+    /** Камера: углы в градусах, расстояния в блоках. */
+    public static final class Camera {
+        public boolean enabled = true;
+        /** "world" — точка взгляда в мировых координатах; "player" — смещением от игрока. */
+        public String anchor = "world";
+        public float lerp = 0.12f;
+        public double overviewDistance = 17, overviewPitch = -32, overviewSide = 35;
+        public double focusDistance = 6.5, focusPitch = -18, focusSide = 40;
+        public double actionDistance = 7, actionPitch = -24, actionSide = 70;
+    }
 
     public static Settings parse(String json) {
         Map<String, Object> m = Json.obj(Json.parse(json));
         Settings s = new Settings();
         Object roles = m.get("companionRoles");
         if (roles != null) Json.obj(roles).forEach((k, v) -> s.companionRoles.put(k, String.valueOf(v)));
+        s.fallbackRole = Json.str(m, "fallbackRole", s.fallbackRole);
         Object cam = m.get("camera");
         if (cam != null) {
             Map<String, Object> c = Json.obj(cam);
-            s.cameraEnabled = Json.bool(c, "enabled", true);
-            s.cameraDistance = (float) Json.num(c, "distance", 13);
-            s.cameraPitch = (float) Json.num(c, "pitch", -35);
-            s.cameraYaw = (float) Json.num(c, "yaw", 0);
-            s.cameraLerp = (float) Json.num(c, "lerp", 0.08);
+            Camera k = s.camera;
+            k.enabled = Json.bool(c, "enabled", k.enabled);
+            k.anchor = Json.str(c, "anchor", k.anchor);
+            k.lerp = (float) Json.num(c, "lerp", k.lerp);
+            Object o = c.get("overview");
+            if (o != null) {
+                Map<String, Object> v = Json.obj(o);
+                k.overviewDistance = Json.num(v, "distance", k.overviewDistance);
+                k.overviewPitch = Json.num(v, "pitch", k.overviewPitch);
+                k.overviewSide = Json.num(v, "side", k.overviewSide);
+            }
+            Object f = c.get("focus");
+            if (f != null) {
+                Map<String, Object> v = Json.obj(f);
+                k.focusDistance = Json.num(v, "distance", k.focusDistance);
+                k.focusPitch = Json.num(v, "pitch", k.focusPitch);
+                k.focusSide = Json.num(v, "side", k.focusSide);
+            }
+            Object a = c.get("action");
+            if (a != null) {
+                Map<String, Object> v = Json.obj(a);
+                k.actionDistance = Json.num(v, "distance", k.actionDistance);
+                k.actionPitch = Json.num(v, "pitch", k.actionPitch);
+                k.actionSide = Json.num(v, "side", k.actionSide);
+            }
+        }
+        Object ui = m.get("ui");
+        if (ui != null) {
+            Map<String, Object> u = Json.obj(ui);
+            s.uiIcons = Json.bool(u, "icons", s.uiIcons);
+            s.uiBars = Json.bool(u, "bars", s.uiBars);
         }
         Object fx = m.get("particles");
         if (fx != null) {
@@ -35,8 +78,8 @@ public final class Settings {
             s.targetRing = Json.str(p, "targetRing", "");
             s.hitFx = Json.str(p, "hit", "");
         }
-        s.actionDelayMs = (long) Json.num(m, "actionDelayMs", 1400);
-        s.enemyThinkMs = (long) Json.num(m, "enemyThinkMs", 700);
+        s.actionDelayMs = (long) Json.num(m, "actionDelayMs", s.actionDelayMs);
+        s.enemyThinkMs = (long) Json.num(m, "enemyThinkMs", s.enemyThinkMs);
         s.proximityTrigger = Json.bool(m, "proximityTrigger", true);
         return s;
     }
