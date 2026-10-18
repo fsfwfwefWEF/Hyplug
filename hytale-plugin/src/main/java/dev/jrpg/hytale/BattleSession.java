@@ -67,6 +67,8 @@ public final class BattleSession implements BattleListener {
     /** Журнал боя для окна слева: строки уже разбиты по ширине окна, у каждой свой цвет. */
     private final Deque<LogEntry> journal = new ArrayDeque<>();
     record LogEntry(String text, String color) {}
+    /** Журнал для книги в HUD: строки целиком (книга переносит сама), без обрезки по 60. */
+    private final List<LogEntry> book = new java.util.ArrayList<>();
     /** Реплика, которая сейчас печатается в окне над бойцом (id → видимая часть). */
     private final Map<String, String> speaking = new java.util.concurrent.ConcurrentHashMap<>();
     private final Map<String, Integer> speechSeq = new java.util.concurrent.ConcurrentHashMap<>();
@@ -78,6 +80,8 @@ public final class BattleSession implements BattleListener {
     private Battle battle;
     private BattleMenu menu;
     private BattleMenuPage page;
+    /** HUD боя (баннер, очередь, книга) с анимациями; null — выключен (settings.json → ui.hud). */
+    private BattleHud hud;
     private BattleCamera camera;
     private Vector3d enemyCenter;
     private boolean closed;
@@ -183,7 +187,9 @@ public final class BattleSession implements BattleListener {
         List<Combatant> party = plugin.partyOf(player.getUuid()).buildParty(content);
         battle = plugin.data().createBattle(encounter, party,
                 plugin.inventoryOf(player.getUuid()), this, System.nanoTime());
-        battle.setReactions(plugin.settings().reactions.enabled);
+        // Парирование и уклонение убраны (2026-10-18: игроку неинтересны). Код реакций в battle-core остался
+        // выключенным: враги бьют без фазы ожидания ответа.
+        battle.setReactions(false);
         menu = new BattleMenu(battle);
         // Компаньоны, ходившие за игроком, уходят: в бою их изображают куклы на арене.
         plugin.followers().pause(player.getUuid());
@@ -460,6 +466,7 @@ public final class BattleSession implements BattleListener {
         BattleMenuPage next = new BattleMenuPage(player, this);
         page = next;
         Pages.open(plugin, player, playerEntity, store, next, () -> !closed && page == next, null);
+        showHud();
     }
 
     /**
@@ -485,7 +492,15 @@ public final class BattleSession implements BattleListener {
     }
 
     private void refresh() {
-        if (page == null || closed) return;
+        if (closed) return;
+        if (hud != null) {
+            try {
+                hud.refresh();
+            } catch (Throwable t) {
+                plugin.warn("Не удалось обновить HUD боя", t);
+            }
+        }
+        if (page == null) return;
         updateNameplates();
         try {
             page.refresh();
@@ -505,6 +520,43 @@ public final class BattleSession implements BattleListener {
     String bannerSub() { return bannerSub; }
     List<String> logLines() { return List.copyOf(log); }
     List<LogEntry> journal() { return List.copyOf(journal); }
+    /** Строки журнала для книги, начиная с номера from (по порядку добавления). */
+    List<LogEntry> bookSince(int from) {
+        return from >= book.size() ? List.of() : List.copyOf(book.subList(Math.max(0, from), book.size()));
+    }
+    String encounterName() { return encounter.name(); }
+    boolean hudShown() { return hud != null; }
+
+    /** Шаг анимации HUD в потоке мира (не выполняется после конца боя). */
+    void hudLater(long ms, Runnable r) {
+        later(ms, r);
+    }
+
+    private void showHud() {
+        if (hud != null || closed || !plugin.settings().uiHud) return;
+        try {
+            Player p = store.getComponent(playerEntity, Player.getComponentType());
+            if (p == null) return;
+            BattleHud h = new BattleHud(player, this);
+            p.getHudManager().addCustomHud(player, h);
+            hud = h;
+        } catch (Throwable t) {
+            hud = null;
+            plugin.warn("HUD боя не показался (очередь и журнал будут в окне боя)", t);
+        }
+    }
+
+    private void hideHud() {
+        if (hud == null) return;
+        hud = null;
+        try {
+            if (!playerEntity.isValid()) return;
+            Player p = store.getComponent(playerEntity, Player.getComponentType());
+            if (p != null) p.getHudManager().removeCustomHud(player, BattleHud.KEY);
+        } catch (Throwable t) {
+            plugin.warn("Не удалось убрать HUD боя", t);
+        }
+    }
 
     record InsLine(String text, String color) {}
 
@@ -609,6 +661,7 @@ public final class BattleSession implements BattleListener {
         bannerSub = "";
         if (pos != null) Fx.particle(plugin.settings().turnRing, pos, playerEntity, store);
         clearInfo();
+        if (hud != null) hud.onTurn();
     }
 
     @Override
@@ -1253,6 +1306,7 @@ public final class BattleSession implements BattleListener {
         plugin.followers().resume(player.getUuid());
         if (camera != null) camera.reset();
         BattleMusic.stop(plugin, store, playerEntity);
+        hideHud();
         if (closeMenu && page != null) {
             try {
                 page.closePage();
@@ -1499,6 +1553,7 @@ public final class BattleSession implements BattleListener {
         for (String l : line.split("\n")) {
             log.addLast(l);
             while (log.size() > 7) log.removeFirst();
+            book.add(new LogEntry(l.strip(), color));
             for (String part : wrap(l, LOG_WIDTH)) journal.addLast(new LogEntry(part, color));
             while (journal.size() > 60) journal.removeFirst();
         }

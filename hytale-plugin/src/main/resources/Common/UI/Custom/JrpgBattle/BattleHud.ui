@@ -1,0 +1,356 @@
+$C = "../Common.ui";
+
+// HUD боя: баннер хода #HBannerRow, очередь #HQueue (#HQ0..7, фоны #HQ<n>Cur/Pty/Ene), книга журнала #HBook
+// (страницы #HBookL/#HBookR, лист #HFlip). Положение элементов плагин меняет шагами — это анимации.
+// Собрано tools/gen_battle_ui.py — правь скрипт.
+
+Group {
+  Anchor: (Full: 0);
+
+  Group #HBannerRow {
+    Anchor: (Left: 0, Right: 0, Top: 96, Height: 62);
+    LayoutMode: Left;
+
+    Group { FlexWeight: 1; }
+    Group #HBannerBox {
+      Anchor: (Width: 600, Height: 60);
+      LayoutMode: Top;
+      Background: (TexturePath: "jr_banner.png");
+      Padding: (Top: 8);
+
+      Label #HBanner {
+        Text: "";
+        Anchor: (Height: 27);
+        Style: (FontSize: 22, TextColor: #e8c46a, RenderBold: true, HorizontalAlignment: Center);
+      }
+      Label #HBannerSub {
+        Text: "";
+        Anchor: (Height: 18);
+        Style: (FontSize: 13, TextColor: #e9eef6, HorizontalAlignment: Center);
+      }
+    }
+    Group { FlexWeight: 1; }
+  }
+  Group #HQueue {
+    Anchor: (Left: 12, Top: 170, Width: 236, Height: 382);
+    Background: (TexturePath: "jr_panel.png", Border: 22);
+
+    Label #HQueueTitle { Text: "ОЧЕРЕДЬ ХОДОВ"; Anchor: (Left: 16, Top: 12, Width: 200, Height: 20); Style: (FontSize: 13, TextColor: #e8c46a, RenderBold: true); }
+    Group #HQ0 {
+      Anchor: (Left: 11, Top: 38, Width: 214, Height: 50);
+
+      Group #HQ0Cur { Anchor: (Left: 0, Top: 0, Width: 214, Height: 50); Background: (TexturePath: "jr_q_cur.png"); }
+      Group #HQ0Pty { Anchor: (Left: 0, Top: 0, Width: 214, Height: 50); Background: (TexturePath: "jr_q_party.png"); }
+      Group #HQ0Ene { Anchor: (Left: 0, Top: 0, Width: 214, Height: 50); Background: (TexturePath: "jr_q_enemy.png"); }
+      Group {
+        Anchor: (Left: 12, Top: 0, Width: 196, Height: 50);
+        LayoutMode: Left;
+
+        Group {
+          LayoutMode: Top;
+          Anchor: (Width: 38);
+
+          Group { FlexWeight: 1; }
+          Group #HQ0Icon { Anchor: (Width: 38, Height: 38); }
+          Group { FlexWeight: 1; }
+        }
+        Group { Anchor: (Width: 8); }
+        Group {
+          FlexWeight: 1;
+          LayoutMode: Top;
+
+          Group { FlexWeight: 1; }
+          Label #HQ0Name {
+            Text: "";
+            Anchor: (Height: 19);
+            Style: (FontSize: 15, TextColor: #e9eef6, RenderBold: true);
+          }
+          Label #HQ0Sub {
+            Text: "";
+            Anchor: (Height: 15);
+            Style: (FontSize: 12, TextColor: #e8c46a);
+          }
+          Group { FlexWeight: 1; }
+        }
+      }
+    }
+    Group #HQ1 {
+      Anchor: (Left: 11, Top: 94, Width: 214, Height: 36);
+
+      Group #HQ1Cur { Anchor: (Left: 0, Top: 0, Width: 214, Height: 36); Background: (TexturePath: "jr_q_cur.png"); }
+      Group #HQ1Pty { Anchor: (Left: 0, Top: 0, Width: 214, Height: 36); Background: (TexturePath: "jr_q_party.png"); }
+      Group #HQ1Ene { Anchor: (Left: 0, Top: 0, Width: 214, Height: 36); Background: (TexturePath: "jr_q_enemy.png"); }
+      Group {
+        Anchor: (Left: 12, Top: 0, Width: 196, Height: 36);
+        LayoutMode: Left;
+
+        Group {
+          LayoutMode: Top;
+          Anchor: (Width: 26);
+
+          Group { FlexWeight: 1; }
+          Group #HQ1Icon { Anchor: (Width: 26, Height: 26); }
+          Group { FlexWeight: 1; }
+        }
+        Group { Anchor: (Width: 8); }
+        Group {
+          FlexWeight: 1;
+          LayoutMode: Top;
+
+          Group { FlexWeight: 1; }
+          Label #HQ1Name {
+            Text: "";
+            Anchor: (Height: 16);
+            Style: (FontSize: 13, TextColor: #e9eef6, RenderBold: true);
+          }
+          Label #HQ1Sub {
+            Text: "";
+            Anchor: (Height: 13);
+            Style: (FontSize: 12, TextColor: #b4c2d6);
+          }
+          Group { FlexWeight: 1; }
+        }
+      }
+    }
+    Group #HQ2 {
+      Anchor: (Left: 11, Top: 134, Width: 214, Height: 36);
+
+      Group #HQ2Cur { Anchor: (Left: 0, Top: 0, Width: 214, Height: 36); Background: (TexturePath: "jr_q_cur.png"); }
+      Group #HQ2Pty { Anchor: (Left: 0, Top: 0, Width: 214, Height: 36); Background: (TexturePath: "jr_q_party.png"); }
+      Group #HQ2Ene { Anchor: (Left: 0, Top: 0, Width: 214, Height: 36); Background: (TexturePath: "jr_q_enemy.png"); }
+      Group {
+        Anchor: (Left: 12, Top: 0, Width: 196, Height: 36);
+        LayoutMode: Left;
+
+        Group {
+          LayoutMode: Top;
+          Anchor: (Width: 26);
+
+          Group { FlexWeight: 1; }
+          Group #HQ2Icon { Anchor: (Width: 26, Height: 26); }
+          Group { FlexWeight: 1; }
+        }
+        Group { Anchor: (Width: 8); }
+        Group {
+          FlexWeight: 1;
+          LayoutMode: Top;
+
+          Group { FlexWeight: 1; }
+          Label #HQ2Name {
+            Text: "";
+            Anchor: (Height: 16);
+            Style: (FontSize: 13, TextColor: #e9eef6, RenderBold: true);
+          }
+          Label #HQ2Sub {
+            Text: "";
+            Anchor: (Height: 13);
+            Style: (FontSize: 12, TextColor: #b4c2d6);
+          }
+          Group { FlexWeight: 1; }
+        }
+      }
+    }
+    Group #HQ3 {
+      Anchor: (Left: 11, Top: 174, Width: 214, Height: 36);
+
+      Group #HQ3Cur { Anchor: (Left: 0, Top: 0, Width: 214, Height: 36); Background: (TexturePath: "jr_q_cur.png"); }
+      Group #HQ3Pty { Anchor: (Left: 0, Top: 0, Width: 214, Height: 36); Background: (TexturePath: "jr_q_party.png"); }
+      Group #HQ3Ene { Anchor: (Left: 0, Top: 0, Width: 214, Height: 36); Background: (TexturePath: "jr_q_enemy.png"); }
+      Group {
+        Anchor: (Left: 12, Top: 0, Width: 196, Height: 36);
+        LayoutMode: Left;
+
+        Group {
+          LayoutMode: Top;
+          Anchor: (Width: 26);
+
+          Group { FlexWeight: 1; }
+          Group #HQ3Icon { Anchor: (Width: 26, Height: 26); }
+          Group { FlexWeight: 1; }
+        }
+        Group { Anchor: (Width: 8); }
+        Group {
+          FlexWeight: 1;
+          LayoutMode: Top;
+
+          Group { FlexWeight: 1; }
+          Label #HQ3Name {
+            Text: "";
+            Anchor: (Height: 16);
+            Style: (FontSize: 13, TextColor: #e9eef6, RenderBold: true);
+          }
+          Label #HQ3Sub {
+            Text: "";
+            Anchor: (Height: 13);
+            Style: (FontSize: 12, TextColor: #b4c2d6);
+          }
+          Group { FlexWeight: 1; }
+        }
+      }
+    }
+    Group #HQ4 {
+      Anchor: (Left: 11, Top: 214, Width: 214, Height: 36);
+
+      Group #HQ4Cur { Anchor: (Left: 0, Top: 0, Width: 214, Height: 36); Background: (TexturePath: "jr_q_cur.png"); }
+      Group #HQ4Pty { Anchor: (Left: 0, Top: 0, Width: 214, Height: 36); Background: (TexturePath: "jr_q_party.png"); }
+      Group #HQ4Ene { Anchor: (Left: 0, Top: 0, Width: 214, Height: 36); Background: (TexturePath: "jr_q_enemy.png"); }
+      Group {
+        Anchor: (Left: 12, Top: 0, Width: 196, Height: 36);
+        LayoutMode: Left;
+
+        Group {
+          LayoutMode: Top;
+          Anchor: (Width: 26);
+
+          Group { FlexWeight: 1; }
+          Group #HQ4Icon { Anchor: (Width: 26, Height: 26); }
+          Group { FlexWeight: 1; }
+        }
+        Group { Anchor: (Width: 8); }
+        Group {
+          FlexWeight: 1;
+          LayoutMode: Top;
+
+          Group { FlexWeight: 1; }
+          Label #HQ4Name {
+            Text: "";
+            Anchor: (Height: 16);
+            Style: (FontSize: 13, TextColor: #e9eef6, RenderBold: true);
+          }
+          Label #HQ4Sub {
+            Text: "";
+            Anchor: (Height: 13);
+            Style: (FontSize: 12, TextColor: #b4c2d6);
+          }
+          Group { FlexWeight: 1; }
+        }
+      }
+    }
+    Group #HQ5 {
+      Anchor: (Left: 11, Top: 254, Width: 214, Height: 36);
+
+      Group #HQ5Cur { Anchor: (Left: 0, Top: 0, Width: 214, Height: 36); Background: (TexturePath: "jr_q_cur.png"); }
+      Group #HQ5Pty { Anchor: (Left: 0, Top: 0, Width: 214, Height: 36); Background: (TexturePath: "jr_q_party.png"); }
+      Group #HQ5Ene { Anchor: (Left: 0, Top: 0, Width: 214, Height: 36); Background: (TexturePath: "jr_q_enemy.png"); }
+      Group {
+        Anchor: (Left: 12, Top: 0, Width: 196, Height: 36);
+        LayoutMode: Left;
+
+        Group {
+          LayoutMode: Top;
+          Anchor: (Width: 26);
+
+          Group { FlexWeight: 1; }
+          Group #HQ5Icon { Anchor: (Width: 26, Height: 26); }
+          Group { FlexWeight: 1; }
+        }
+        Group { Anchor: (Width: 8); }
+        Group {
+          FlexWeight: 1;
+          LayoutMode: Top;
+
+          Group { FlexWeight: 1; }
+          Label #HQ5Name {
+            Text: "";
+            Anchor: (Height: 16);
+            Style: (FontSize: 13, TextColor: #e9eef6, RenderBold: true);
+          }
+          Label #HQ5Sub {
+            Text: "";
+            Anchor: (Height: 13);
+            Style: (FontSize: 12, TextColor: #b4c2d6);
+          }
+          Group { FlexWeight: 1; }
+        }
+      }
+    }
+    Group #HQ6 {
+      Anchor: (Left: 11, Top: 294, Width: 214, Height: 36);
+
+      Group #HQ6Cur { Anchor: (Left: 0, Top: 0, Width: 214, Height: 36); Background: (TexturePath: "jr_q_cur.png"); }
+      Group #HQ6Pty { Anchor: (Left: 0, Top: 0, Width: 214, Height: 36); Background: (TexturePath: "jr_q_party.png"); }
+      Group #HQ6Ene { Anchor: (Left: 0, Top: 0, Width: 214, Height: 36); Background: (TexturePath: "jr_q_enemy.png"); }
+      Group {
+        Anchor: (Left: 12, Top: 0, Width: 196, Height: 36);
+        LayoutMode: Left;
+
+        Group {
+          LayoutMode: Top;
+          Anchor: (Width: 26);
+
+          Group { FlexWeight: 1; }
+          Group #HQ6Icon { Anchor: (Width: 26, Height: 26); }
+          Group { FlexWeight: 1; }
+        }
+        Group { Anchor: (Width: 8); }
+        Group {
+          FlexWeight: 1;
+          LayoutMode: Top;
+
+          Group { FlexWeight: 1; }
+          Label #HQ6Name {
+            Text: "";
+            Anchor: (Height: 16);
+            Style: (FontSize: 13, TextColor: #e9eef6, RenderBold: true);
+          }
+          Label #HQ6Sub {
+            Text: "";
+            Anchor: (Height: 13);
+            Style: (FontSize: 12, TextColor: #b4c2d6);
+          }
+          Group { FlexWeight: 1; }
+        }
+      }
+    }
+    Group #HQ7 {
+      Anchor: (Left: 11, Top: 334, Width: 214, Height: 36);
+
+      Group #HQ7Cur { Anchor: (Left: 0, Top: 0, Width: 214, Height: 36); Background: (TexturePath: "jr_q_cur.png"); }
+      Group #HQ7Pty { Anchor: (Left: 0, Top: 0, Width: 214, Height: 36); Background: (TexturePath: "jr_q_party.png"); }
+      Group #HQ7Ene { Anchor: (Left: 0, Top: 0, Width: 214, Height: 36); Background: (TexturePath: "jr_q_enemy.png"); }
+      Group {
+        Anchor: (Left: 12, Top: 0, Width: 196, Height: 36);
+        LayoutMode: Left;
+
+        Group {
+          LayoutMode: Top;
+          Anchor: (Width: 26);
+
+          Group { FlexWeight: 1; }
+          Group #HQ7Icon { Anchor: (Width: 26, Height: 26); }
+          Group { FlexWeight: 1; }
+        }
+        Group { Anchor: (Width: 8); }
+        Group {
+          FlexWeight: 1;
+          LayoutMode: Top;
+
+          Group { FlexWeight: 1; }
+          Label #HQ7Name {
+            Text: "";
+            Anchor: (Height: 16);
+            Style: (FontSize: 13, TextColor: #e9eef6, RenderBold: true);
+          }
+          Label #HQ7Sub {
+            Text: "";
+            Anchor: (Height: 13);
+            Style: (FontSize: 12, TextColor: #b4c2d6);
+          }
+          Group { FlexWeight: 1; }
+        }
+      }
+    }
+  }
+  Group #HBook {
+    Anchor: (Left: 12, Bottom: 12, Width: 440, Height: 290);
+    Background: (TexturePath: "jr_book.png");
+
+    Label #HBookLHead { Text: ""; Anchor: (Left: 28, Top: 18, Width: 176, Height: 16); Style: (FontSize: 12, TextColor: #7a6040, RenderBold: true, HorizontalAlignment: Center); }
+    Label #HBookRHead { Text: ""; Anchor: (Left: 238, Top: 18, Width: 176, Height: 16); Style: (FontSize: 12, TextColor: #7a6040, RenderBold: true, HorizontalAlignment: Center); }
+    Label #HBookL { Text: ""; Anchor: (Left: 28, Top: 38, Width: 176, Height: 210); Style: (FontSize: 13, TextColor: #3a2a1a, Wrap: true); }
+    Label #HBookR { Text: ""; Anchor: (Left: 238, Top: 38, Width: 176, Height: 210); Style: (FontSize: 13, TextColor: #3a2a1a, Wrap: true); }
+    Label #HBookLNum { Text: ""; Anchor: (Left: 28, Top: 260, Width: 176, Height: 14); Style: (FontSize: 11, TextColor: #8a7050, HorizontalAlignment: Center); }
+    Label #HBookRNum { Text: ""; Anchor: (Left: 238, Top: 260, Width: 176, Height: 14); Style: (FontSize: 11, TextColor: #8a7050, HorizontalAlignment: Center); }
+    Group #HFlip { Anchor: (Left: 222, Top: 12, Width: 206, Height: 266); Background: (TexturePath: "jr_page.png"); }
+  }
+}

@@ -9,11 +9,16 @@
 import math
 import os
 import sys
+
+import numpy as np
 from PIL import Image, ImageDraw, ImageFilter
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import art  # noqa: E402
 
 OUT = os.path.join(os.path.dirname(__file__), "..", "hytale-plugin", "src", "main", "resources",
                    "Common", "UI", "Custom", "JrpgBattle", "Icons")
-SS = 4  # суперсэмплинг
+SS = 3  # суперсэмплинг
 SIZES = {"s": 22, "m": 40, "g": 48, "l": 88}
 
 GOLD = (222, 184, 96)
@@ -31,66 +36,58 @@ def lerp(a, b, t):
     return tuple(int(a[i] + (b[i] - a[i]) * t) for i in range(3))
 
 
-def frame(size, top, bottom, border=GOLD, round_=0.22, circle=False):
-    S = size * SS
-    img = Image.new("RGBA", (S, S), (0, 0, 0, 0))
-    grad = Image.new("RGBA", (S, S))
-    gd = ImageDraw.Draw(grad)
-    for y in range(S):
-        gd.line([(0, y), (S, y)], fill=lerp(top, bottom, y / S) + (255,))
-    mask = Image.new("L", (S, S), 0)
-    md = ImageDraw.Draw(mask)
-    pad = int(S * 0.04)
-    if circle:
-        md.ellipse([pad, pad, S - pad, S - pad], fill=255)
-    else:
-        md.rounded_rectangle([pad, pad, S - pad, S - pad], radius=int(S * round_), fill=255)
-    img.paste(grad, (0, 0), mask)
-    d = ImageDraw.Draw(img)
-    w = max(SS * 2, int(S * 0.055))
-    if circle:
-        d.ellipse([pad, pad, S - pad, S - pad], outline=border + (255,), width=w)
-        d.ellipse([pad + w, pad + w, S - pad - w, S - pad - w], outline=GOLD_D + (255,), width=max(SS, w // 3))
-    else:
-        d.rounded_rectangle([pad, pad, S - pad, S - pad], radius=int(S * round_), outline=border + (255,), width=w)
-        d.rounded_rectangle([pad + w, pad + w, S - pad - w, S - pad - w], radius=int(S * round_ * 0.8),
-                            outline=GOLD_D + (255,), width=max(SS, w // 3))
-    # блик сверху
-    hl = Image.new("RGBA", (S, S), (0, 0, 0, 0))
-    hd = ImageDraw.Draw(hl)
-    hd.ellipse([int(S * 0.1), int(-S * 0.45), int(S * 0.9), int(S * 0.38)], fill=(255, 255, 255, 34))
-    img = Image.alpha_composite(img, Image.composite(hl, Image.new("RGBA", (S, S)), mask))
-    return img
-
-
 def P(S, pts):
     return [(x * S, y * S) for x, y in pts]
-
-
-def glow(img, color, S):
-    g = Image.new("RGBA", img.size, (0, 0, 0, 0))
-    return g
 
 
 # ---------- глифы (координаты 0..1) ----------
 
 def g_sword(d, S, c=WHITE):
-    d.polygon(P(S, [(0.72, 0.18), (0.82, 0.18), (0.82, 0.28), (0.40, 0.70), (0.30, 0.60)]), fill=c)
-    d.polygon(P(S, [(0.24, 0.56), (0.30, 0.50), (0.50, 0.70), (0.44, 0.76)]), fill=GOLD)
-    d.polygon(P(S, [(0.30, 0.68), (0.36, 0.74), (0.24, 0.86), (0.18, 0.80)]), fill=(140, 96, 60))
-    d.ellipse(P(S, [(0.13, 0.81), (0.21, 0.89)]), fill=GOLD)
+    # клинок: светлая и тёмная грани, дол посередине
+    d.polygon(P(S, [(0.80, 0.14), (0.86, 0.14), (0.86, 0.20), (0.41, 0.69), (0.31, 0.59)]), fill=(236, 240, 250))
+    d.polygon(P(S, [(0.86, 0.14), (0.86, 0.20), (0.41, 0.69), (0.36, 0.64)]), fill=(150, 162, 188))
+    d.line(P(S, [(0.80, 0.21), (0.42, 0.59)]), fill=(120, 136, 170), width=int(S * 0.018))
+    # гарда с камнем
+    d.polygon(P(S, [(0.20, 0.55), (0.27, 0.48), (0.52, 0.73), (0.45, 0.80)]), fill=(232, 186, 90))
+    d.polygon(P(S, [(0.20, 0.55), (0.23, 0.52), (0.48, 0.77), (0.45, 0.80)]), fill=(150, 104, 40))
+    d.ellipse(P(S, [(0.315, 0.595), (0.405, 0.685)]), fill=(70, 150, 255))
+    d.ellipse(P(S, [(0.33, 0.61), (0.36, 0.64)]), fill=(220, 240, 255))
+    # рукоять с обмоткой и навершием
+    d.polygon(P(S, [(0.31, 0.71), (0.37, 0.77), (0.24, 0.90), (0.18, 0.84)]), fill=(110, 70, 40))
+    for t in (0.25, 0.5, 0.75):
+        x, y = 0.34 - 0.13 * t, 0.74 + 0.13 * t
+        d.line(P(S, [(x - 0.03, y - 0.03), (x + 0.03, y + 0.03)]), fill=(70, 42, 22), width=int(S * 0.015))
+    d.ellipse(P(S, [(0.11, 0.84), (0.21, 0.94)]), fill=(232, 186, 90))
 
 
 def g_shield(d, S, c=(170, 196, 230)):
-    d.polygon(P(S, [(0.5, 0.16), (0.80, 0.27), (0.76, 0.56), (0.5, 0.86), (0.24, 0.56), (0.20, 0.27)]), fill=c)
-    d.polygon(P(S, [(0.5, 0.24), (0.70, 0.32), (0.67, 0.54), (0.5, 0.76)]), fill=(120, 150, 200))
-    d.line(P(S, [(0.5, 0.24), (0.5, 0.78)]), fill=GOLD, width=int(S * 0.04))
+    rim = (232, 186, 90)
+    d.polygon(P(S, [(0.5, 0.12), (0.83, 0.25), (0.79, 0.57), (0.5, 0.90), (0.21, 0.57), (0.17, 0.25)]), fill=rim)
+    d.polygon(P(S, [(0.5, 0.18), (0.77, 0.29), (0.73, 0.55), (0.5, 0.82), (0.27, 0.55), (0.23, 0.29)]), fill=c)
+    darker = tuple(int(v * 0.68) for v in c[:3])
+    d.polygon(P(S, [(0.5, 0.18), (0.77, 0.29), (0.73, 0.55), (0.5, 0.82)]), fill=darker)
+    d.polygon(P(S, [(0.5, 0.30), (0.58, 0.46), (0.5, 0.66), (0.42, 0.46)]), fill=rim)
 
 
-def g_flame(d, S, outer=(255, 140, 40), inner=(255, 226, 120)):
-    d.polygon(P(S, [(0.5, 0.12), (0.62, 0.32), (0.74, 0.30), (0.78, 0.55), (0.70, 0.76), (0.5, 0.88),
-                    (0.30, 0.76), (0.22, 0.55), (0.30, 0.38), (0.40, 0.44)]), fill=outer)
-    d.polygon(P(S, [(0.5, 0.40), (0.60, 0.58), (0.62, 0.72), (0.5, 0.82), (0.38, 0.72), (0.40, 0.58)]), fill=inner)
+def flame_shape(cx, top, w, h, n=48, lick=0.0):
+    pts = []
+    for i in range(n + 1):
+        t = i / n * math.pi * 2
+        x = math.sin(t)
+        y = -math.cos(t)
+        # капля: узкий верх, круглый низ, язычки по бокам
+        r = (1 - 0.55 * max(0.0, y)) * (1 + lick * math.sin(t * 3))
+        pts.append((cx + x * w * r, top + h * (0.5 - 0.5 * y * (1.1 if y > 0 else 0.9))))
+    return pts
+
+
+def g_flame(d, S, outer=(232, 70, 24), inner=(255, 226, 120)):
+    d.polygon(P(S, flame_shape(0.5, 0.10, 0.31, 0.80, lick=0.08)), fill=outer)
+    d.polygon(P(S, flame_shape(0.47, 0.26, 0.22, 0.62, lick=0.06)), fill=(255, 140, 36))
+    d.polygon(P(S, flame_shape(0.52, 0.44, 0.13, 0.44)), fill=(255, 210, 90))
+    d.polygon(P(S, flame_shape(0.52, 0.58, 0.065, 0.28)), fill=(255, 250, 220))
+    for ex, ey, r in ((0.26, 0.24, 0.025), (0.74, 0.32, 0.02), (0.68, 0.14, 0.015)):
+        d.ellipse(P(S, [(ex - r, ey - r), (ex + r, ey + r)]), fill=(255, 200, 90))
 
 
 def g_snow(d, S, c=(220, 245, 255)):
@@ -107,15 +104,24 @@ def g_snow(d, S, c=(220, 245, 255)):
 
 
 def g_cross(d, S, c=(140, 255, 160)):
-    d.rounded_rectangle(P(S, [(0.40, 0.18), (0.60, 0.82)]), radius=int(S * 0.04), fill=c)
-    d.rounded_rectangle(P(S, [(0.18, 0.40), (0.82, 0.60)]), radius=int(S * 0.04), fill=c)
+    dark = tuple(int(v * 0.62) for v in c[:3])
+    d.rounded_rectangle(P(S, [(0.39, 0.17), (0.61, 0.83)]), radius=int(S * 0.05), fill=dark)
+    d.rounded_rectangle(P(S, [(0.17, 0.39), (0.83, 0.61)]), radius=int(S * 0.05), fill=dark)
+    d.rounded_rectangle(P(S, [(0.41, 0.19), (0.59, 0.79)]), radius=int(S * 0.04), fill=c)
+    d.rounded_rectangle(P(S, [(0.19, 0.41), (0.79, 0.59)]), radius=int(S * 0.04), fill=c)
+    d.rounded_rectangle(P(S, [(0.44, 0.21), (0.50, 0.40)]), radius=int(S * 0.02), fill=(240, 255, 240))
+    d.rounded_rectangle(P(S, [(0.21, 0.44), (0.40, 0.50)]), radius=int(S * 0.02), fill=(240, 255, 240))
 
 
 def g_drop(d, S, c=(140, 220, 90), shine=True):
-    d.polygon(P(S, [(0.5, 0.14), (0.66, 0.42), (0.34, 0.42)]), fill=c)
-    d.ellipse(P(S, [(0.28, 0.34), (0.72, 0.84)]), fill=c)
+    dark = tuple(int(v * 0.6) for v in c[:3])
+    d.polygon(P(S, [(0.5, 0.12), (0.68, 0.44), (0.32, 0.44)]), fill=dark)
+    d.ellipse(P(S, [(0.27, 0.34), (0.73, 0.86)]), fill=dark)
+    d.polygon(P(S, [(0.5, 0.16), (0.64, 0.44), (0.36, 0.44)]), fill=c)
+    d.ellipse(P(S, [(0.30, 0.36), (0.68, 0.82)]), fill=c)
     if shine:
-        d.ellipse(P(S, [(0.38, 0.48), (0.48, 0.60)]), fill=(255, 255, 255, 140))
+        d.ellipse(P(S, [(0.37, 0.46), (0.47, 0.62)]), fill=(255, 255, 255, 190))
+        d.ellipse(P(S, [(0.55, 0.68), (0.61, 0.74)]), fill=(255, 255, 255, 120))
 
 
 def g_skull(d, S, c=(200, 255, 150)):
@@ -137,7 +143,9 @@ def g_star(d, S, c=(255, 230, 120), r1=0.36, r2=0.15, n=5, cx=0.5, cy=0.52):
 
 
 def g_bolt(d, S, c=(255, 236, 90)):
-    d.polygon(P(S, [(0.58, 0.10), (0.28, 0.54), (0.48, 0.54), (0.40, 0.90), (0.74, 0.42), (0.54, 0.42), (0.66, 0.10)]), fill=c)
+    d.polygon(P(S, [(0.58, 0.08), (0.26, 0.55), (0.47, 0.55), (0.38, 0.92), (0.76, 0.42), (0.55, 0.42), (0.68, 0.08)]), fill=(255, 196, 40))
+    d.polygon(P(S, [(0.60, 0.12), (0.33, 0.52), (0.50, 0.52), (0.43, 0.80), (0.68, 0.45), (0.51, 0.45), (0.63, 0.12)]), fill=c)
+    d.polygon(P(S, [(0.61, 0.16), (0.42, 0.46), (0.52, 0.46), (0.58, 0.18)]), fill=(255, 252, 220))
 
 
 def g_spiral(d, S, c=(200, 170, 255)):
@@ -183,10 +191,16 @@ def g_wave(d, S, c=(240, 170, 90)):
 
 
 def g_bottle(d, S, c=(230, 70, 90)):
-    d.rectangle(P(S, [(0.43, 0.14), (0.57, 0.30)]), fill=(200, 170, 120))
-    d.ellipse(P(S, [(0.24, 0.30), (0.76, 0.86)]), fill=(230, 235, 245))
-    d.ellipse(P(S, [(0.28, 0.44), (0.72, 0.82)]), fill=c)
-    d.ellipse(P(S, [(0.34, 0.48), (0.44, 0.58)]), fill=(255, 255, 255, 150))
+    d.rounded_rectangle(P(S, [(0.41, 0.10), (0.59, 0.20)]), radius=int(S * 0.02), fill=(150, 100, 60))
+    d.rectangle(P(S, [(0.44, 0.19), (0.56, 0.33)]), fill=(200, 215, 235))
+    d.ellipse(P(S, [(0.22, 0.30), (0.78, 0.88)]), fill=(196, 210, 232))
+    d.ellipse(P(S, [(0.25, 0.33), (0.75, 0.85)]), fill=(70, 80, 110))
+    dark = tuple(int(v * 0.6) for v in c[:3])
+    d.chord(P(S, [(0.25, 0.33), (0.75, 0.85)]), 350, 190, fill=dark)
+    d.chord(P(S, [(0.27, 0.36), (0.73, 0.82)]), 355, 185, fill=c)
+    d.ellipse(P(S, [(0.42, 0.62), (0.47, 0.67)]), fill=(255, 255, 255, 120))
+    d.ellipse(P(S, [(0.55, 0.70), (0.59, 0.74)]), fill=(255, 255, 255, 100))
+    d.arc(P(S, [(0.30, 0.38), (0.70, 0.80)]), 200, 250, fill=(255, 255, 255), width=int(S * 0.03))
 
 
 def g_bomb(d, S):
@@ -478,22 +492,89 @@ ICONS = {
 }
 
 
+SPARKLY = {"magic", "focus", "ether", "levelup", "star", "st_charged", "haste", "st_haste", "thunder", "ice",
+           "st_frozen", "heal", "regen", "st_regen"}
+
+
+def accent_of(top):
+    """Цвет свечения стихии: верхний цвет плитки, светлее и насыщеннее."""
+    r, g, b = top
+    m = max(r, g, b) or 1
+    sat = tuple(min(255, int(c * 255 / m)) for c in (r, g, b))
+    return art.lerp(sat, (255, 255, 255), 0.18)
+
+
 def render(key, size=128):
+    """Иконка в стиле референса: тёмная плитка с цветным свечением стихии, объёмный глиф с обводкой
+    и бликом, золотая кайма с фаской. Портреты и статусы — круглые."""
     top, bottom, glyph = ICONS[key]
+    top, bottom = art.hexc(top), art.hexc(bottom)
     circle = key.startswith("st_") or key.startswith("pt_")
-    img = frame(size, hexc(top), hexc(bottom), circle=circle)
     S = size * SS
-    layer = Image.new("RGBA", (S, S), (0, 0, 0, 0))
-    d = ImageDraw.Draw(layer)
-    glyph(d, S)
-    # тень под глифом
-    shadow = layer.split()[3].filter(ImageFilter.GaussianBlur(S * 0.02))
-    sh = Image.new("RGBA", (S, S), (0, 0, 0, 0))
-    sh.putalpha(shadow.point(lambda a: int(a * 0.6)))
-    sh = sh.transform(sh.size, Image.AFFINE, (1, 0, -S * 0.015, 0, 1, -S * 0.02))
-    img = Image.alpha_composite(img, sh)
-    img = Image.alpha_composite(img, layer)
-    return img.resize((size, size), Image.LANCZOS)
+    dim = (S, S)
+    pad = int(S * 0.02)
+    shape = art.ellipse_mask(dim, pad) if circle else art.rounded_mask(dim, pad, int(S * 0.2))
+    accent = accent_of(top)
+    # фон: свечение стихии в центре, к краям почти чёрный синий
+    bg = art.radial(dim, art.lerp(art.lerp(top, bottom, 0.5), art.NAVY, 0.25), art.lerp(bottom, (6, 9, 18), 0.75),
+                    cy=0.44, r=0.7, power=1.05)
+    bg[..., :3] = np.clip(bg[..., :3] + art.noise(dim, 0.025, seed=len(key), blur=S * 0.004)[..., None], 0, 1)
+    # глиф
+    layer = Image.new("RGBA", dim, (0, 0, 0, 0))
+    glyph(ImageDraw.Draw(layer), S)
+    g = art.arr(layer)
+    a = g[..., 3]
+    # мягкое свечение за глифом
+    halo = art.blur_mask(art.dilate(a, S * 0.02), S * 0.07)
+    bg = art.add(bg, accent, halo, 0.7)
+    if key in SPARKLY:
+        rays = Image.new("L", dim, 0)
+        rd = ImageDraw.Draw(rays)
+        for k in range(12):
+            ang = k * math.pi / 6 + 0.13
+            rd.polygon([(S * 0.5, S * 0.46), (S * 0.5 + math.cos(ang - 0.07) * S * 0.6, S * 0.46 + math.sin(ang - 0.07) * S * 0.6),
+                        (S * 0.5 + math.cos(ang + 0.07) * S * 0.6, S * 0.46 + math.sin(ang + 0.07) * S * 0.6)], fill=40)
+        bg = art.add(bg, accent, art.blur_mask(art.mask_from(rays), S * 0.02), 0.5)
+    tile = art.with_alpha(bg, shape)
+    # тень от каймы внутрь
+    inner_shadow = art.blur_mask(1 - art.erode(shape, S * 0.06), S * 0.05) * shape
+    tile = art.over(tile, art.with_alpha(art.solid(dim, (0, 0, 0)), inner_shadow * 0.55))
+    # обводка глифа (тёмная), тень вниз-вправо
+    outline = art.blur_mask(art.dilate(a, S * 0.022), S * 0.006)
+    drop = art.shift(art.blur_mask(a, S * 0.02), int(S * 0.02), int(S * 0.03))
+    tile = art.over(tile, art.with_alpha(art.solid(dim, (0, 0, 0)), drop * 0.55 * shape))
+    tile = art.over(tile, art.with_alpha(art.solid(dim, art.INK), outline * 0.9))
+    # объём: свет сверху, низ темнее, светлая кромка сверху-слева, тёмная снизу-справа
+    x, y = art.coords(dim)
+    shade = np.clip(1.3 - 0.6 * y + 0.22 * (0.5 - x), 0.5, 1.35)
+    g2 = g.copy()
+    g2[..., :3] = np.clip(g[..., :3] * shade[..., None], 0, 1)
+    rim = np.clip(a - art.shift(a, int(S * 0.014), int(S * 0.02)), 0, 1)
+    low = np.clip(a - art.shift(a, -int(S * 0.012), -int(S * 0.018)), 0, 1)
+    g2 = art.add(g2, (255, 255, 255), art.blur_mask(rim, S * 0.004), 0.55)
+    g2[..., :3] = np.clip(g2[..., :3] * (1 - 0.35 * art.blur_mask(low, S * 0.004)[..., None]), 0, 1)
+    tile = art.over(tile, g2)
+    # цветная кромка свечения вокруг глифа
+    edge = np.clip(art.blur_mask(art.dilate(a, S * 0.03), S * 0.012) - art.dilate(a, S * 0.018), 0, 1)
+    tile = art.add(tile, accent, edge * shape, 0.45)
+    # блик стекла сверху
+    gloss = Image.new("L", dim, 0)
+    ImageDraw.Draw(gloss).ellipse([int(S * 0.08), int(-S * 0.55), int(S * 0.92), int(S * 0.36)], fill=255)
+    gm = art.blur_mask(art.mask_from(gloss), S * 0.03) * art.erode(shape, S * 0.07)
+    tile = art.add(tile, (255, 255, 255), gm, 0.09)
+    if key in SPARKLY:
+        sp = Image.new("RGBA", dim, (0, 0, 0, 0))
+        sd = ImageDraw.Draw(sp)
+        light = art.lerp(accent, (255, 255, 255), 0.6) + (255,)
+        art.sparkle(sd, S * 0.76, S * 0.24, S * 0.075, light)
+        art.sparkle(sd, S * 0.24, S * 0.72, S * 0.05, light)
+        spa = art.arr(sp)
+        tile = art.add(tile, accent, art.blur_mask(spa[..., 3], S * 0.02), 0.6)
+        tile = art.over(tile, spa)
+    # кайма
+    ring, _ = art.bevel_ring(dim, shape, max(4, int(S * 0.065)))
+    tile = art.over(tile, ring)
+    return art.downsample(art.img_of(tile), (size, size))
 
 
 UI = """Group {{
@@ -506,7 +587,7 @@ UI = """Group {{
 def main():
     os.makedirs(OUT, exist_ok=True)
     for key in ICONS:
-        size = 128 if key.startswith("pt_") else 64
+        size = 128 if key.startswith("pt_") else 96
         render(key, size).save(os.path.join(OUT, key + ".png"))
         for suffix, n in SIZES.items():
             with open(os.path.join(OUT, f"{key}_{suffix}.ui"), "w", encoding="utf-8") as f:

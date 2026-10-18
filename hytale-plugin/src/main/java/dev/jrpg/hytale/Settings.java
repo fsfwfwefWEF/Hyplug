@@ -21,6 +21,14 @@ public final class Settings {
     public boolean uiIcons = true;
     /** Полоски HP/MP; false — только числа. */
     public boolean uiBars = true;
+    /** Баннер хода, очередь и книга журнала в HUD с анимациями; false — всё в окне боя, без анимаций. */
+    public boolean uiHud = true;
+    /** Анимации HUD (сдвиг очереди, выезд баннера, перелистывание книги). */
+    public boolean uiAnimations = true;
+    /** Шрифт заголовков: "Secondary" (второй шрифт игры), "Default" или пусто — как в разметке. */
+    public String uiTitleFont = "Secondary";
+    /** Кнопки меню на своих текстурах (jr_btn*.png); false — стандартные кнопки игры. */
+    public boolean uiSkinButtons = true;
     public String turnRing = "", targetRing = "", hitFx = "";
     /** Частицы эффектов боя по ключам {@link ParticleCatalog#KEYWORDS}; чего нет — подбирается само. */
     public final Map<String, String> fx = new HashMap<>();
@@ -41,7 +49,8 @@ public final class Settings {
 
     /** Парирование и уклонение: окна в мс относительно момента удара врага. */
     public static final class Reactions {
-        public boolean enabled = true;
+        /** Не используется: реакции выключены в BattleSession. */
+        public boolean enabled = false;
         /** Уклонение засчитывается с dodgeBefore мс до удара и до dodgeAfter после. */
         public long dodgeBefore = 450, dodgeAfter = 150;
         /** Парирование: окно короче. */
@@ -203,6 +212,10 @@ public final class Settings {
             Map<String, Object> u = Json.obj(ui);
             s.uiIcons = Json.bool(u, "icons", s.uiIcons);
             s.uiBars = Json.bool(u, "bars", s.uiBars);
+            s.uiHud = Json.bool(u, "hud", s.uiHud);
+            s.uiAnimations = Json.bool(u, "animations", s.uiAnimations);
+            s.uiTitleFont = Json.str(u, "titleFont", s.uiTitleFont);
+            s.uiSkinButtons = Json.bool(u, "skinButtons", s.uiSkinButtons);
         }
         Object fx = m.get("particles");
         if (fx != null) {
