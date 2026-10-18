@@ -82,6 +82,8 @@ public final class Settings {
     public boolean introFlyby = true;
     /** В бою героя изображает кукла со скином игрока (ходит плавно), а тело игрока уменьшается до невидимого. */
     public boolean heroDouble = true;
+    /** Эффекты способностей из фигур клиента (метеор, молнии, шипы, кольца — см. Vfx). */
+    public boolean vfxShapes = true;
     /** Сложность: множители врагов и их рост с уровнем партии (settings.json → difficulty). */
     public dev.jrpg.battle.GameData.Difficulty difficulty = dev.jrpg.battle.GameData.Difficulty.NORMAL;
     /** NPC случайных отрядов бродят у своего места (false — стоят). */
@@ -264,6 +266,7 @@ public final class Settings {
         s.preBattlePrompt = Json.bool(m, "preBattlePrompt", s.preBattlePrompt);
         s.introFlyby = Json.bool(m, "introFlyby", s.introFlyby);
         s.heroDouble = Json.bool(m, "heroDouble", s.heroDouble);
+        s.vfxShapes = Json.bool(m, "vfxShapes", s.vfxShapes);
         Object df = m.get("difficulty");
         if (df != null) {
             Map<String, Object> d = Json.obj(df);

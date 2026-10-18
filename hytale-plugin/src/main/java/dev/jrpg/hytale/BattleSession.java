@@ -323,6 +323,7 @@ public final class BattleSession implements BattleListener {
 
     private void despawn(String id) {
         Ref<EntityStore> ref = puppets.remove(id);
+        plugin.mover().forget(ref);
         if (ref == null || ref == playerEntity || !ref.isValid()) return;
         try {
             store.removeEntity(ref, RemoveReason.REMOVE);
@@ -778,18 +779,39 @@ public final class BattleSession implements BattleListener {
             if (firstTarget != null && firstTarget.side != actor.side) bark(actor, "skill", false);
             if (ab != null && !item && (ab.magical() || ab.damagePower() <= 0)) {
                 Fx.particleAt(ParticleCatalog.get("cast"), home, 1.0, playerEntity, store);
+                if (plugin.settings().vfxShapes) Vfx.play(plugin, world, "cast", home, home, false);
             }
             hitAt = 450;
         }
 
         Vector3d from = strikeAt != null ? strikeAt : home;
         String impactFx = impactParticle(ab);
+        // Эффект способности из фигур: снаряды и метеор начинают лететь раньше удара, остальное — в момент удара.
+        String vfx = plugin.settings().vfxShapes
+                ? Vfx.kindFor(ab, ab == null ? null : battle.content().element(ab), strikeAt != null) : "";
+        long lead = Vfx.leadMs(vfx);
+        if (lead > 0) {
+            long startAt = strikeAt != null ? hitAt : 300;
+            hitAt = startAt + lead;
+            boolean aoe = ab != null && (ab.target() == TargetType.ALL_ENEMIES || ab.target() == TargetType.ALL_ALLIES);
+            later(startAt, () -> {
+                for (ActionResult.Hit h : r.hits()) {
+                    if (h.target() == actor && h.damage() > 0) continue;
+                    Vfx.play(plugin, world, vfx, home, homes.get(h.target().id), aoe || h.crit());
+                }
+            });
+        }
         Battle.Reaction reaction = r.reaction();
         later(hitAt, () -> {
             for (ActionResult.Hit h : r.hits()) {
                 Vector3d pos = homes.get(h.target().id);
                 Ref<EntityStore> tRef = puppets.get(h.target().id);
                 boolean answeredHit = reaction != Battle.Reaction.NONE && h.target().side == Side.PARTY;
+                boolean thorns = h.combos().contains(Battle.THORNS_NOTE);
+                if (lead == 0 && !vfx.isEmpty() && !thorns && pos != null) {
+                    boolean aoe = ab != null && (ab.target() == TargetType.ALL_ENEMIES || ab.target() == TargetType.ALL_ALLIES);
+                    Vfx.play(plugin, world, vfx, home, pos, aoe || h.crit());
+                }
                 if (h.damage() > 0) Fx.particleAt(impactFx, pos, 1.0, playerEntity, store);
                 else if (h.heal() > 0 || h.mpRestore() > 0) Fx.particleAt(ParticleCatalog.get("heal"), pos, 0.4, playerEntity, store);
                 else if (!h.statusesApplied().isEmpty() && h.target().side == actor.side) {
@@ -823,7 +845,8 @@ public final class BattleSession implements BattleListener {
             banner = "";
             bannerSub = "";
             later(settle, () -> {
-                if (back != null) Fx.teleport(store, actorRef, home, yawOf(actor));
+                // Кукла уже дошла сама (NpcMover); телепорт поверх даёт рывок на клиенте — только для игрока.
+                if (back != null && actorRef == playerEntity) Fx.teleport(store, actorRef, home, yawOf(actor));
                 if (battle.phase() == Battle.Phase.PRESENTING) battle.acknowledge();
                 refresh();
             });
@@ -1358,6 +1381,7 @@ public final class BattleSession implements BattleListener {
             Fx.setScale(store, playerEntity, heroScale);
             Vector3d home = homes.get("hero");
             if (home != null) Fx.teleportPlayer(store, playerEntity, home, Fx.yawTowards(home, enemyCenter));
+            Fx.restorePlayerLook(store, playerEntity);
             heroScale = null;
         }
         despawnPuppets();

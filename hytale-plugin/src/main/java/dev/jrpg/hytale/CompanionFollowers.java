@@ -153,7 +153,10 @@ final class CompanionFollowers {
                 Store<EntityStore> st = ref.getStore();
                 runIn(st.getExternalData().getWorld(), () -> {
                     Float sc = Fx.scale(st, ref);
-                    if (sc != null && sc < 0.2f) Fx.setScale(st, ref, 1.0f);
+                    if (sc != null && sc < 0.2f) {
+                        Fx.setScale(st, ref, 1.0f);
+                        Fx.restorePlayerLook(st, ref);
+                    }
                 }, () -> { });
             }
             boolean want = cfg.enabled && !paused.contains(id) && !plugin.sessions().containsKey(id)

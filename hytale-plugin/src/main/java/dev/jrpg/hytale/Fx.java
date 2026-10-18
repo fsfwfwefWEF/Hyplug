@@ -108,6 +108,44 @@ public final class Fx {
         }
     }
 
+    /**
+     * Вернуть игроку его вид, как ванильная /model reset: модель заново из скина + повторная отправка скина.
+     * Нужно после смены размера: сервер шлёт ModelUpdate без скина, и клиент рисует лысую модель без одежды.
+     * Повторяется через 0.4 с — на случай, если обновление размера уйдёт позже.
+     */
+    public static void restorePlayerLook(Store<EntityStore> store, Ref<EntityStore> ref) {
+        applyPlayerLook(store, ref);
+        try {
+            com.hypixel.hytale.server.core.universe.world.World w = store.getExternalData().getWorld();
+            JrpgPlugin.get().scheduler().schedule(() -> {
+                try {
+                    w.execute(() -> applyPlayerLook(store, ref));
+                } catch (Throwable ignored) {
+                    // мир выгружен
+                }
+            }, 400, java.util.concurrent.TimeUnit.MILLISECONDS);
+        } catch (Throwable t) {
+            warnOnce("Вид игрока не восстанавливается повторно", t);
+        }
+    }
+
+    private static void applyPlayerLook(Store<EntityStore> store, Ref<EntityStore> ref) {
+        try {
+            if (ref == null || !ref.isValid()) return;
+            var sc = store.getComponent(ref, com.hypixel.hytale.server.core.modules.entity.player.PlayerSkinComponent.getComponentType());
+            if (sc == null || sc.getPlayerSkin() == null) return;
+            var cm = com.hypixel.hytale.server.core.cosmetics.CosmeticsModule.get();
+            var model = cm == null ? null : cm.createModel(sc.getPlayerSkin());
+            if (model != null) {
+                store.putComponent(ref, com.hypixel.hytale.server.core.modules.entity.component.ModelComponent.getComponentType(),
+                        new com.hypixel.hytale.server.core.modules.entity.component.ModelComponent(model));
+            }
+            sc.setNetworkOutdated();
+        } catch (Throwable t) {
+            warnOnce("Вид игрока не восстанавливается", t);
+        }
+    }
+
     public static void nameplate(Store<EntityStore> store, Ref<EntityStore> ref, String text) {
         try {
             if (ref == null || !ref.isValid()) return;

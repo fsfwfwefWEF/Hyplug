@@ -43,6 +43,9 @@ final class ParticleCatalog {
     /** Служебные и «чужие» системы (примеры, предупреждения, подготовка выстрела, приёмы оружия). */
     private static final List<String> FOREIGN = List.of("example", "test", "debug", "warning", "prefire",
             "signature", "_dev", "editor");
+    /** Слова разовых вспышек: такие системы берём, даже если срок жизни не задан. */
+    private static final List<String> BURST = List.of("explosion", "impact", "hit", "burst", "splash", "implosion",
+            "spark", "poof", "shatter", "break", "smash", "slam", "strike");
     /** Эффекты, которые подбираются только вручную (settings.json → particles). */
     private static final List<String> MANUAL = List.of("physical");
 
@@ -101,7 +104,9 @@ final class ParticleCatalog {
             String low = id.toLowerCase(Locale.ROOT);
             if (LOOPING.stream().anyMatch(low::contains) || FOREIGN.stream().anyMatch(low::contains)) return;
             float life = ps == null ? 0 : ps.getLifeSpan();
-            if (life > 0 && life <= 4) usable.add(id);
+            // 0 — срок не задан: берём, если по имени похоже на разовую вспышку.
+            boolean burst = BURST.stream().anyMatch(low::contains);
+            if ((life > 0 && life <= 4) || (life <= 0 && burst)) usable.add(id);
         });
         Map<String, String> out = new LinkedHashMap<>();
         for (Map.Entry<String, List<String>> e : KEYWORDS.entrySet()) {
@@ -120,6 +125,9 @@ final class ParticleCatalog {
             out.put(e.getKey(), best == null ? "" : best);
         }
         picks = out;
+        List<String> sorted = new ArrayList<>(all.keySet());
+        java.util.Collections.sort(sorted);
+        JrpgPlugin.get().log("Все системы частиц (" + sorted.size() + "): " + sorted);
         JrpgPlugin.get().log("Частицы боя (из " + all.size() + ", коротких " + usable.size() + "): " + out
                 + ". Поменять: settings.json → particles, список: /jrpg particles <слово>");
         return out;
