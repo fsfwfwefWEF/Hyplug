@@ -22,7 +22,7 @@ public final class Settings {
     /** Полоски HP/MP; false — только числа. */
     public boolean uiBars = true;
     /** Баннер хода, очередь и книга журнала в HUD с анимациями; false — всё в окне боя, без анимаций. */
-    public boolean uiHud = true;
+    public boolean uiHud = false;
     /** Анимации HUD (сдвиг очереди, выезд баннера, перелистывание книги). */
     public boolean uiAnimations = true;
     /** Шрифт заголовков: "Secondary" (второй шрифт игры), "Default" или пусто — как в разметке. */

@@ -379,7 +379,7 @@ public final class BattleSession implements BattleListener {
         // Камера при наведении больше не дёргается (в 0.4 она прыгала от цели к цели).
         if (hoverScreen == BattleMenu.Screen.TARGET && index >= 0 && index < menu.targets().size()) {
             Combatant t = menu.targets().get(index);
-            Fx.particle(plugin.settings().targetRing, homes.get(t.id), playerEntity, store);
+            ring(t.id);
         }
         refresh();
     }
@@ -455,10 +455,7 @@ public final class BattleSession implements BattleListener {
         if (menu.screen() != BattleMenu.Screen.TARGET) return;
         List<Combatant> targets = menu.targets();
         camera.targets(targets.isEmpty() || targets.get(0).side == Side.ENEMY);
-        for (Combatant t : targets) {
-            Vector3d pos = homes.get(t.id);
-            if (pos != null) Fx.particle(plugin.settings().targetRing, pos, playerEntity, store);
-        }
+        for (Combatant t : targets) ring(t.id);
     }
 
     public void openMenu() {
@@ -1484,10 +1481,26 @@ public final class BattleSession implements BattleListener {
             loggedMouse = true;
             plugin.log("Мышь в мире работает: наведение на " + (c == null ? "пустое место" : c.name));
         }
+        hoverCombatant(c);
+    }
+
+    /** Мышь над кнопкой врага в окне боя (кнопка стоит там, где враг на экране). */
+    void onHitHover(String id) {
+        if (closed || battle == null) return;
+        Combatant c = alive(id);
+        if (c == null || c.id.equals(peekId)) return;
+        if (!loggedHit) {
+            loggedHit = true;
+            plugin.log("Кнопки над врагами работают: наведение на " + c.name);
+        }
+        mouseSeq++;
+        hoverCombatant(c);
+    }
+
+    private void hoverCombatant(Combatant c) {
         if (battle.phase() == Battle.Phase.AWAIT_REACTION) return;
         if (c != null) {
-            Vector3d pos = homes.get(c.id);
-            if (pos != null) Fx.particle(plugin.settings().targetRing, pos, playerEntity, store);
+            ring(c.id);
             peekId = c.id;
         } else {
             peekId = null;
@@ -1495,7 +1508,32 @@ public final class BattleSession implements BattleListener {
         refresh();
     }
 
-    private boolean loggedMouse;
+    /** Кольцо под бойцом (у босса шире). */
+    private void ring(String id) {
+        Combatant c = battle == null ? null : battle.byId(id);
+        Fx.ring(plugin.settings().targetRing, world, homes.get(id), c != null && c.boss ? 1.9 : 1.0, playerEntity, store);
+    }
+
+    /** Клик по кнопке врага в окне боя — как клик по нему в мире. */
+    void onHitClick(String id) {
+        if (closed || battle == null) return;
+        clickCombatant(alive(id));
+    }
+
+    /** Где боец на экране: {x центра, y макушки, y ног} от 0 до 1; null — не виден. */
+    double[] screenBox(String id) {
+        Combatant c = alive(id);
+        Vector3d at = c == null ? null : homes.get(id);
+        if (at == null || camera == null) return null;
+        double height = c.boss ? 2.6 : 1.7;
+        double[] feet = camera.project(new Vector3d(at.x, at.y, at.z));
+        double[] head = camera.project(new Vector3d(at.x, at.y + height, at.z));
+        if (feet == null || head == null) return null;
+        if (feet[0] < -0.05 || feet[0] > 1.05 || head[1] > 1.0 || feet[1] < 0) return null;
+        return new double[]{feet[0], head[1], feet[1]};
+    }
+
+    private boolean loggedMouse, loggedHit;
     /** Враг, выбранный кликом в мире до выбора действия: «Атака» и навыки по одной цели бьют его сразу. */
     private String preTarget;
 
@@ -1504,6 +1542,10 @@ public final class BattleSession implements BattleListener {
         if (closed || battle == null) return;
         Combatant c = alive(combatantAt(target));
         plugin.log("Мышь в мире: клик по " + (c == null ? "пустому месту" : c.name));
+        clickCombatant(c);
+    }
+
+    private void clickCombatant(Combatant c) {
         if (c == null || battle.phase() != Battle.Phase.AWAIT_COMMAND) return;
         if (menu.screen() == BattleMenu.Screen.TARGET && menu.targets().contains(c)) {
             onInspect(c.id);
@@ -1511,8 +1553,7 @@ public final class BattleSession implements BattleListener {
         }
         preTarget = c.side == Side.ENEMY ? c.id : null;
         inspectId = c.id;
-        Vector3d pos = homes.get(c.id);
-        if (pos != null) Fx.particle(plugin.settings().targetRing, pos, playerEntity, store);
+        ring(c.id);
         refresh();
     }
 

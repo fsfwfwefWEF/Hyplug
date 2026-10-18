@@ -63,6 +63,26 @@ public final class Fx {
         }
     }
 
+    /**
+     * Кольцо под бойцом: частица из settings.json (particles.targetRing), а если её нет — плоский золотой
+     * «бублик» (отладочная фигура клиента DisplayDebug, тот же, что рисуют селекторы атак), гаснет сам.
+     */
+    public static void ring(String particle, com.hypixel.hytale.server.core.universe.world.World world, Vector3d feet,
+                            double radius, Ref<EntityStore> viewer, Store<EntityStore> store) {
+        if (feet == null) return;
+        if (particle != null && !particle.isBlank()) {
+            particle(particle, feet, viewer, store);
+            return;
+        }
+        try {
+            com.hypixel.hytale.server.core.modules.debug.DebugUtils.addDonut(world, feet.x, feet.y + 0.05, feet.z,
+                    radius, radius * 0.82, 0.06, 0.0, Math.PI * 2, new org.joml.Vector3f(1.0f, 0.82f, 0.25f),
+                    0.85f, 1.6f, com.hypixel.hytale.server.core.modules.debug.DebugUtils.FLAG_FADE);
+        } catch (Throwable t) {
+            warnOnce("Кольцо под целью не нарисовалось", t);
+        }
+    }
+
     public static void nameplate(Store<EntityStore> store, Ref<EntityStore> ref, String text) {
         try {
             if (ref == null || !ref.isValid()) return;

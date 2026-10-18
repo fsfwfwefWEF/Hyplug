@@ -250,6 +250,24 @@ def speech_layer(i):
     ])
 
 
+HIT_W, HIT_H = 140, 180
+
+
+def hit_layer(i):
+    """Невидимая кнопка над врагом в мире (наведение — кольцо и описание, клик — выбор цели). Пока открыто
+    окно боя, клики в мир клиент не шлёт, поэтому мышь ловит окно: плагин ставит кнопку туда, где враг на экране
+    (BattleCamera.project), через Anchor распорок #Hit<i>Top/#Hit<i>Left и размер самой кнопки #Hit<i>."""
+    return group(f"HitLayer{i}", ["Anchor: (Full: 0);", "LayoutMode: Top;"], [
+        f"Group #Hit{i}Top {{ Anchor: (Height: 400); }}",
+        group(f"Hit{i}Row", [f"Anchor: (Height: {HIT_H});", "LayoutMode: Left;"], [
+            f"Group #Hit{i}Left {{ Anchor: (Width: 800); }}",
+            f"Button #Hit{i} {{ Anchor: (Width: {HIT_W}, Height: {HIT_H}); }}",
+            f"Group {{ FlexWeight: 1; }}",
+        ]),
+        f"Group {{ FlexWeight: 1; }}",
+    ])
+
+
 BOOK_W, BOOK_H = 440, 290
 
 
@@ -314,7 +332,8 @@ def battle():
     ])
     main = group("", ["Anchor: (Full: 0);", "LayoutMode: Top;", "Padding: (Full: 10);"],
                  [enemy_row, spacer(h=6), banner, middle, bottom])
-    root = group("", [], [main] + [speech_layer(i) for i in range(SPEECH)])
+    # Кнопки над врагами — первыми, под всем остальным: панели окна перекрывают их и забирают клик.
+    root = group("", [], [hit_layer(i) for i in range(ENEMIES)] + [main] + [speech_layer(i) for i in range(SPEECH)])
     text = ('$C = "../Common.ui";\n\n'
             "// Боевое меню JRPG. Файл собран скриптом tools/gen_battle_ui.py — правь скрипт, а не этот файл.\n"
             "// Сверху враги, справа осмотр бойца, внизу партия, команды и описание. Баннер хода, очередь и\n"

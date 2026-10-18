@@ -74,6 +74,12 @@ public final class BattleMenuPage extends InteractiveCustomUIPage<BattleMenuPage
             bind(evt, CustomUIEventBindingType.MouseEntered, "#E" + i + "Info", "peekEnemy", i);
             bind(evt, CustomUIEventBindingType.MouseExited, "#E" + i + "Info", "unpeek", i);
         }
+        // Невидимые кнопки над врагами в мире: наведение — кольцо и описание, клик — выбор цели.
+        for (int i = 0; i < ENEMIES; i++) {
+            bind(evt, CustomUIEventBindingType.Activating, "#Hit" + i, "hitClick", i);
+            bind(evt, CustomUIEventBindingType.MouseEntered, "#Hit" + i, "hitHover", i);
+            bind(evt, CustomUIEventBindingType.MouseExited, "#Hit" + i, "unpeek", i);
+        }
         for (int i = 0; i < PARTY; i++) {
             bind(evt, CustomUIEventBindingType.Activating, "#P" + i + "Info", "ally", i);
             bind(evt, CustomUIEventBindingType.MouseEntered, "#P" + i + "Info", "peekAlly", i);
@@ -128,6 +134,8 @@ public final class BattleMenuPage extends InteractiveCustomUIPage<BattleMenuPage
             case "peekAlly" -> { if (i >= 0 && i < PARTY) session.onPeek(partyIds[i]); }
             case "unpeek" -> session.onUnpeek();
             case "enemy" -> { if (i >= 0 && i < ENEMIES) session.onInspect(enemyIds[i]); }
+            case "hitHover" -> { if (i >= 0 && i < ENEMIES) session.onHitHover(enemyIds[i]); }
+            case "hitClick" -> { if (i >= 0 && i < ENEMIES) session.onHitClick(enemyIds[i]); }
             case "ally" -> { if (i >= 0 && i < PARTY) session.onInspect(partyIds[i]); }
             default -> { }
         }
@@ -173,6 +181,33 @@ public final class BattleMenuPage extends InteractiveCustomUIPage<BattleMenuPage
         }
     }
 
+    /** Кнопки над врагами: где враг на экране (по камере), размер — от роста на экране. Экран считается 1920×1080. */
+    private void fillHits(UICommandBuilder cmd) {
+        for (int i = 0; i < ENEMIES; i++) {
+            double[] box = enemyIds[i] == null ? null : session.screenBox(enemyIds[i]);
+            cmd.set("#HitLayer" + i + ".Visible", box != null);
+            if (box == null) continue;
+            int h = (int) Math.round(Math.max(70, Math.min(420, (box[2] - box[1]) * 1080 * 1.15)));
+            int w = (int) Math.round(Math.max(80, Math.min(360, h * 0.9)));
+            int x = (int) Math.round(box[0] * 1920 - w / 2.0), y = (int) Math.round(box[2] * 1080 - h);
+            x = Math.max(0, Math.min(1920 - w, x));
+            y = Math.max(0, Math.min(1080 - h, y));
+            Anchor top = new Anchor();
+            top.setHeight(Value.of(y));
+            cmd.setObject("#Hit" + i + "Top.Anchor", top);
+            Anchor row = new Anchor();
+            row.setHeight(Value.of(h));
+            cmd.setObject("#Hit" + i + "Row.Anchor", row);
+            Anchor left = new Anchor();
+            left.setWidth(Value.of(x));
+            cmd.setObject("#Hit" + i + "Left.Anchor", left);
+            Anchor size = new Anchor();
+            size.setWidth(Value.of(w));
+            size.setHeight(Value.of(h));
+            cmd.setObject("#Hit" + i + ".Anchor", size);
+        }
+    }
+
     private static double clamp(double v) {
         return Math.max(0.01, Math.min(0.99, v));
     }
@@ -199,6 +234,7 @@ public final class BattleMenuPage extends InteractiveCustomUIPage<BattleMenuPage
         cmd.set("#BookSpace.Visible", hud);
         if (!hud) fillQueue(cmd, b);
         fillEnemies(cmd, b);
+        fillHits(cmd);
         fillParty(cmd, b);
         fillMenu(cmd, session.menu());
         fillInfo(cmd);
@@ -329,8 +365,35 @@ public final class BattleMenuPage extends InteractiveCustomUIPage<BattleMenuPage
     private void fillInfo(UICommandBuilder cmd) {
         BattleSession.Info info = session.info();
         cmd.set("#InfoTitle.Text", info.title());
-        cmd.set("#InfoText.TextSpans", RichText.describe(info.text(), RichText.DARK, names(true), names(false), true));
+        cmd.set("#InfoText.TextSpans", RichText.describe(fit(info.text(), INFO_COLS, INFO_LINES), RichText.DARK,
+                names(true), names(false), true));
         icon(cmd, "#InfoIcon", iconKey(info.icon()), "s");
+    }
+
+    /** Окно описания (470×280, шрифт 14): примерно столько букв в строке и строк влезает. */
+    private static final int INFO_COLS = 54, INFO_LINES = 11;
+
+    /** Обрезать текст, чтобы с переносами он влез в окно; лишнее — «…». */
+    static String fit(String text, int cols, int maxLines) {
+        if (text == null) return "";
+        StringBuilder out = new StringBuilder();
+        int used = 0;
+        for (String line : text.split("\n", -1)) {
+            int need = Math.max(1, (line.length() + cols - 1) / cols);
+            if (used + need > maxLines) {
+                int left = maxLines - used;
+                if (left > 0) {
+                    String cut = line.substring(0, Math.min(line.length(), left * cols - 2));
+                    out.append(out.length() > 0 ? "\n" : "").append(cut).append("…");
+                } else if (out.length() > 0) {
+                    out.append("…");
+                }
+                return out.toString();
+            }
+            out.append(out.length() > 0 || used > 0 ? "\n" : "").append(line);
+            used += need;
+        }
+        return out.toString();
     }
 
     /** Имена бойцов стороны (для раскраски текста). */

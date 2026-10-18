@@ -7,6 +7,81 @@ $C = "../Common.ui";
 
 Group {
 
+  Group #HitLayer0 {
+    Anchor: (Full: 0);
+    LayoutMode: Top;
+
+    Group #Hit0Top { Anchor: (Height: 400); }
+    Group #Hit0Row {
+      Anchor: (Height: 180);
+      LayoutMode: Left;
+
+      Group #Hit0Left { Anchor: (Width: 800); }
+      Button #Hit0 { Anchor: (Width: 140, Height: 180); }
+      Group { FlexWeight: 1; }
+    }
+    Group { FlexWeight: 1; }
+  }
+  Group #HitLayer1 {
+    Anchor: (Full: 0);
+    LayoutMode: Top;
+
+    Group #Hit1Top { Anchor: (Height: 400); }
+    Group #Hit1Row {
+      Anchor: (Height: 180);
+      LayoutMode: Left;
+
+      Group #Hit1Left { Anchor: (Width: 800); }
+      Button #Hit1 { Anchor: (Width: 140, Height: 180); }
+      Group { FlexWeight: 1; }
+    }
+    Group { FlexWeight: 1; }
+  }
+  Group #HitLayer2 {
+    Anchor: (Full: 0);
+    LayoutMode: Top;
+
+    Group #Hit2Top { Anchor: (Height: 400); }
+    Group #Hit2Row {
+      Anchor: (Height: 180);
+      LayoutMode: Left;
+
+      Group #Hit2Left { Anchor: (Width: 800); }
+      Button #Hit2 { Anchor: (Width: 140, Height: 180); }
+      Group { FlexWeight: 1; }
+    }
+    Group { FlexWeight: 1; }
+  }
+  Group #HitLayer3 {
+    Anchor: (Full: 0);
+    LayoutMode: Top;
+
+    Group #Hit3Top { Anchor: (Height: 400); }
+    Group #Hit3Row {
+      Anchor: (Height: 180);
+      LayoutMode: Left;
+
+      Group #Hit3Left { Anchor: (Width: 800); }
+      Button #Hit3 { Anchor: (Width: 140, Height: 180); }
+      Group { FlexWeight: 1; }
+    }
+    Group { FlexWeight: 1; }
+  }
+  Group #HitLayer4 {
+    Anchor: (Full: 0);
+    LayoutMode: Top;
+
+    Group #Hit4Top { Anchor: (Height: 400); }
+    Group #Hit4Row {
+      Anchor: (Height: 180);
+      LayoutMode: Left;
+
+      Group #Hit4Left { Anchor: (Width: 800); }
+      Button #Hit4 { Anchor: (Width: 140, Height: 180); }
+      Group { FlexWeight: 1; }
+    }
+    Group { FlexWeight: 1; }
+  }
   Group {
     Anchor: (Full: 0);
     LayoutMode: Top;
