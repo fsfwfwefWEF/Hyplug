@@ -147,6 +147,12 @@ public final class Fx {
      */
     public static Ref<EntityStore> spawnPuppet(Store<EntityStore> store, String roleSpec, String who, Vector3d pos, float yaw,
                                                String nameplate) {
+        return spawnPuppet(store, roleSpec, who, pos, yaw, nameplate, null);
+    }
+
+    /** То же, с человеческим видом look (модель игрока со скином, см. {@link HumanLook}); null — вид роли. */
+    public static Ref<EntityStore> spawnPuppet(Store<EntityStore> store, String roleSpec, String who, Vector3d pos, float yaw,
+                                               String nameplate, HumanLook.Look look) {
         try {
             String role = resolveRole(roleSpec, who);
             if (role == null || pos == null) return null;
@@ -161,10 +167,14 @@ public final class Fx {
                     warnOnce("Не удалось пометить NPC как временного", t);
                 }
                 if (nameplate != null) holder.putComponent(Nameplate.getComponentType(), new Nameplate(nameplate));
+                if (look != null) {
+                    holder.putComponent(com.hypixel.hytale.server.core.modules.entity.player.PlayerSkinComponent.getComponentType(),
+                            new com.hypixel.hytale.server.core.modules.entity.player.PlayerSkinComponent(look.skin()));
+                }
             };
             TriConsumer<NPCEntity, Ref<EntityStore>, Store<EntityStore>> after = null;
             Pair<Ref<EntityStore>, NPCEntity> spawned = npcs.spawnEntity(store, npcs.getIndex(role), pos,
-                    new Rotation3f(0, yaw, 0), null, prepare, after);
+                    new Rotation3f(0, yaw, 0), look == null ? null : look.model(), prepare, after);
             if (spawned == null || spawned.first() == null) return null;
             Ref<EntityStore> ref = spawned.first();
             // На всякий случай ещё раз (если заготовку кто-то переписал): кукла заморожена и стоит.

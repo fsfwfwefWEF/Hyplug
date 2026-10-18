@@ -32,7 +32,7 @@ final class WeaponAnims {
     /** Слова, по которым анимация набора НЕ годится для удара: позы, ходьба, зарядка (зацикленные). */
     private static final List<String> NOT_A_STRIKE = List.of("idle", "walk", "run", "sprint", "crouch", "jump",
             "fall", "swim", "fly", "climb", "equip", "pullback", "charging", "loop", "hold", "aim", "sit", "slide",
-            "mantle", "glide", "roll", "dodge");
+            "mantle", "glide", "roll", "dodge", "charged", "leap", "whirlwind", "spin", "frontflip", "dash");
 
     private static final Random RND = new Random();
     private static final Set<String> loggedSets = new HashSet<>();
@@ -50,7 +50,10 @@ final class WeaponAnims {
         if (all.isEmpty()) return false;
         List<String> tried = new ArrayList<>();
         String held = heldSet(store, ref);
-        if (held != null) tried.add(held);
+        // Пустая рука (набор Default — удары кулаками) не мешает подсказкам: герой бьёт «мечом» из
+        // settings.json, пока у него нет настоящего оружия в руке.
+        boolean emptyHand = held != null && held.equalsIgnoreCase(ItemPlayerAnimations.DEFAULT_ID);
+        if (held != null && !(emptyHand && hints != null && !hints.isEmpty())) tried.add(held);
         if (hints != null) for (String h : hints) if (!tried.contains(h)) tried.add(h);
         for (String setId : tried) {
             ItemPlayerAnimations set = find(all, setId);
@@ -101,13 +104,22 @@ final class WeaponAnims {
         return null;
     }
 
-    /** Анимация удара в наборе: первое слово, у которого есть совпадения, и случайная из них (разные замахи). */
+    /**
+     * Анимация удара в наборе. Сначала точные имена из списка (случайное из тех, что есть в наборе, —
+     * разные замахи), потом по части имени. Заряжаемые и вращения (…Charged, Whirlwind, Spin…) по части
+     * имени не берутся: они зациклены и не кончаются сами (в 0.7.2 Брам так и крутился после удара).
+     */
     private static String pick(ItemPlayerAnimations set, List<String> words) {
         Map<String, ItemAnimation> anims = set.getAnimations();
         if (anims == null || anims.isEmpty()) return null;
         if (loggedSets.add(set.getId())) {
             JrpgPlugin.get().log("Анимации оружия " + set.getId() + ": " + new java.util.TreeSet<>(anims.keySet()));
         }
+        List<String> exact = new ArrayList<>();
+        for (String w : words) {
+            for (String key : anims.keySet()) if (key.equalsIgnoreCase(w)) exact.add(key);
+        }
+        if (!exact.isEmpty()) return exact.get(RND.nextInt(exact.size()));
         for (String w : words) {
             String want = w.toLowerCase(Locale.ROOT);
             List<String> found = new ArrayList<>();

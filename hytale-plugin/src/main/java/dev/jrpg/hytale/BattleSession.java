@@ -95,6 +95,9 @@ public final class BattleSession implements BattleListener {
     private final java.util.Random rnd = new java.util.Random();
 
     /** Замах врага: кто, чем, по кому, где стоит для удара и когда удар (System.currentTimeMillis). */
+    /** Счётчик анимаций бойца: снимать замах, только если после него не было новой анимации. */
+    private final Map<Ref<EntityStore>, Integer> animSeq = new java.util.concurrent.ConcurrentHashMap<>();
+
     private static final class Windup {
         final Combatant actor;
         final Ability ability;
@@ -225,6 +228,9 @@ public final class BattleSession implements BattleListener {
             battle.start(opening);
             refresh();
         });
+        // Перед первым ходом кто-то из врагов и кто-то из партии бросают реплику (settings.json → barks).
+        later(Math.max(400, intro - plugin.settings().ms(1800)), () -> barkAny(Side.ENEMY, "start"));
+        later(Math.max(900, intro - plugin.settings().ms(700)), () -> barkAny(Side.PARTY, "start"));
     }
 
     /**
@@ -251,7 +257,8 @@ public final class BattleSession implements BattleListener {
     // ---------- NPC-куклы ----------
 
     private void spawnPuppet(Combatant c, String roleSpec, Vector3d pos, float yaw) {
-        Ref<EntityStore> ref = Fx.spawnPuppet(store, roleSpec, c.name, pos, yaw, BattleText.nameplate(c, false));
+        HumanLook.Look look = c.side == Side.PARTY ? HumanLook.of(c.id, plugin.settings().companionLooks.get(c.id)) : null;
+        Ref<EntityStore> ref = Fx.spawnPuppet(store, roleSpec, c.name, pos, yaw, BattleText.nameplate(c, false), look);
         if (ref == null) return;
         puppets.put(c.id, ref);
     }
@@ -583,16 +590,21 @@ public final class BattleSession implements BattleListener {
             // Враг уже подошёл и замахнулся (окно ответа) — удар сразу.
             strikeAt = w.strikeAt;
             hitAt = 0;
+            bark(actor, isBasicAttack(actor, ab) ? "attack" : "skill", false);
         } else if (isMelee(actor, ab, firstTarget, item) && actorRef != null && home != null && targetPos != null) {
             // Точка удара: перед целью (для удара по всем — перед центром врагов).
             Vector3d aim = ab.target() == TargetType.ALL_ENEMIES ? (actor.side == Side.PARTY ? enemyCenter : center) : targetPos;
             strikeAt = strikePoint(home, aim);
             long arrive = walk(actorRef, home, strikeAt, Fx.yawTowards(strikeAt, aim));
             String kind = isBasicAttack(actor, ab) ? "attack" : "skill";
-            later(arrive, () -> animateAs(actor, actorRef, kind));
+            later(arrive, () -> {
+                animateAs(actor, actorRef, kind);
+                bark(actor, kind, false);
+            });
             hitAt = arrive + 300;
         } else {
             animateAs(actor, actorRef, "cast");
+            if (firstTarget != null && firstTarget.side != actor.side) bark(actor, "skill", false);
             if (ab != null && !item && (ab.magical() || ab.damagePower() <= 0)) {
                 Fx.particleAt(ParticleCatalog.get("cast"), home, 1.0, playerEntity, store);
             }
@@ -614,12 +626,14 @@ public final class BattleSession implements BattleListener {
                 }
                 if (h.killed()) {
                     fallen(h.target(), true);
+                    bark(h.target(), "death", true);
                 } else if (answeredHit) {
                     showReaction(reaction, h.target(), tRef, pos);
                 } else if (h.statusesApplied().contains(STUN) && tRef != null && h.target().isAlive()) {
                     knockDown(h.target(), tRef);
                 } else if (h.damage() > 0 && tRef != null && h.target() != actor) {
                     animateAs(h.target(), tRef, "hurt");
+                    later(450, () -> bark(h.target(), "hurt", false));
                     if (pos != null && from != null) knockback(h.target(), tRef, pos, from);
                 }
                 if (!(answeredHit && reaction == Battle.Reaction.PARRY)) popHit(h, 0);
@@ -631,6 +645,9 @@ public final class BattleSession implements BattleListener {
         Vector3d back = strikeAt;
         long returnAt = Math.max(plugin.settings().ms(plugin.settings().actionDelayMs), hitAt + 900);
         later(returnAt, () -> {
+            if (actorRef != null && actorRef != playerEntity && !downed.contains(actor.id) && actor.isAlive()) {
+                Fx.stopAnimation(store, actorRef, com.hypixel.hytale.protocol.AnimationSlot.Action);
+            }
             long settle = back != null ? walk(actorRef, back, home, yawOf(actor)) : 0;
             banner = "";
             bannerSub = "";
@@ -676,6 +693,16 @@ public final class BattleSession implements BattleListener {
     private void animateAs(Combatant c, Ref<EntityStore> ref, String kind) {
         Settings.Animations an = plugin.settings().anim;
         if (!an.enabled || ref == null) return;
+        int seq = animSeq.merge(ref, 1, Integer::sum);
+        if (kind.equals("attack") || kind.equals("skill") || kind.equals("cast") || kind.equals("parry")) {
+            // Замах снимается через strikeMs, если сам не кончился (зацикленные «заряженные» и вращения),
+            // и только если с тех пор боец не начал другую анимацию.
+            later(an.strikeMs, () -> {
+                if (animSeq.getOrDefault(ref, 0) == seq && !downed.contains(c.id) && c.isAlive()) {
+                    Fx.stopAnimation(store, ref, com.hypixel.hytale.protocol.AnimationSlot.Action);
+                }
+            });
+        }
         String modelKind = kind.equals("skill") ? "attack" : kind;
         List<String> own = ownAnims(c, kind);
         if (own.isEmpty() && !modelKind.equals(kind)) own = ownAnims(c, modelKind);
@@ -899,13 +926,17 @@ public final class BattleSession implements BattleListener {
             plugin.mover().go(store, world, ref, from, to, dur, dist > 1.5, false, yaw);
             return dur;
         }
-        int n = (int) Math.max(an.stepCount, dur / Math.max(10, an.stepMs));
-        for (int i = 1; i <= n; i++) {
-            double t = i / (double) n;
-            Vector3d p = new Vector3d(from.x + (to.x - from.x) * t, from.y + (to.y - from.y) * t, from.z + (to.z - from.z) * t);
-            later(Math.round(dur * (i - 1) / (double) n), () -> Fx.teleport(store, ref, p, yaw));
-        }
-        return dur;
+        // Игрока двигает только телепорт, а каждый телепорт клиент показывает скачком. Поэтому вместо бега —
+        // короткий рывок: анимация «рывок вперёд/назад» и два телепорта (середина, конец) за dashMs.
+        Vector3d heroHome = homes.getOrDefault("hero", from);
+        boolean forward = Math.hypot(to.x - heroHome.x, to.z - heroHome.z) > Math.hypot(from.x - heroHome.x, from.z - heroHome.z);
+        long dash = an.dashMs;
+        float faceYaw = forward ? Fx.yawTowards(from, to) : Fx.yawTowards(to, from);
+        Fx.animate(store, ref, forward ? an.dashForward : an.dashBack, List.of());
+        Vector3d mid = new Vector3d((from.x + to.x) / 2, (from.y + to.y) / 2, (from.z + to.z) / 2);
+        later(dash / 3, () -> Fx.teleport(store, ref, mid, faceYaw));
+        later(dash * 2 / 3, () -> Fx.teleport(store, ref, to, yaw));
+        return dash + 80;
     }
 
     /** Цель отлетает на полблока от удара и через мгновение возвращается (NPC — плавно, игрок — телепортом). */
@@ -998,6 +1029,7 @@ public final class BattleSession implements BattleListener {
         String line = speaker == null ? text : speaker.name + ": «" + text + "»";
         addLog(line);
         say(line);
+        if (speaker != null) speech(speaker, text);
     }
 
     @Override
@@ -1015,6 +1047,7 @@ public final class BattleSession implements BattleListener {
                 plugin.scheduler().execute(plugin::saveWorld);
             }
             for (Combatant c : battle.alive(Side.PARTY)) animateAs(c, puppets.get(c.id), "victory");
+            barkAny(Side.PARTY, "win");
             Map<String, Integer> loot = plugin.data().rollLoot(encounter, rnd);
             loot.forEach((item, cnt) -> battle.inventory().merge(item, cnt, Integer::sum));
             Map<String, Integer> all = new java.util.LinkedHashMap<>(drops);
@@ -1146,6 +1179,43 @@ public final class BattleSession implements BattleListener {
         return false;
     }
     PlayerRef player() { return player; }
+
+    // ---------- реплики ----------
+
+    private static final String SPEECH = "#fff1a8";
+
+    /** Реплика бойца на событие (settings.json → barks): над головой, в журнале и в чате. */
+    private void bark(Combatant c, String event, boolean always) {
+        if (c == null) return;
+        List<String> lines = barkLines(c, event);
+        if (lines.isEmpty()) return;
+        if (!always && rnd.nextDouble() >= plugin.settings().barkChance) return;
+        String text = lines.get(rnd.nextInt(lines.size()));
+        addLog(c.name + ": «" + text + "»");
+        say(c.name + ": «" + text + "»");
+        speech(c, text);
+    }
+
+    /** Реплика кого-то одного со стороны side, у кого есть фразы на это событие. */
+    private void barkAny(Side side, String event) {
+        List<Combatant> who = new java.util.ArrayList<>();
+        for (Combatant c : battle.alive(side)) if (!barkLines(c, event).isEmpty()) who.add(c);
+        if (!who.isEmpty()) bark(who.get(rnd.nextInt(who.size())), event, true);
+    }
+
+    private List<String> barkLines(Combatant c, String event) {
+        String key = c.side == Side.ENEMY && c.templateId != null ? c.templateId : c.id;
+        Map<String, List<String>> byEvent = plugin.settings().barks.get(key);
+        if (byEvent == null) return List.of();
+        return byEvent.getOrDefault(event, List.of());
+    }
+
+    /** Фраза всплывает над говорящим (как цифры урона, но в кавычках и жёлтым). */
+    private void speech(Combatant c, String text) {
+        if (!plugin.settings().combatText) return;
+        Ref<EntityStore> ref = puppets.get(c.id);
+        if (ref != null) Fx.combatText(store, playerEntity, ref, "«" + text + "»", SPEECH);
+    }
 
     // ---------- утилиты ----------
 

@@ -5,6 +5,10 @@
 
   // Роли NPC Hytale для компаньонов (герой — сам игрок). Список ролей в игре: /jrpg roles <часть имени>.
   "companionRoles": { "lyra": "Kweebec_Seedling", "bram": "Trork_Warrior" },
+  // Человеческий вид компаньонов: модель игрока со своим скином, на ней видны одежда (позже броня и оружие)
+  // и работают ванильные анимации оружия. "male" / "female" — скин подбирается сам и не меняется
+  // (в логе: «Вид компаньона ...»), или JSON скина. Убрать строку — компаньон снова выглядит как его роль.
+  "companionLooks": { "bram": "male", "lyra": "female" },
   // Роль, которой изображается враг/компаньон, если его роль в игре не нашлась.
   "fallbackRole": "Trork_Warrior",
 
@@ -60,13 +64,19 @@
   // Остальное — анимации модели: берётся первое имя из списка, которое есть у модели (имена в логе:
   // «Анимации модели ...»). death — поза «повержен» (держится, пока боец лежит), knockdown/down/wake —
   // сбит с ног оглушением: падает, лежит, пока оглушён, встаёт. lieMs — сколько лежит поверженный враг.
-  // runSpeed — скорость подхода к цели на арене (блоков в секунду); stepCount/stepMs — шаги самого игрока.
+  // runSpeed — скорость подхода к цели на арене (блоков в секунду).
   "animations": {
     "enabled": true,
-    "weaponAttack": ["SwingLeft", "SwingRight", "SwingDown", "Swing", "Slash", "Attack", "Stab", "Thrust", "Strike", "Punch", "Bash"],
-    "weaponSkill": ["Charged", "Heavy", "Smash", "Slam", "Overhead", "Spin", "Lunge", "Combo", "SwingDown", "Swing", "Slash", "Attack", "Stab"],
-    "weaponCast": ["Cast", "Spell", "Shoot", "Throw"],
-    "weaponParry": ["Block", "Guard", "Parry"],
+    "weaponAttack": ["SwingLeft", "SwingRight", "SwingDown", "Stab", "SwingDownLeft", "SwingDownRight", "SwingUpLeft", "SwingUpRight"],
+    "weaponSkill": ["SwingDownStrong", "SwingDownLeft", "SwingDownRight", "Sweep", "SwingUpLeft", "SwingUpRight", "GuardBash", "SwingDown", "Stab"],
+    "weaponCast": ["CastLeft", "CastEnchant"],
+    "weaponParry": ["GuardBash"],
+    // Через strikeMs мс анимация удара снимается, даже если сама не кончилась (зацикленные замахи).
+    "strikeMs": 1100,
+    // Сам игрок не бежит (его двигает телепорт), а делает рывок к цели и обратно за dashMs мс.
+    "dashForward": ["DashForward"],
+    "dashBack": ["DashBackward"],
+    "dashMs": 220,
     "attack": ["Attack", "Swing", "Slash", "Strike", "Punch", "Bite", "Melee", "Hit"],
     "cast": ["Cast", "Spell", "Magic", "Shoot", "Throw", "Roar", "Attack"],
     "hurt": ["Hurt", "Damage", "Flinch"],
@@ -77,21 +87,39 @@
     "victory": ["Cheer", "Celebrate", "Victory", "Wave", "Emote", "Roar"],
     "dodge": ["RollBackward", "DashBackward", "Roll", "Dodge"],
     "parry": ["Block", "Parry", "Guard", "SwingWeaponAir", "Attack"],
-    // Герой — сам игрок (оружие — что в руке, иначе "weapon"), Лира — Kweebec_Seedling, Брам — Trork_Warrior.
-    // У врагов свои списки — в enemies.json, поле "anim" (там же "weapon").
+    // Герой — сам игрок (оружие — что в руке, иначе "weapon"; пустая рука не считается), Лира и Брам —
+    // люди (companionLooks), у них анимации модели игрока. У врагов свои списки — в enemies.json, поле "anim".
     "heroes": {
-      "hero": { "weapon": ["Sword", "Longsword", "Shortsword", "Default"], "dodge": ["RollBackward", "Roll"] },
-      "lyra": { "weapon": ["Spear", "Staff", "Default"], "cast": ["Cheer", "Celebrate", "Happy"], "dodge": ["Roll"] },
-      "bram": { "weapon": ["Battleaxe", "Axe", "Mace", "Club", "Hammer", "Default"], "cast": ["Roar", "BrawlCheer"] }
+      "hero": { "weapon": ["Sword", "Longsword", "Shortsword"], "dodge": ["RollBackward", "DashBackward", "Roll"] },
+      "lyra": { "weapon": ["Spear", "Staff"], "dodge": ["DashBackward", "RollBackward", "Roll"] },
+      "bram": { "weapon": ["Battleaxe", "Axe", "Mace", "Club"], "dodge": ["DashBackward", "RollBackward"] }
     },
     "lieMs": 2600,
-    "runSpeed": 6.5,
-    "stepCount": 7,
-    "stepMs": 50
+    "runSpeed": 6.5
+  },
+
+  // Реплики в бою: над говорящим всплывает фраза, она же в журнале боя и в чате. Ключ — id героя
+  // (hero, lyra, bram) или шаблона врага из enemies.json. События: start (начало боя), attack, skill,
+  // hurt, death, win. barkChance — шанс реплики на удар и на урон; начало, смерть и победа — всегда.
+  "barkChance": 0.35,
+  "barks": {
+    "hero":  { "start": ["К бою!", "Держитесь рядом!"], "skill": ["Получай!", "Сейчас!"], "hurt": ["Ерунда!"], "win": ["Готово."] },
+    "lyra":  { "start": ["Я прикрою!", "Не отставай!"], "attack": ["Ха!", "Вот так!"], "hurt": ["Ай!", "Больно же!"], "death": ["Простите…"], "win": ["Победа!"] },
+    "bram":  { "start": ["Ну, кто первый?", "Разомнёмся."], "attack": ["Р-раз!", "Ещё!"], "skill": ["Под топор!"], "hurt": ["Царапина."], "death": ["Не… сейчас…"], "win": ["Хорошая драка."] },
+    "goblin": { "start": ["Блестяшки наши!", "Хе-хе, добыча!"], "attack": ["Ткнуть!", "Хи-хи!"], "hurt": ["Ой-ой!"], "death": ["Нечестно…"] },
+    "trork":  { "start": ["Раздавлю!", "Мясо пришло!"], "attack": ["Ар-р!", "Получай!"], "hurt": ["Гр-р!"], "death": ["Ар-гх…"] },
+    "wolf":   { "start": ["Р-р-р…"], "attack": ["Гр-р!"], "death": ["Ау-у…"] },
+    "skeleton": { "start": ["…живые…"], "attack": ["Кость за кость."], "death": ["…наконец…"] },
+    "slime":  { "start": ["Бульк."], "hurt": ["Плюх!"], "death": ["Бу-у-ульк…"] },
+    "spider": { "start": ["Ш-ш-ш…"], "attack": ["Ш-ш!"], "death": ["…ш-ш…"] },
+    "spiderling": { "attack": ["Пи-и!"], "death": ["…пи…"] }
   },
 
   // NPC случайных отрядов бродят шагом у своего места (false — стоят на месте).
   "squadWander": true,
+
+  // Подсказка «[O] Меню героя» в правом верхнем углу экрана (меню на клавише режима; /jrpg gmkey — выключить).
+  "keyHint": true,
 
   // Автостарт боя, когда игрок подходит к встрече из encounters.json или к отряду из squads.json.
   "proximityTrigger": true,

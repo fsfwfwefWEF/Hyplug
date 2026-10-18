@@ -298,7 +298,8 @@ final class CompanionFollowers {
             if (role == null) continue;
             Vector3d at = ground(world, slot(me, g, i, heroes.size(), plugin.settings().follow.distance), me.y);
             float yaw = Fx.yawTowards(at, me);
-            Ref<EntityStore> ref = Fx.spawnPuppet(store, role, h.def.name(), at, yaw, h.def.name());
+            HumanLook.Look look = HumanLook.of(h.def.id(), plugin.settings().companionLooks.get(h.def.id()));
+            Ref<EntityStore> ref = Fx.spawnPuppet(store, role, h.def.name(), at, yaw, h.def.name(), look);
             if (ref == null) continue;
             g.list.add(new Follower(h.def.id(), ref, new Vector3d(at), yaw));
         }

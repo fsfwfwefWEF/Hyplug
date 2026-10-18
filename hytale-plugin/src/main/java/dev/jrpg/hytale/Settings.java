@@ -8,6 +8,12 @@ import java.util.Map;
 /** Настройки отображения боя (settings.json): камера, интерфейс, частицы, роли NPC, паузы. */
 public final class Settings {
     public final Map<String, String> companionRoles = new HashMap<>();
+    /** Человеческий вид компаньонов: "male" / "female" или JSON скина (см. {@link HumanLook}); нет — вид роли. */
+    public final Map<String, String> companionLooks = new HashMap<>();
+    /** Реплики в бою: id героя или шаблона врага → событие (start, attack, skill, hurt, death, win) → фразы. */
+    public final Map<String, Map<String, java.util.List<String>>> barks = new HashMap<>();
+    /** Шанс реплики на удар / получение урона (начало боя, смерть и победа — всегда). */
+    public double barkChance = 0.35;
     /** Роль NPC, если роль врага/компаньона не найдена в игре. */
     public String fallbackRole = "Trork_Warrior";
     public final Camera camera = new Camera();
@@ -55,6 +61,8 @@ public final class Settings {
     public boolean introFlyby = true;
     /** NPC случайных отрядов бродят у своего места (false — стоят). */
     public boolean squadWander = true;
+    /** Подсказка «[O] Меню героя» в правом верхнем углу экрана (пока меню висит на клавише режима). */
+    public boolean keyHint = true;
     public final Animations anim = new Animations();
 
     /**
@@ -72,7 +80,7 @@ public final class Settings {
         public final Map<String, Map<String, java.util.List<String>>> heroes = new HashMap<>();
         public java.util.List<String> dodge = java.util.List.of("RollBackward", "DashBackward", "Roll", "Dodge");
         public java.util.List<String> parry = java.util.List.of("Block", "Parry", "Guard", "SwingWeaponAir", "Attack");
-        /** Подход к цели на арене: скорость бега, блоков в секунду (NPC идут плавно, игрок — мелкими шагами). */
+        /** Подход к цели на арене: скорость бега, блоков в секунду (NPC бегут плавно, игрок делает рывок). */
         public double runSpeed = 6.5;
         /** Шаги подхода для самого игрока (его двигает телепорт) и пауза между ними, мс. */
         public int stepCount = 7;
@@ -84,12 +92,18 @@ public final class Settings {
         /** Сколько мс поверженный враг лежит, прежде чем исчезнуть. */
         public long lieMs = 2600;
         /** Слова анимаций оружия (наборы ItemPlayerAnimations) для обычного удара, приёма, магии и блока. */
-        public java.util.List<String> weaponAttack = java.util.List.of("SwingLeft", "SwingRight", "SwingDown",
-                "Swing", "Slash", "Attack", "Stab", "Thrust", "Strike", "Punch", "Bash");
-        public java.util.List<String> weaponSkill = java.util.List.of("Charged", "Heavy", "Smash", "Slam",
-                "Overhead", "Spin", "Lunge", "Combo", "SwingDown", "Swing", "Slash", "Attack", "Stab");
-        public java.util.List<String> weaponCast = java.util.List.of("Cast", "Spell", "Shoot", "Throw");
-        public java.util.List<String> weaponParry = java.util.List.of("Block", "Guard", "Parry");
+        public java.util.List<String> weaponAttack = java.util.List.of("SwingLeft", "SwingRight", "SwingDown", "Stab",
+                "SwingDownLeft", "SwingDownRight", "SwingUpLeft", "SwingUpRight");
+        public java.util.List<String> weaponSkill = java.util.List.of("SwingDownStrong", "SwingDownLeft", "SwingDownRight",
+                "Sweep", "SwingUpLeft", "SwingUpRight", "GuardBash", "SwingDown", "Stab");
+        public java.util.List<String> weaponCast = java.util.List.of("CastLeft", "CastEnchant");
+        public java.util.List<String> weaponParry = java.util.List.of("GuardBash");
+        /** Сколько мс длится удар: потом его анимация снимается (если сама не кончилась). */
+        public long strikeMs = 1100;
+        /** Рывок самого игрока к цели и обратно (его двигает телепорт, поэтому — рывок, а не бег). */
+        public java.util.List<String> dashForward = java.util.List.of("DashForward");
+        public java.util.List<String> dashBack = java.util.List.of("DashBackward");
+        public long dashMs = 220;
     }
 
     /** Камера: углы в градусах, расстояния в блоках. */
@@ -112,6 +126,19 @@ public final class Settings {
         Object roles = m.get("companionRoles");
         if (roles != null) Json.obj(roles).forEach((k, v) -> s.companionRoles.put(k, String.valueOf(v)));
         s.fallbackRole = Json.str(m, "fallbackRole", s.fallbackRole);
+        Object looks = m.get("companionLooks");
+        if (looks != null) Json.obj(looks).forEach((k, v) -> {
+            if (v != null) s.companionLooks.put(k, v instanceof String str ? str : Json.write(v));
+        });
+        Object barks = m.get("barks");
+        if (barks != null) Json.obj(barks).forEach((who, v) -> {
+            Map<String, java.util.List<String>> byEvent = new HashMap<>();
+            Map<String, Object> bm = Json.obj(v);
+            for (String ev : bm.keySet()) byEvent.put(ev, Json.strings(bm, ev));
+            s.barks.put(who, byEvent);
+        });
+        s.barkChance = Json.num(m, "barkChance", s.barkChance);
+        s.keyHint = Json.bool(m, "keyHint", s.keyHint);
         Object cam = m.get("camera");
         if (cam != null) {
             Map<String, Object> c = Json.obj(cam);
@@ -219,6 +246,10 @@ public final class Settings {
             if (a.containsKey("weaponSkill")) k.weaponSkill = Json.strings(a, "weaponSkill");
             if (a.containsKey("weaponCast")) k.weaponCast = Json.strings(a, "weaponCast");
             if (a.containsKey("weaponParry")) k.weaponParry = Json.strings(a, "weaponParry");
+            k.strikeMs = (long) Math.max(300, Json.num(a, "strikeMs", k.strikeMs));
+            if (a.containsKey("dashForward")) k.dashForward = Json.strings(a, "dashForward");
+            if (a.containsKey("dashBack")) k.dashBack = Json.strings(a, "dashBack");
+            k.dashMs = (long) Math.max(60, Json.num(a, "dashMs", k.dashMs));
         }
         return s;
     }

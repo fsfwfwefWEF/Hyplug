@@ -65,6 +65,7 @@ public final class MainMenuPage extends InteractiveCustomUIPage<BattleMenuPage.C
                 // Та же команда, что слала бы клавиша; идёт мимо перехвата, права проверяет сервер.
                 String command = gameMode(store, ref) == GameMode.Creative ? "gm a" : "gm c";
                 Pages.close(this, playerRef);
+                plugin.menuKey().allowNextChange(playerRef.getUuid());
                 CommandManager.get().handleCommand(playerRef, command);
             }
             case "close" -> Pages.close(this, playerRef);

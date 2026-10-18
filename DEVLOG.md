@@ -332,3 +332,19 @@ jrpg-mod/
 - Версия 0.7.2, `DATA_VERSION` остаётся 7.
 
 **Проверено:** 42 теста, голый сервер 0.7.2 грузит сборку без новых ошибок. В игре не проверено.
+
+## Сессия 13 — 0.7.3: полировка боя по логу 0.7.2 (2026-10-18)
+
+**Что было в игре (лог 0.7.2):** Брам крутился после удара; герой «летел» к цели рывками; герой бил кулаками; клавиша O ничего не открывала (в логе сервера `executed command: gm a/gm c`, то есть перехват пакета не сработал); реплик в бою не было.
+
+**Сделано:**
+- `WeaponAnims.pick`: сначала точные имена из списка (случайное из найденных), потом по части имени с исключением зацикленных (`Charged`, `Leap`, `Whirlwind`, `Spin`, `Frontflip`, `Dash`). Новые списки в settings.json: weaponAttack `SwingLeft…SwingUpRight`, weaponSkill `SwingDownStrong, Sweep…`, weaponCast `CastLeft, CastEnchant`, weaponParry `GuardBash`. Пустая рука (набор `Default`) пропускается, если есть подсказки `weapon` — герой бьёт как мечом.
+- `BattleSession.animateAs`: счётчик `animSeq` на бойца; через `animations.strikeMs` (1100) слот Action снимается, если боец не начал новую анимацию. Перед возвратом на место слот Action атакующего NPC тоже снимается.
+- `BattleSession.walk` для игрока: рывок (`dashForward`/`dashBack`, `dashMs` 220) и два телепорта (середина, конец) вместо 7+ шагов. `stepCount/stepMs` больше не используются.
+- Клавиша O: `GameMenuKey.ModeChange` — `EntityEventSystem<ChangeGameModeEvent>` (событие отменяемое, его вызывает только `Player.setGameMode` из `/gm`, `/gamemode` и триггер-зон; вход в мир идёт через `initGameMode`). При флаге `gmKeyMenu` смена отменяется и открывается меню. Кнопка «Режим» в `MainMenuPage` вызывает `allowNextChange` (одна смена в течение 3 с). Пакетный перехват оставлен; двойное открытие гасится (350 мс). В лог по разу пишется, какой путь сработал. Причину, почему пакетный фильтр не сработал, по байткоду найти не удалось (путь `PlayerChannelHandler.channelRead → PacketAdapters.__handleInbound` выглядит верным).
+- HUD: `GameMenuKey.KeyHintHud` (`CustomUIHud`, `appendInline(null, …)`, как `SpectatingHud`) — «[O] Меню героя» справа сверху. Раз в 2 с синхронизируется с флагом и `settings.keyHint`.
+- Реплики: `settings.json → barks` (ключ — id героя или шаблона врага; события start, attack, skill, hurt, death, win), `barkChance` 0.35. `BattleSession.bark/barkAny/speech`: всплывающий текст над говорящим (жёлтый, в кавычках), журнал и чат. Реплики боссов (`onDialogue`) тоже всплывают над говорящим.
+- Человеческие компаньоны (решение пользователя: воин и воительница): `HumanLook` собирает модель игрока со скином (`CosmeticsModule.generateRandomSkin` с постоянным зерном, отбор по бороде и типу стрижки; или JSON скина), `Fx.spawnPuppet(..., look)` кладёт `PlayerSkinComponent` в заготовку и передаёт `Model` в `spawnEntity` (как `/npc spawn --randomModel`). `settings.json → companionLooks: { bram: male, lyra: female }`. Роль остаётся (поведение, запасной вид). В лог: «Вид компаньона …».
+- Версия 0.7.3, `DATA_VERSION` 8.
+
+**Проверено:** тесты battle-core, голый сервер грузит сборку (462 SEVERE — как раньше). В игре не проверено.
