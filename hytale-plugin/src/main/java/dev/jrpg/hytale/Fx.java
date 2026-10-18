@@ -524,6 +524,55 @@ public final class Fx {
         }
     }
 
+    private static volatile List<String> emoteIds;
+
+    /** Все эмоции игры (id), один раз пишутся в лог. */
+    static List<String> emotes() {
+        List<String> e = emoteIds;
+        if (e != null) return e;
+        java.util.Set<String> ids = new java.util.TreeSet<>();
+        try {
+            var cm = com.hypixel.hytale.server.core.cosmetics.CosmeticsModule.get();
+            if (cm != null) ids.addAll(cm.getRegistry().getEmotesInGame().keySet());
+        } catch (Throwable t) {
+            warnOnce("Список эмоций не прочитать", t);
+        }
+        try {
+            ids.addAll(com.hypixel.hytale.server.core.cosmetics.EmoteAsset.getAssetMap().getAssetMap().keySet());
+        } catch (Throwable t) {
+            warnOnce("Эмоции-ассеты не прочитать", t);
+        }
+        if (ids.isEmpty()) return List.of(); // ассеты ещё не загружены
+        e = List.copyOf(ids);
+        emoteIds = e;
+        JrpgPlugin.get().log("Эмоции в игре (" + e.size() + "): " + e);
+        return e;
+    }
+
+    /** Первая эмоция, в id которой есть одно из слов (по порядку слов), кроме уже занятых; null — нет. */
+    static String pickEmote(List<String> words, java.util.Collection<String> taken) {
+        List<String> all = emotes();
+        for (String w : words) {
+            String low = w.toLowerCase(java.util.Locale.ROOT);
+            for (String id : all) {
+                if (id.toLowerCase(java.util.Locale.ROOT).contains(low) && !taken.contains(id)) return id;
+            }
+        }
+        return null;
+    }
+
+    /** Эмоция (танец, приветствие…) в слоте Emote — как ванильная /emote. true — отправлена. */
+    public static boolean emote(Store<EntityStore> store, Ref<EntityStore> ref, String emoteId) {
+        if (emoteId == null || ref == null || !ref.isValid()) return false;
+        try {
+            AnimationUtils.playAnimation(ref, AnimationSlot.Emote, null, emoteId, true, store);
+            return true;
+        } catch (Throwable t) {
+            warnOnce("Эмоция " + emoteId + " не сработала", t);
+            return false;
+        }
+    }
+
     /** Снять анимацию слота (встать после «лежит», вернуть обычную позу). */
     public static void stopAnimation(Store<EntityStore> store, Ref<EntityStore> ref, AnimationSlot slot) {
         try {

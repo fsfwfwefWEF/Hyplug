@@ -100,4 +100,22 @@ class BattleMenuTest {
         assertTrue(BattleText.side(b, Side.PARTY).contains("Герой"));
         assertTrue(BattleText.queue(b).startsWith("Очередь"));
     }
+
+    @Test
+    void viewOtherHeroShowsTheirAbilitiesReadOnly() {
+        Battle b = partyFirst();
+        BattleMenu m = new BattleMenu(b);
+        Combatant other = b.alive(Side.PARTY).stream().filter(c -> c != b.current()).findFirst().orElseThrow();
+        assertTrue(m.view(other.id));
+        assertEquals(other, m.viewed());
+        assertTrue(m.title().contains(other.name));
+        assertEquals(other.abilities.size() + 1, m.options().size());
+        assertNull(m.click(0), "осмотр не ходит");
+        assertNotNull(m.error());
+        assertTrue(m.canGoBack());
+        m.back();
+        assertNull(m.viewed());
+        assertEquals(BattleMenu.Screen.MAIN, m.screen());
+        assertFalse(m.view(b.current().id), "свой текущий герой — обычное меню");
+    }
 }

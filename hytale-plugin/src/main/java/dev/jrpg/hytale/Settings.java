@@ -103,6 +103,8 @@ public final class Settings {
         public java.util.List<String> hurt = java.util.List.of("Hurt", "Damage", "Flinch");
         public java.util.List<String> death = java.util.List.of("Death", "Die", "Knockedout", "KnockedoutLaydown", "Laydown", "Sleep");
         public java.util.List<String> victory = java.util.List.of("Cheer", "Celebrate", "Victory", "Wave", "Emote", "Roar");
+        /** Эмоции героев в конце боя: слова для поиска среди эмоций игры, каждому герою своя. */
+        public java.util.List<String> victoryEmotes = java.util.List.of("Dance", "Cheer", "Victory", "Clap", "Flex", "Wave", "Salute", "Laugh");
         /** Анимации героев и компаньонов по id (attack/cast/dodge/parry), если у их модели нет общих имён. */
         public final Map<String, Map<String, java.util.List<String>>> heroes = new HashMap<>();
         public java.util.List<String> dodge = java.util.List.of("RollBackward", "DashBackward", "Roll", "Dodge");
@@ -147,6 +149,10 @@ public final class Settings {
         public double minHeight = 3.5;
         public double overviewDistance = 20, overviewPitch = -38, overviewSide = 55;
         public double focusDistance = 11, focusPitch = -28, focusSide = 45;
+        /** Портрет героя в полный рост при осмотре в бою (клик по карточке героя): расстояние камеры. */
+        public double profileDistance = 3.6;
+        /** Облёт в конце боя: высота камеры над землёй и расстояние от центра партии. */
+        public double outroHeight = 1.6, outroDistance = 6.5;
         public double actionDistance = 10, actionPitch = -30, actionSide = 75;
         public double targetDistance = 15;
         /** Угол обзора камеры боя по вертикали (градусы). По нему окна реплик ставятся над головами. */
@@ -192,6 +198,9 @@ public final class Settings {
             k.lerp = (float) Json.num(c, "lerp", k.lerp);
             k.flip = Json.bool(c, "flip", k.flip);
             k.minHeight = Json.num(c, "minHeight", k.minHeight);
+            k.profileDistance = Json.num(c, "profileDistance", k.profileDistance);
+            k.outroHeight = Json.num(c, "outroHeight", k.outroHeight);
+            k.outroDistance = Json.num(c, "outroDistance", k.outroDistance);
             k.targetDistance = Json.num(c, "targetDistance", k.targetDistance);
             k.fov = (float) Json.num(c, "fov", k.fov);
             k.mouseTargets = Json.bool(c, "mouseTargets", k.mouseTargets);
@@ -287,6 +296,7 @@ public final class Settings {
             if (a.containsKey("hurt")) k.hurt = Json.strings(a, "hurt");
             if (a.containsKey("death")) k.death = Json.strings(a, "death");
             if (a.containsKey("victory")) k.victory = Json.strings(a, "victory");
+            if (a.containsKey("victoryEmotes")) k.victoryEmotes = Json.strings(a, "victoryEmotes");
             if (a.containsKey("dodge")) k.dodge = Json.strings(a, "dodge");
             if (a.containsKey("parry")) k.parry = Json.strings(a, "parry");
             if (a.get("heroes") != null) {

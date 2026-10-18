@@ -30,6 +30,8 @@ public final class BattleMenu {
     private String pending;
     private List<String> ids = List.of();
     private String error;
+    /** Осмотр другого героя партии (его способности, чтобы спланировать ход); null — обычное меню. */
+    private String viewId;
 
     public BattleMenu(Battle battle) {
         this.battle = battle;
@@ -49,6 +51,32 @@ public final class BattleMenu {
         screen = Screen.MAIN;
         pending = null;
         error = null;
+        viewId = null;
+    }
+
+    /**
+     * Осмотреть героя партии: меню показывает его способности (только смотреть). Свой текущий герой,
+     * чужая сторона или конец боя — осмотр снимается. Возвращает, включён ли осмотр.
+     */
+    public boolean view(String combatantId) {
+        Combatant c = combatantId == null ? null : battle.byId(combatantId);
+        Screen s = screen();
+        if (c == null || c.side != Side.PARTY || c == battle.current() || s != Screen.MAIN && s != Screen.SKILLS
+                && s != Screen.ITEMS) {
+            viewId = null;
+            return false;
+        }
+        viewId = c.id;
+        error = null;
+        return true;
+    }
+
+    /** Кого сейчас осматриваем (null — никого). */
+    public Combatant viewed() {
+        if (viewId == null) return null;
+        Screen s = screen();
+        if (s != Screen.MAIN && s != Screen.SKILLS && s != Screen.ITEMS) return null;
+        return battle.byId(viewId);
     }
 
     /** Последняя ошибка ввода («не хватает AP»), показывается под меню. */
@@ -56,6 +84,8 @@ public final class BattleMenu {
 
     public String title() {
         Combatant c = battle.current();
+        Combatant v = viewed();
+        if (v != null) return "Осмотр: " + v.name + "  (AP " + v.ap + ", MP " + v.mp + ")";
         return switch (screen()) {
             case MAIN -> "Ход: " + c.name + "  (AP " + c.ap + ", MP " + c.mp + ")";
             case SKILLS -> c.name + ": способности";
@@ -74,6 +104,20 @@ public final class BattleMenu {
     public List<Option> options() {
         Combatant c = battle.current();
         List<Option> out = new ArrayList<>();
+        Combatant v = viewed();
+        if (v != null) {
+            // Только смотреть: что этот герой сможет на своём ходу (хватает ли AP/MP — по нынешним).
+            Content k = battle.content();
+            Ability atk = k.ability(Content.ATTACK);
+            out.add(new Option("Атака", true, "+1 AP", "sword", Describe.ability(k, atk)));
+            for (String id : v.abilities) {
+                Ability a = k.ability(id);
+                String cost = (a.apCost() > 0 ? a.apCost() + " AP " : "") + (a.mpCost() > 0 ? a.mpCost() + " MP" : "");
+                out.add(new Option(a.name(), battle.canAfford(v, a), cost.trim(), Describe.abilityIcon(k, a),
+                        Describe.ability(k, a) + (battle.canAfford(v, a) ? "" : "\nСейчас не хватает AP/MP.")));
+            }
+            return out;
+        }
         switch (screen()) {
             case MAIN -> {
                 Content k = battle.content();
@@ -129,12 +173,17 @@ public final class BattleMenu {
     }
 
     public boolean canGoBack() {
+        if (viewed() != null) return true;
         Screen s = screen();
         return s == Screen.SKILLS || s == Screen.ITEMS || s == Screen.TARGET;
     }
 
     public void back() {
         error = null;
+        if (viewId != null) {
+            viewId = null;
+            return;
+        }
         switch (screen()) {
             case SKILLS, ITEMS -> screen = Screen.MAIN;
             case TARGET -> screen = pending.startsWith("skill:") ? Screen.SKILLS
@@ -149,6 +198,10 @@ public final class BattleMenu {
      */
     public BattleAction click(int index) {
         error = null;
+        if (viewed() != null) {
+            error = "Это осмотр. Вернись к своему герою: «Назад» или клик по его карточке.";
+            return null;
+        }
         List<Option> opts = options();
         if (index < 0 || index >= opts.size()) return null;
         if (!opts.get(index).enabled()) {
@@ -199,7 +252,7 @@ public final class BattleMenu {
     }
 
     /** Клик по врагу в главном меню — сразу обычная атака по нему. null — сейчас нельзя. */
-    public BattleAction attack(String targetId) {
+    public BattleAction attack(String targetId) { viewId = null;
         error = null;
         if (screen() != Screen.MAIN || targetId == null) return null;
         Combatant t = battle.byId(targetId);

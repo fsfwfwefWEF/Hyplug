@@ -392,7 +392,13 @@ public final class BattleSession implements BattleListener {
     void onBack() {
         if (closed) return;
         clearInfo();
+        boolean wasViewing = menu.viewed() != null;
         menu.back();
+        if (wasViewing && battle.phase() == Battle.Phase.AWAIT_COMMAND) {
+            camera.focus(homes.get(battle.current().id), true);
+            refresh();
+            return;
+        }
         if (battle.phase() == Battle.Phase.AWAIT_COMMAND) camera.focus(homes.get(battle.current().id), true);
         refresh();
     }
@@ -468,6 +474,18 @@ public final class BattleSession implements BattleListener {
                 refresh();
                 return;
             }
+        }
+        // Клик по карточке своего героя в свой ход: осмотр его способностей, камера в полный рост на него.
+        Combatant c = battle.byId(combatantId);
+        if (c != null && c.side == Side.PARTY && battle.phase() == Battle.Phase.AWAIT_COMMAND) {
+            Combatant was = menu.viewed();
+            boolean viewing = menu.view(c == was ? null : combatantId);
+            hoverIndex = -1;
+            inspectId = viewing ? combatantId : null;
+            if (viewing) camera.profile(homes.get(c.id), yawOf(c));
+            else camera.focus(homes.get(battle.current().id), true);
+            refresh();
+            return;
         }
         inspectId = combatantId;
         hoverIndex = -1;
@@ -679,7 +697,8 @@ public final class BattleSession implements BattleListener {
             return new Info(c == null ? "Бой" : "Ход: " + c.name, "Что происходит — в журнале боя слева. Эффекты, иммунитеты "
                     + "и слабости бойца — в окне «Осмотр» справа: наведи мышь на «?» у его карточки.", "info");
         }
-        return new Info(c.name, Describe.combatant(k, c), "portrait:" + Describe.portrait(c));
+        return new Info(c.name, "[Клик по карточке союзника — его способности и вид в полный рост]\n" + Describe.combatant(k, c),
+                "portrait:" + Describe.portrait(c));
     }
 
     // ---------- события ядра ----------
@@ -1257,13 +1276,14 @@ public final class BattleSession implements BattleListener {
 
     @Override
     public void onBattleEnd(Battle.Outcome outcome) {
-        camera.overview();
+        if (outcome == Battle.Outcome.VICTORY) outro();
+        else camera.overview();
         if (outcome == Battle.Outcome.VICTORY) {
             if (!encounter.id().startsWith(SquadSpawner.ID_PREFIX)) {
                 plugin.progress().markCleared(encounter, System.currentTimeMillis());
                 plugin.scheduler().execute(plugin::saveWorld);
             }
-            for (Combatant c : battle.alive(Side.PARTY)) animateAs(c, puppets.get(c.id), "victory");
+            celebrate();
             barkAny(Side.PARTY, "win");
             Map<String, Integer> loot = plugin.data().rollLoot(encounter, rnd);
             loot.forEach((item, cnt) -> battle.inventory().merge(item, cnt, Integer::sum));
@@ -1286,6 +1306,51 @@ public final class BattleSession implements BattleListener {
         // Опыт, добыча и потраченные зелья — сразу в сохранение.
         plugin.savePlayer(player.getUuid());
         refresh();
+    }
+
+    /** Финал победы: облёт камеры на средней высоте вокруг партии, потом камера держит последний кадр. */
+    private void outro() {
+        int n = 48;
+        long step = 110;
+        for (int k = 0; k < n; k++) {
+            int kk = k;
+            later(400 + k * step, () -> {
+                if (!closed) camera.outro(kk, n);
+            });
+        }
+    }
+
+    /**
+     * Герои празднуют: каждому своя эмоция игры (танец, аплодисменты…), а если эмоций нет —
+     * анимации победы из settings.json. Через ~4 с эмоция повторяется ещё раз, пока идёт облёт.
+     */
+    private void celebrate() {
+        Settings.Animations an = plugin.settings().anim;
+        java.util.Set<String> taken = new java.util.HashSet<>();
+        int i = 0;
+        for (Combatant c : battle.alive(Side.PARTY)) {
+            Ref<EntityStore> ref = puppets.get(c.id);
+            if (ref == null) continue;
+            plugin.mover().stop(ref);
+            Fx.stopAnimation(store, ref, com.hypixel.hytale.protocol.AnimationSlot.Action);
+            // Каждому своё слово первым, чтобы не все танцевали одинаково.
+            List<String> words = new java.util.ArrayList<>(an.victoryEmotes);
+            if (!words.isEmpty()) java.util.Collections.rotate(words, -(i % words.size()));
+            String emote = Fx.pickEmote(words, taken);
+            if (emote == null) emote = Fx.pickEmote(words, java.util.Set.of());
+            i++;
+            String em = emote;
+            long delay = 300L * i;
+            later(delay, () -> {
+                if (em == null || !Fx.emote(store, ref, em)) animateAs(c, ref, "victory");
+            });
+            if (em != null) {
+                taken.add(em);
+                later(delay + 4200, () -> {
+                    if (!closed) Fx.emote(store, ref, em);
+                });
+            }
+        }
     }
 
     // ---------- всплывающие надписи ----------

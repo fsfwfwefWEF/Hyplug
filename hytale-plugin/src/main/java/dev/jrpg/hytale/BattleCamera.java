@@ -89,6 +89,38 @@ public final class BattleCamera {
         shot("focus:" + pos, look, partySide ? s.focusSide : s.focusSide + 15, s.focusPitch, s.focusDistance);
     }
 
+    /**
+     * Портрет в полный рост (осмотр героя в бою): камера спереди-сбоку от бойца на уровне груди,
+     * близко, чтобы его было хорошо видно от ног до головы. faceYaw — куда боец смотрит.
+     */
+    public void profile(Vector3d pos, float faceYaw) {
+        if (pos == null) return;
+        // Направление взгляда бойца (yaw как у сущностей: вперёд = (-sin, -cos)).
+        double fx = -Math.sin(faceYaw), fz = -Math.cos(faceYaw);
+        // Камера на 35° сбоку от линии взгляда, со стороны правила 180° (как остальные кадры).
+        double side = Math.toRadians(35) * (s.flip ? -1 : 1);
+        double cx = fx * Math.cos(side) - fz * Math.sin(side), cz = fx * Math.sin(side) + fz * Math.cos(side);
+        double dist = s.profileDistance;
+        Vector3d look = new Vector3d(pos.x, pos.y + 0.95, pos.z);
+        Vector3d cam = new Vector3d(pos.x + cx * dist, pos.y + 1.15, pos.z + cz * dist);
+        place("profile:" + pos, cam, look, s.lerp);
+    }
+
+    /**
+     * Финал боя: облёт партии на средней высоте (кадр k из n) — камера идёт дугой перед героями
+     * со стороны врагов, чтобы видно было лица и эмоции.
+     */
+    public void outro(int k, int n) {
+        double t = n <= 1 ? 1 : k / (double) (n - 1);
+        double ang = Math.toRadians(-70 + 140 * t) * (s.flip ? -1 : 1);
+        // Вперёд от партии к врагам (ax, az), поворот на ang вокруг вертикали.
+        double dx = ax * Math.cos(ang) - az * Math.sin(ang), dz = ax * Math.sin(ang) + az * Math.cos(ang);
+        Vector3d look = new Vector3d(partyCenter.x, partyCenter.y + 1.0, partyCenter.z);
+        Vector3d cam = new Vector3d(partyCenter.x + dx * s.outroDistance, partyCenter.y + s.outroHeight,
+                partyCenter.z + dz * s.outroDistance);
+        place("outro:" + k, cam, look, Math.min(s.lerp, 0.06f));
+    }
+
     /** Кадр «действующий + цель»: точка между ними, камера сбоку, чтобы видно было обоих. */
     public void action(Vector3d actor, Vector3d target) {
         if (actor == null || target == null) {
@@ -106,16 +138,22 @@ public final class BattleCamera {
     }
 
     private void shot(String id, Vector3d look, double sideDeg, double pitchDeg, double dist, float lerp) {
+        // Направление от точки взгляда к камере: назад (к партии) на cos(side), вправо на sin(side).
+        double side = Math.toRadians(sideDeg), pitch = Math.toRadians(Math.min(-5, pitchDeg));
+        double ux = -ax * Math.cos(side) + rx * Math.sin(side);
+        double uz = -az * Math.cos(side) + rz * Math.sin(side);
+        double horiz = dist * Math.cos(-pitch);
+        double camX = look.x + ux * horiz, camZ = look.z + uz * horiz;
+        double camY = look.y + Math.max(s.minHeight, dist * Math.sin(-pitch));
+        place(id, new Vector3d(camX, camY, camZ), look, lerp);
+    }
+
+    /** Поставить камеру в точку cam взглядом на look. */
+    private void place(String id, Vector3d cam, Vector3d look, float lerp) {
         if (!s.enabled) return;
         lastShot = id;
         try {
-            // Направление от точки взгляда к камере: назад (к партии) на cos(side), вправо на sin(side).
-            double side = Math.toRadians(sideDeg), pitch = Math.toRadians(Math.min(-5, pitchDeg));
-            double ux = -ax * Math.cos(side) + rx * Math.sin(side);
-            double uz = -az * Math.cos(side) + rz * Math.sin(side);
-            double horiz = dist * Math.cos(-pitch);
-            double camX = look.x + ux * horiz, camZ = look.z + uz * horiz;
-            double camY = look.y + Math.max(s.minHeight, dist * Math.sin(-pitch));
+            double camX = cam.x, camY = cam.y, camZ = cam.z;
             // Смотрим из камеры на точку look (yaw как у сущностей: atan2(-dx, -dz)).
             double vx = look.x - camX, vy = look.y - camY, vz = look.z - camZ;
             float yaw = (float) Math.atan2(-vx, -vz);
