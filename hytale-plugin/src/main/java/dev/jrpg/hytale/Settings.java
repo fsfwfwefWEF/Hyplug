@@ -41,7 +41,8 @@ public final class Settings {
 
     /** Парирование и уклонение: окна в мс относительно момента удара врага. */
     public static final class Reactions {
-        public boolean enabled = true;
+        /** Не используется: реакции выключены в BattleSession. */
+        public boolean enabled = false;
         /** Уклонение засчитывается с dodgeBefore мс до удара и до dodgeAfter после. */
         public long dodgeBefore = 450, dodgeAfter = 150;
         /** Парирование: окно короче. */

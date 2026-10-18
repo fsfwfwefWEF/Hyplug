@@ -183,7 +183,9 @@ public final class BattleSession implements BattleListener {
         List<Combatant> party = plugin.partyOf(player.getUuid()).buildParty(content);
         battle = plugin.data().createBattle(encounter, party,
                 plugin.inventoryOf(player.getUuid()), this, System.nanoTime());
-        battle.setReactions(plugin.settings().reactions.enabled);
+        // Парирование и уклонение убраны (2026-10-18: игроку неинтересны). Код реакций в battle-core остался
+        // выключенным: враги бьют без фазы ожидания ответа.
+        battle.setReactions(false);
         menu = new BattleMenu(battle);
         // Компаньоны, ходившие за игроком, уходят: в бою их изображают куклы на арене.
         plugin.followers().pause(player.getUuid());
