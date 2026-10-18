@@ -34,7 +34,8 @@ BAR_W_PARTY = 220
 BAR_W_ENEMY = 150
 
 
-def label(id_, text="", size=14, color=TEXT, bold=False, height=None, width=None, flex=False, wrap=False, center=False):
+def label(id_, text="", size=14, color=TEXT, bold=False, height=None, width=None, flex=False, wrap=False, center=False,
+          font=None):
     anchor = []
     if width: anchor.append(f"Width: {width}")
     if height: anchor.append(f"Height: {height}")
@@ -42,6 +43,7 @@ def label(id_, text="", size=14, color=TEXT, bold=False, height=None, width=None
     if bold: style.append("RenderBold: true")
     if wrap: style.append("Wrap: true")
     if center: style.append("HorizontalAlignment: Center")
+    if font: style.append(f'FontName: "{font}"')
     lines = [f"Label{(' #' + id_) if id_ else ''} {{", f'  Text: "{text}";']
     if anchor: lines.append(f"  Anchor: ({', '.join(anchor)});")
     if flex: lines.append("  FlexWeight: 1;")
@@ -93,13 +95,37 @@ def aura(id_, w, h, props, children, inset=2):
     return group(id_, [f"Anchor: (Width: {w}, Height: {h});"], [glow, content])
 
 
-def button(id_, text, w, h, cancel=False, left=None, top=None):
+def button(id_, text, w, h, cancel=False, left=None, top=None, skin=False):
     kind = "CancelTextButton" if cancel else "SecondaryTextButton"
     anchor = ([f"Left: {left}", f"Top: {top}"] if left is not None else []) + [f"Width: {w}", f"Height: {h}"]
+    if skin and SKIN_BUTTONS:
+        # своя кнопка на текстурах jr_btn*.png; стиль @JrButton объявлен в начале BattleMenu.ui
+        return f'TextButton #{id_} {{ Text: "{text}"; Anchor: ({", ".join(anchor)}); Style: @JrButton; }}'
     return f'$C.@{kind} #{id_} {{ @Text = "{text}"; Anchor: ({", ".join(anchor)}); }}'
 
 
 # ---------- бой ----------
+# Шрифт заголовков и кнопки на текстурах задаются только разметкой: менять Style.FontName из плагина клиент
+# запрещает (краш 0.9.0). TITLE_FONT = None — обычный шрифт; SKIN_BUTTONS = False — кнопки игры.
+TITLE_FONT = None  # "Secondary" после проверки в игре
+SKIN_BUTTONS = False  # True после проверки в игре
+
+
+def title_font():
+    return f', FontName: "{TITLE_FONT}"' if TITLE_FONT else ""
+
+
+def jr_button_style():
+    def state(tex, color):
+        return (f'({tex and f"Background: (TexturePath: {chr(34)}{tex}{chr(34)}, Border: 12), "}'
+                f"LabelStyle: (FontSize: 13, TextColor: {color}, RenderBold: true, "
+                f"HorizontalAlignment: Center, VerticalAlignment: Center))")
+    return ("@JrButton = TextButtonStyle(\n"
+            f"  Default: {state('jr_btn.png', '#f3e7c9')},\n"
+            f"  Hovered: {state('jr_btn_hover.png', '#fff4d0')},\n"
+            f"  Pressed: {state('jr_btn_press.png', '#e8c46a')},\n"
+            f"  Disabled: {state('jr_btn_off.png', '#8a8478')}\n"
+            ");\n\n") if SKIN_BUTTONS else ""
 # Стиль «синий камень и золото»: окна на текстуре jr_panel*.png (9-slice, рисует tools/gen_frames.py),
 # полоски на jr_bar_*.png. Текст крупнее и светлее, чем в 0.8: основной 14, мелкий не меньше 12.
 
@@ -172,8 +198,8 @@ def enemy_card(i):
         group("", ["Anchor: (Height: 28);", "LayoutMode: Left;"], [
             slot(f"E{i}Icon", 26),
             spacer(w=6),
-            label(f"E{i}Name", size=15, bold=True, color=ENEMY_NAME, height=26, flex=True),
-            button(f"E{i}Info", "?", 26, 24),
+            label(f"E{i}Name", size=15, bold=True, color=ENEMY_NAME, height=26, flex=True, font=TITLE_FONT),
+            button(f"E{i}Info", "?", 26, 24, skin=True),
         ]),
         group("", ["Anchor: (Height: 14);", "LayoutMode: Left;"], [
             tbar(f"E{i}Hp", BAR_W_ENEMY, "jr_bar_ehp", h=7),
@@ -196,7 +222,7 @@ def party_row(i):
         spacer(w=8),
         group("", ["FlexWeight: 1;", "LayoutMode: Top;"], [
             group("", ["Anchor: (Height: 20);", "LayoutMode: Left;"], [
-                label(f"P{i}Name", size=16, bold=True, color=PARTY_NAME, width=120, height=20),
+                label(f"P{i}Name", size=16, bold=True, color=PARTY_NAME, width=120, height=20, font=TITLE_FONT),
                 label(f"P{i}Nums", size=12, color=SUB, height=20, flex=True),
             ]),
             spacer(h=2),
@@ -206,7 +232,7 @@ def party_row(i):
             spacer(h=2),
             group(f"P{i}Status", ["Anchor: (Height: 22);", "LayoutMode: Left;"], []),
         ]),
-        button(f"P{i}Info", "?", 26, 24),
+        button(f"P{i}Info", "?", 26, 24, skin=True),
     ])
 
 
@@ -214,7 +240,7 @@ def option_row(i):
     return aura(f"Row{i}", 324, 36, ["LayoutMode: Left;"], [
         slot(f"Opt{i}Icon", 26),
         spacer(w=6),
-        button(f"Opt{i}", "", 206, 30),
+        button(f"Opt{i}", "", 206, 30, skin=True),
         spacer(w=6),
         label(f"Opt{i}Hint", size=12, color=GOLD, height=30, flex=True),
     ])
@@ -280,7 +306,7 @@ def battle():
         spacer(flex=True),
         group("BannerBox", ["Anchor: (Width: 600, Height: 60);", "LayoutMode: Top;", tex("jr_banner"),
                             "Padding: (Top: 9);"], [
-            label("Banner", "", 22, GOLD, True, height=26, center=True),
+            label("Banner", "", 22, GOLD, True, height=26, center=True, font=TITLE_FONT),
             label("BannerSub", "", 13, TEXT, height=18, center=True),
         ]),
         spacer(flex=True),
@@ -289,14 +315,26 @@ def battle():
                                  "Padding: (Full: 12);"],
                   [panel_title("ОЧЕРЕДЬ ХОДОВ", "QueueTitle"), spacer(h=4)]
                   + sum(([queue_slot(i), spacer(h=3)] for i in range(QUEUE)), []))
-    log = group("LogPanel", [f"Anchor: (Width: {LOG_W});", "LayoutMode: Top;", skin("jr_panel"),
-                             "Padding: (Full: 12);"],
-                [panel_title("ЖУРНАЛ БОЯ", "LogTitle")]
-                + [label(f"Log{i}", "", 12, TEXT, height=16) for i in range(LOG_LINES)])
+    # Журнал — раскрытая книга (jr_book.png): слева прошлая страница, справа текущая; новая страница
+    # открывается сама, когда правая заполнена (BookPages.java). HUD клиент прячет при открытом окне,
+    # поэтому книга живёт здесь, без покадровой анимации (обновления окна ждут ответа клиента).
+    bh = BOOK_H - 10
+    pl, pr, pt, pw = 28, 238, 20, 176
+    def page_label(id_, left, top, h, size, color, extra=""):
+        return (f'Label #{id_} {{ Text: ""; Anchor: (Left: {left}, Top: {top}, Width: {pw}, Height: {h}); '
+                f"Style: (FontSize: {size}, TextColor: {color}{extra}); }}")
+    log = group("LogPanel", [f"Anchor: (Width: {BOOK_W}, Height: {bh});", tex("jr_book")], [
+        page_label("BookLHead", pl, pt - 4, 16, 12, "#7a6040", ", RenderBold: true, HorizontalAlignment: Center"),
+        page_label("BookRHead", pr, pt - 4, 16, 12, "#7a6040", ", RenderBold: true, HorizontalAlignment: Center"),
+        page_label("BookL", pl, pt + 16, bh - pt - 48, 13, "#3a2a1a", ", Wrap: true"),
+        page_label("BookR", pr, pt + 16, bh - pt - 48, 13, "#3a2a1a", ", Wrap: true"),
+        page_label("BookLNum", pl, bh - 28, 14, 11, "#8a7050", ", HorizontalAlignment: Center"),
+        page_label("BookRNum", pr, bh - 28, 14, 11, "#8a7050", ", HorizontalAlignment: Center"),
+    ])
     inspect = group("InsPanel", [f"Anchor: (Width: {INS_W});", "LayoutMode: Top;", skin("jr_panel"),
                                  "Padding: (Full: 13);"], [
         panel_title("ОСМОТР И ЭФФЕКТЫ", "InsHeader"),
-        label("InsTitle", "", 16, ENEMY_NAME, True, height=22),
+        label("InsTitle", "", 16, ENEMY_NAME, True, height=22, font=TITLE_FONT),
         label("InsSub", "", 12, SUB, height=17),
         spacer(h=4),
     ] + [label(f"Ins{i}", "", 13, TEXT, height=17) for i in range(INS_LINES)])
@@ -310,8 +348,8 @@ def battle():
     menu = group("MenuPanel", ["Anchor: (Width: 350);", "LayoutMode: Top;", skin("jr_panel"),
                                "Padding: (Left: 13, Right: 13, Top: 11, Bottom: 10);"], [
         group("", ["Anchor: (Height: 28);", "LayoutMode: Left;"], [
-            label("MenuTitle", "", 15, GOLD, True, height=26, flex=True),
-            button("Back", "Назад", 84, 26, cancel=True),
+            label("MenuTitle", "", 15, GOLD, True, height=26, flex=True, font=TITLE_FONT),
+            button("Back", "Назад", 84, 26, cancel=True, skin=True),
         ]),
         spacer(h=2),
     ] + [option_row(i) for i in range(OPTIONS)] + [label("Error", "", 12, "#ff8070", height=16)])
@@ -320,7 +358,7 @@ def battle():
         group("", ["Anchor: (Height: 32);", "LayoutMode: Left;"], [
             slot("InfoIcon", 30),
             spacer(w=8),
-            label("InfoTitle", "", 17, GOLD, True, height=30, flex=True),
+            label("InfoTitle", "", 17, GOLD, True, height=30, flex=True, font=TITLE_FONT),
         ]),
         spacer(h=4),
         label("InfoText", "", 14, TEXT, flex=True, wrap=True),
@@ -339,7 +377,7 @@ def battle():
             "// Сверху враги, справа осмотр бойца, внизу партия, команды и описание. Баннер хода, очередь и\n"
             "// журнал-книга обычно в HUD (BattleHud.ui); здесь их запасной вид для settings.json → ui.hud = false.\n"
             "// Рамки — текстуры jr_*.png (tools/gen_frames.py), иконки вставляются в слоты #...Icon из Icons/*.ui.\n\n"
-            + root + "\n")
+            + jr_button_style() + root + "\n")
     write("BattleMenu.ui", text)
 
 
@@ -380,7 +418,7 @@ def hud():
         spacer(flex=True),
         group("HBannerBox", ["Anchor: (Width: 600, Height: 60);", "LayoutMode: Top;", tex("jr_banner"),
                              "Padding: (Top: 8);"], [
-            label("HBanner", "", 22, GOLD, True, height=27, center=True),
+            label("HBanner", "", 22, GOLD, True, height=27, center=True, font=TITLE_FONT),
             label("HBannerSub", "", 13, TEXT, height=18, center=True),
         ]),
         spacer(flex=True),
@@ -388,15 +426,15 @@ def hud():
     q_h = q_top(QUEUE - 1) + Q_H + 12
     queue = group("HQueue", [f"Anchor: (Left: 12, Top: 170, Width: {HUD_Q_W}, Height: {q_h});", skin("jr_panel")], [
         f'Label #HQueueTitle {{ Text: "ОЧЕРЕДЬ ХОДОВ"; Anchor: (Left: 16, Top: 12, Width: 200, Height: 20); '
-        f"Style: (FontSize: 13, TextColor: {GOLD}, RenderBold: true); }}",
+        f"Style: (FontSize: 13, TextColor: {GOLD}, RenderBold: true{title_font()}); }}",
     ] + [hud_queue_item(i) for i in range(QUEUE)])
     # Книга: левая страница — прошлая, правая — текущая. #HFlip — переворачиваемый лист (анимация).
     page_l, page_r, page_top, page_w, page_h = 28, 238, 22, 176, 232
     book = group("HBook", [f"Anchor: (Left: 12, Bottom: 12, Width: {BOOK_W}, Height: {BOOK_H});", tex("jr_book")], [
         f'Label #HBookLHead {{ Text: ""; Anchor: (Left: {page_l}, Top: {page_top - 4}, Width: {page_w}, Height: 16); '
-        f"Style: (FontSize: 12, TextColor: #7a6040, RenderBold: true, HorizontalAlignment: Center); }}",
+        f"Style: (FontSize: 12, TextColor: #7a6040, RenderBold: true, HorizontalAlignment: Center{title_font()}); }}",
         f'Label #HBookRHead {{ Text: ""; Anchor: (Left: {page_r}, Top: {page_top - 4}, Width: {page_w}, Height: 16); '
-        f"Style: (FontSize: 12, TextColor: #7a6040, RenderBold: true, HorizontalAlignment: Center); }}",
+        f"Style: (FontSize: 12, TextColor: #7a6040, RenderBold: true, HorizontalAlignment: Center{title_font()}); }}",
         f'Label #HBookL {{ Text: ""; Anchor: (Left: {page_l}, Top: {page_top + 16}, Width: {page_w}, Height: {page_h - 22}); '
         f"Style: (FontSize: 13, TextColor: #3a2a1a, Wrap: true); }}",
         f'Label #HBookR {{ Text: ""; Anchor: (Left: {page_r}, Top: {page_top + 16}, Width: {page_w}, Height: {page_h - 22}); '

@@ -211,7 +211,11 @@ public final class BattleSession implements BattleListener {
             Vector3d pos = onGround(arena(PARTY_X[i % PARTY_X.length], 0));
             homes.put(c.id, pos);
             float yaw = Fx.yawTowards(pos, enemyCenter);
-            if (c.id.equals("hero")) {
+            if (c.id.equals("hero") && plugin.settings().heroDouble && spawnHeroDouble(c, pos, yaw)) {
+                // Тело игрока стоит позади своего места и уменьшено до невидимого: героя играет кукла.
+                Vector3d behind = new Vector3d(pos.x + (pos.x - enemyCenter.x) * 0.15, pos.y, pos.z + (pos.z - enemyCenter.z) * 0.15);
+                Fx.teleportPlayer(store, playerEntity, behind, yaw);
+            } else if (c.id.equals("hero")) {
                 puppets.put(c.id, playerEntity);
                 Fx.teleportPlayer(store, playerEntity, pos, yaw);
                 Fx.ensureCombatText(store, playerEntity, c.name);
@@ -282,6 +286,29 @@ public final class BattleSession implements BattleListener {
         puppets.put(c.id, ref);
         if (c.side == Side.PARTY) GearVisuals.dressNpc(store, ref, heroOf(c.id), plugin.content());
     }
+
+    /**
+     * Двойник героя: кукла на модели игрока с его скином и снаряжением. Ходит, падает и бьёт, как компаньоны
+     * (игрока сервер умеет двигать только телепортом — рывками). Тело игрока на время боя уменьшается
+     * (EntityScaleComponent), в конце боя размер возвращается. false — не вышло, героем остаётся игрок.
+     */
+    private boolean spawnHeroDouble(Combatant c, Vector3d pos, float yaw) {
+        HumanLook.Look look = HumanLook.ofPlayer(store, playerEntity);
+        if (look == null) return false;
+        String role = plugin.settings().companionRoles.getOrDefault("hero",
+                plugin.settings().companionRoles.getOrDefault("bram", plugin.settings().fallbackRole));
+        Ref<EntityStore> ref = Fx.spawnPuppet(store, role, c.name, pos, yaw, BattleText.nameplate(c, false), look);
+        if (ref == null) return false;
+        puppets.put(c.id, ref);
+        GearVisuals.dressNpc(store, ref, heroOf(c.id), plugin.content());
+        Float was = Fx.scale(store, playerEntity);
+        heroScale = was == null || was < 0.2f ? 1.0f : was;
+        Fx.setScale(store, playerEntity, 0.01f);
+        return true;
+    }
+
+    /** Размер тела игрока до боя (если героя играет двойник), иначе null. */
+    private Float heroScale;
 
     /** Прогресс героя партии (снаряжение) или null. */
     private dev.jrpg.battle.Progression.Hero heroOf(String id) {
@@ -618,7 +645,11 @@ public final class BattleSession implements BattleListener {
         Content k = battle.content();
         if (peekId != null) {
             Combatant c = battle.byId(peekId);
-            if (c != null) return new Info(c.name, Describe.combatant(k, c), "portrait:" + Describe.portrait(c));
+            if (c != null) {
+                String hint = hintFor(c);
+                return new Info(c.name, hint == null ? Describe.combatant(k, c) : hint + "\n" + Describe.combatant(k, c),
+                        "portrait:" + Describe.portrait(c));
+            }
         }
         if (inspectId != null) {
             Combatant c = battle.byId(inspectId);
@@ -894,9 +925,15 @@ public final class BattleSession implements BattleListener {
         Settings.Animations an = plugin.settings().anim;
         if (!an.enabled || ref == null) return;
         downed.remove(c.id);
-        if (Fx.animateIn(store, ref, com.hypixel.hytale.protocol.AnimationSlot.Status, ownAnims(c, "death"), an.death) == null && fall) {
-            animateAs(c, ref, "hurt");
-        }
+        plugin.mover().stop(ref);
+        // Сначала прервать замах/«больно», иначе после смерти они доигрывают, и боец будто встаёт.
+        Fx.stopAnimation(store, ref, com.hypixel.hytale.protocol.AnimationSlot.Action);
+        String death = fall ? Fx.animateIn(store, ref, com.hypixel.hytale.protocol.AnimationSlot.Status, ownAnims(c, "death"), an.death) : null;
+        // Анимация смерти не зациклена: когда она кончится, держим позу «лежит» до исчезновения.
+        later(death == null ? 0 : an.deathMs, () -> {
+            if (c.isAlive()) return;
+            Fx.animateIn(store, ref, com.hypixel.hytale.protocol.AnimationSlot.Status, null, an.lie);
+        });
     }
 
     /** Оглушили ударом: падает и лежит, пока оглушение не пройдёт (тогда {@link #wake}). */
@@ -1124,13 +1161,23 @@ public final class BattleSession implements BattleListener {
                 at += POP_STEP_MS;
             }
         }
-        long gone = Math.max(plugin.settings().anim.lieMs, popsFrom + got.size() * POP_STEP_MS + 400);
+        // Лежит lieMs после анимации смерти, потом медленно уходит в землю и исчезает.
+        long gone = Math.max(plugin.settings().anim.deathMs + plugin.settings().anim.lieMs,
+                popsFrom + got.size() * POP_STEP_MS + 400);
         later(gone, () -> {
+            Ref<EntityStore> ref = puppets.get(c.id);
+            if (ref != null && ref != playerEntity && pos != null) {
+                plugin.mover().slide(store, world, ref, pos, new Vector3d(pos.x, pos.y - 1.6, pos.z), SINK_MS, yawOf(c));
+            }
             Fx.particleAt(ParticleCatalog.get("death"), pos, 0.5, playerEntity, store);
-            despawn(c.id);
-            refresh();
+            later(SINK_MS, () -> {
+                despawn(c.id);
+                refresh();
+            });
         });
     }
+
+    private static final long SINK_MS = 1500;
 
     /** Добыча с врага (loot в enemies.json): сразу в рюкзак партии. */
     private Map<String, Integer> rollDrops(Combatant c) {
@@ -1299,6 +1346,12 @@ public final class BattleSession implements BattleListener {
         if (heroPlateRead) Fx.restoreNameplate(store, playerEntity, heroPlate);
         GearVisuals.restorePlayer(store, playerEntity, heroLoan);
         heroLoan = null;
+        if (heroScale != null) {
+            Fx.setScale(store, playerEntity, heroScale);
+            Vector3d home = homes.get("hero");
+            if (home != null) Fx.teleportPlayer(store, playerEntity, home, Fx.yawTowards(home, enemyCenter));
+            heroScale = null;
+        }
         despawnPuppets();
         plugin.followers().resume(player.getUuid());
         if (camera != null) camera.reset();
@@ -1508,6 +1561,16 @@ public final class BattleSession implements BattleListener {
         refresh();
     }
 
+    /** Подсказка над описанием врага под курсором: что сделает клик. */
+    private String hintFor(Combatant c) {
+        if (c.side != Side.ENEMY || battle.phase() != Battle.Phase.AWAIT_COMMAND || !c.isAlive()) return null;
+        return switch (menu.screen()) {
+            case MAIN -> "[Клик — атаковать: " + battle.current().name + " бьёт " + c.name + "]";
+            case TARGET -> menu.targets().contains(c) ? "[Клик — выбрать целью]" : null;
+            default -> null;
+        };
+    }
+
     /** Кольцо под бойцом (у босса шире). */
     private void ring(String id) {
         Combatant c = battle == null ? null : battle.byId(id);
@@ -1549,6 +1612,21 @@ public final class BattleSession implements BattleListener {
         if (c == null || battle.phase() != Battle.Phase.AWAIT_COMMAND) return;
         if (menu.screen() == BattleMenu.Screen.TARGET && menu.targets().contains(c)) {
             onInspect(c.id);
+            return;
+        }
+        // Главное меню: клик по врагу — сразу обычная атака по нему.
+        BattleAction attack = menu.screen() == BattleMenu.Screen.MAIN ? menu.attack(c.id) : null;
+        if (attack != null) {
+            ring(c.id);
+            clearInfo();
+            preTarget = null;
+            peekId = null;
+            try {
+                battle.submit(attack);
+            } catch (IllegalArgumentException e) {
+                menu.rejected(e.getMessage());
+            }
+            refresh();
             return;
         }
         preTarget = c.side == Side.ENEMY ? c.id : null;

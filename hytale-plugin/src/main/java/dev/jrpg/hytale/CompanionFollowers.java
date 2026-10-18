@@ -148,7 +148,14 @@ final class CompanionFollowers {
             online.add(id);
             Ref<EntityStore> ref = p.getReference();
             if (ref == null || !ref.isValid()) continue; // игрок ещё входит в мир (или меняет мир)
-            firstSeen.putIfAbsent(id, now);
+            if (firstSeen.putIfAbsent(id, now) == null && !plugin.sessions().containsKey(id)) {
+                // Бой мог оборваться (вылет сервера) с уменьшенным телом игрока — вернуть размер при входе.
+                Store<EntityStore> st = ref.getStore();
+                runIn(st.getExternalData().getWorld(), () -> {
+                    Float sc = Fx.scale(st, ref);
+                    if (sc != null && sc < 0.2f) Fx.setScale(st, ref, 1.0f);
+                }, () -> { });
+            }
             boolean want = cfg.enabled && !paused.contains(id) && !plugin.sessions().containsKey(id)
                     && plugin.flag(id, FLAG, true);
             Group g = groups.get(id);

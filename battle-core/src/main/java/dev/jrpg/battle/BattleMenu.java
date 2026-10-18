@@ -198,6 +198,15 @@ public final class BattleMenu {
         return new BattleAction.UseItem(what.substring(5), targetId);
     }
 
+    /** Клик по врагу в главном меню — сразу обычная атака по нему. null — сейчас нельзя. */
+    public BattleAction attack(String targetId) {
+        error = null;
+        if (screen() != Screen.MAIN || targetId == null) return null;
+        Combatant t = battle.byId(targetId);
+        if (t == null || !t.isAlive() || t.side == battle.current().side) return null;
+        return build("attack", targetId);
+    }
+
     /** Выбор цели по id (клик по карточке врага/союзника на экране выбора цели). null — не цель. */
     public BattleAction clickTarget(String combatantId) {
         error = null;

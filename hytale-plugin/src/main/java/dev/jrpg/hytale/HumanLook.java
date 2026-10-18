@@ -30,6 +30,22 @@ final class HumanLook {
         return cache.computeIfAbsent(who + "|" + spec, k -> build(who, spec.trim()));
     }
 
+    /** Вид героя-двойника: модель игрока с его собственным скином (не кэшируется: скин могли сменить). */
+    static Look ofPlayer(com.hypixel.hytale.component.Store<com.hypixel.hytale.server.core.universe.world.storage.EntityStore> store,
+                         com.hypixel.hytale.component.Ref<com.hypixel.hytale.server.core.universe.world.storage.EntityStore> player) {
+        try {
+            var sc = store.getComponent(player, com.hypixel.hytale.server.core.modules.entity.player.PlayerSkinComponent.getComponentType());
+            PlayerSkin skin = sc == null ? null : sc.getPlayerSkin();
+            CosmeticsModule cm = CosmeticsModule.get();
+            if (skin == null || cm == null) return null;
+            Model model = cm.createModel(skin);
+            return model == null ? null : new Look(model, skin);
+        } catch (Throwable t) {
+            Fx.warnOnce("Не удалось собрать двойника героя по скину игрока", t);
+            return null;
+        }
+    }
+
     private static Look build(String who, String spec) {
         try {
             CosmeticsModule cm = CosmeticsModule.get();

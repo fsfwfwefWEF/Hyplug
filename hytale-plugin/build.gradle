@@ -23,7 +23,7 @@ dependencies {
 // Один jar мода: плагин + ядро боя + данные (json) + asset pack (UI).
 jar {
     archiveBaseName = 'JrpgBattles'
-    archiveVersion = '0.9.2'
+    archiveVersion = '0.9.3'
     dependsOn ':battle-core:jar'
     from { configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) } }
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE

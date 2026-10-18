@@ -332,18 +332,25 @@ public final class BattleMenuPage extends InteractiveCustomUIPage<BattleMenuPage
         for (int i = 0; i < PARTY; i++) cmd.set("#P" + i + "Glow.Visible", card != null && card.equals(partyIds[i]));
     }
 
-    private static final int LOG_LINES = 14, INS_LINES = 16;
+    private static final int INS_LINES = 16;
 
-    /** Журнал боя слева: последние строки, каждая своим цветом (урон партии, урон врагов, лечение…). */
+    /** Журнал боя — книга слева внизу: правая страница текущая, левая прошлая; новая открывается сама. */
     private void fillLog(UICommandBuilder cmd) {
-        List<BattleSession.LogEntry> j = session.journal();
-        int from = Math.max(0, j.size() - LOG_LINES);
-        for (int i = 0; i < LOG_LINES; i++) {
-            int at = from + i;
-            BattleSession.LogEntry e = at < j.size() ? j.get(at) : null;
-            cmd.set("#Log" + i + ".TextSpans", e == null ? Message.raw("")
-                    : RichText.line(e.text(), RichText.DARK, e.color(), names(true), names(false)));
+        List<List<BattleSession.LogEntry>> pages = BookPages.paginate(session.bookSince(0));
+        fillBookPage(cmd, "L", pages, pages.size() - 2);
+        fillBookPage(cmd, "R", pages, pages.size() - 1);
+    }
+
+    private void fillBookPage(UICommandBuilder cmd, String side, List<List<BattleSession.LogEntry>> pages, int index) {
+        List<Message> lines = new ArrayList<>();
+        if (index >= 0) {
+            for (BattleSession.LogEntry e : pages.get(index)) {
+                lines.add(RichText.line(e.text(), RichText.PARCHMENT, BattleHud.ink(e.color()), names(true), names(false)));
+            }
         }
+        cmd.set("#Book" + side + ".TextSpans", RichText.lines(lines));
+        cmd.set("#Book" + side + "Num.Text", index >= 0 ? "— " + (index + 1) + " —" : "");
+        cmd.set("#Book" + side + "Head.Text", index == 0 ? session.encounterName() : "");
     }
 
     /** Окно «Осмотр и эффекты»: выбранный боец, его эффекты с ходами и описанием, иммунитеты, слабости. */

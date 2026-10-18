@@ -41,7 +41,7 @@ public final class Settings {
         public long letterMs = 35, holdMs = 1800;
         /** Звук на букву (id звука игры); пусто — подобрать самому. Звучит каждая soundEvery-я буква. */
         public String sound = "";
-        public float volume = 0.45f;
+        public float volume = 1.0f;
         public int soundEvery = 2;
         /** Окна реплик в меню боя над головами (как в FF); false — только подпись над NPC. */
         public boolean bubbles = true;
@@ -80,6 +80,8 @@ public final class Settings {
     public boolean preBattlePrompt = true;
     /** Облёт камеры вокруг арены перед первым ходом. */
     public boolean introFlyby = true;
+    /** В бою героя изображает кукла со скином игрока (ходит плавно), а тело игрока уменьшается до невидимого. */
+    public boolean heroDouble = true;
     /** NPC случайных отрядов бродят у своего места (false — стоят). */
     public boolean squadWander = true;
     /** Подсказка «[O] Меню героя» в правом верхнем углу экрана (пока меню висит на клавише режима). */
@@ -111,7 +113,11 @@ public final class Settings {
         public java.util.List<String> down = java.util.List.of("KnockedoutLaydown", "Laydown", "Sleep");
         public java.util.List<String> wake = java.util.List.of("KnockedoutWake", "Wake", "GetUp", "Getup");
         /** Сколько мс поверженный враг лежит, прежде чем исчезнуть. */
-        public long lieMs = 2600;
+        public long lieMs = 3000;
+        /** Поза «лежит» после анимации смерти (зациклена, держится, пока поверженный не исчезнет). */
+        public java.util.List<String> lie = java.util.List.of("Sleep", "KnockedoutLaydown", "Laydown", "Sleep2");
+        /** Сколько длится анимация смерти до позы «лежит», мс. */
+        public long deathMs = 1100;
         /** Слова анимаций оружия (наборы ItemPlayerAnimations) для обычного удара, приёма, магии и блока. */
         public java.util.List<String> weaponAttack = java.util.List.of("SwingLeft", "SwingRight", "SwingDown", "Stab",
                 "SwingDownLeft", "SwingDownRight", "SwingUpLeft", "SwingUpRight");
@@ -255,6 +261,7 @@ public final class Settings {
         s.proximityTrigger = Json.bool(m, "proximityTrigger", true);
         s.preBattlePrompt = Json.bool(m, "preBattlePrompt", s.preBattlePrompt);
         s.introFlyby = Json.bool(m, "introFlyby", s.introFlyby);
+        s.heroDouble = Json.bool(m, "heroDouble", s.heroDouble);
         s.squadWander = Json.bool(m, "squadWander", s.squadWander);
         Object an = m.get("animations");
         if (an != null) {
@@ -280,6 +287,8 @@ public final class Settings {
             k.stepMs = (long) Math.max(10, Json.num(a, "stepMs", k.stepMs));
             k.runSpeed = Math.max(1, Json.num(a, "runSpeed", k.runSpeed));
             k.lieMs = (long) Math.max(300, Json.num(a, "lieMs", k.lieMs));
+            if (a.containsKey("lie")) k.lie = Json.strings(a, "lie");
+            k.deathMs = (long) Math.max(0, Json.num(a, "deathMs", k.deathMs));
             if (a.containsKey("knockdown")) k.knockdown = Json.strings(a, "knockdown");
             if (a.containsKey("down")) k.down = Json.strings(a, "down");
             if (a.containsKey("wake")) k.wake = Json.strings(a, "wake");

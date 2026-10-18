@@ -445,3 +445,12 @@ jrpg-mod/
 - Музыка: MusicContainer понимает поле Volume в дБ, у Jrpg_Battle_Darkness -8.
 - Описание справа внизу: BattleMenuPage.fit режет текст по оценке 54 буквы × 11 строк.
 - DATA_VERSION 12.
+
+## Сессия 21 (2026-10-18): 0.9.3 — двойник героя, клик-атака, смерть, книга
+
+- Двойник героя (settings heroDouble): BattleSession.spawnHeroDouble — кукла на модели игрока со скином из PlayerSkinComponent (HumanLook.ofPlayer), роль как у Брама, снаряжение через GearVisuals.dressNpc. Тело игрока ставится чуть позади и уменьшается EntityScaleComponent до 0.01 (Fx.setScale), в cleanup размер возвращается. CompanionFollowers при входе игрока возвращает размер 1, если он меньше 0.2 (бой мог оборваться вылетом).
+- Клик по врагу: BattleMenu.attack(id) — из главного меню сразу обычная атака; подсказка в описании (BattleSession.hintFor).
+- Кольцо (DebugUtils.addDonut) синее; в 0.9.2 подтверждено, что клиент его рисует.
+- Смерть: lieDown прерывает слот Action, играет death в слоте Status, через anim.deathMs ставит зацикленную позу anim.lie (Sleep/KnockedoutLaydown/Laydown); через lieMs кукла уходит в землю (mover.slide на 1.6 блока за SINK_MS) и исчезает.
+- speech.volume 1.0. Книга журнала в окне (BookPages, патч треда «Новый стиль интерфейса»), TITLE_FONT/SKIN_BUTTONS выключены.
+- DATA_VERSION 13.

@@ -64,7 +64,7 @@ public final class Fx {
     }
 
     /**
-     * Кольцо под бойцом: частица из settings.json (particles.targetRing), а если её нет — плоский золотой
+     * Кольцо под бойцом: частица из settings.json (particles.targetRing), а если её нет — плоский синий
      * «бублик» (отладочная фигура клиента DisplayDebug, тот же, что рисуют селекторы атак), гаснет сам.
      */
     public static void ring(String particle, com.hypixel.hytale.server.core.universe.world.World world, Vector3d feet,
@@ -76,10 +76,35 @@ public final class Fx {
         }
         try {
             com.hypixel.hytale.server.core.modules.debug.DebugUtils.addDonut(world, feet.x, feet.y + 0.05, feet.z,
-                    radius, radius * 0.82, 0.06, 0.0, Math.PI * 2, new org.joml.Vector3f(1.0f, 0.82f, 0.25f),
+                    radius, radius * 0.82, 0.06, 0.0, Math.PI * 2, new org.joml.Vector3f(0.30f, 0.62f, 1.0f),
                     0.85f, 1.6f, com.hypixel.hytale.server.core.modules.debug.DebugUtils.FLAG_FADE);
         } catch (Throwable t) {
             warnOnce("Кольцо под целью не нарисовалось", t);
+        }
+    }
+
+    /** Размер сущности (EntityScaleComponent); null — не удалось прочитать. */
+    public static Float scale(Store<EntityStore> store, Ref<EntityStore> ref) {
+        try {
+            if (ref == null || !ref.isValid()) return null;
+            var c = store.getComponent(ref, com.hypixel.hytale.server.core.modules.entity.component.EntityScaleComponent.getComponentType());
+            return c == null ? 1.0f : c.getScale();
+        } catch (Throwable t) {
+            warnOnce("Размер сущности не читается", t);
+            return null;
+        }
+    }
+
+    /** Поставить размер сущности (у игрока его видит и он сам: так прячется тело игрока на время боя). */
+    public static void setScale(Store<EntityStore> store, Ref<EntityStore> ref, float scale) {
+        try {
+            if (ref == null || !ref.isValid()) return;
+            var type = com.hypixel.hytale.server.core.modules.entity.component.EntityScaleComponent.getComponentType();
+            var c = store.getComponent(ref, type);
+            if (c == null) store.putComponent(ref, type, new com.hypixel.hytale.server.core.modules.entity.component.EntityScaleComponent(scale));
+            else c.setScale(scale);
+        } catch (Throwable t) {
+            warnOnce("Размер сущности не меняется", t);
         }
     }
 
