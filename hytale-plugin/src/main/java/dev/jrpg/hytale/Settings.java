@@ -53,6 +53,8 @@ public final class Settings {
     public boolean preBattlePrompt = true;
     /** Облёт камеры вокруг арены перед первым ходом. */
     public boolean introFlyby = true;
+    /** NPC случайных отрядов бродят у своего места (false — стоят). */
+    public boolean squadWander = true;
     public final Animations anim = new Animations();
 
     /**
@@ -64,15 +66,30 @@ public final class Settings {
         public java.util.List<String> attack = java.util.List.of("Attack", "Swing", "Slash", "Strike", "Punch", "Bite", "Melee", "Hit");
         public java.util.List<String> cast = java.util.List.of("Cast", "Spell", "Magic", "Shoot", "Throw", "Roar", "Attack");
         public java.util.List<String> hurt = java.util.List.of("Hurt", "Damage", "Flinch");
-        public java.util.List<String> death = java.util.List.of("Death", "Die");
+        public java.util.List<String> death = java.util.List.of("Death", "Die", "Knockedout", "KnockedoutLaydown", "Laydown", "Sleep");
         public java.util.List<String> victory = java.util.List.of("Cheer", "Celebrate", "Victory", "Wave", "Emote", "Roar");
         /** Анимации героев и компаньонов по id (attack/cast/dodge/parry), если у их модели нет общих имён. */
         public final Map<String, Map<String, java.util.List<String>>> heroes = new HashMap<>();
         public java.util.List<String> dodge = java.util.List.of("RollBackward", "DashBackward", "Roll", "Dodge");
         public java.util.List<String> parry = java.util.List.of("Block", "Parry", "Guard", "SwingWeaponAir", "Attack");
-        /** Шаги подхода к цели (телепорт маленькими шагами) и пауза между ними, мс. */
-        public int stepCount = 5;
-        public long stepMs = 70;
+        /** Подход к цели на арене: скорость бега, блоков в секунду (NPC идут плавно, игрок — мелкими шагами). */
+        public double runSpeed = 6.5;
+        /** Шаги подхода для самого игрока (его двигает телепорт) и пауза между ними, мс. */
+        public int stepCount = 7;
+        public long stepMs = 50;
+        /** Сбили с ног (оглушение): падение, поза «лежит» (держится, пока оглушён), подъём. */
+        public java.util.List<String> knockdown = java.util.List.of("HurtFall", "Knockedout", "Hurt");
+        public java.util.List<String> down = java.util.List.of("KnockedoutLaydown", "Laydown", "Sleep");
+        public java.util.List<String> wake = java.util.List.of("KnockedoutWake", "Wake", "GetUp", "Getup");
+        /** Сколько мс поверженный враг лежит, прежде чем исчезнуть. */
+        public long lieMs = 2600;
+        /** Слова анимаций оружия (наборы ItemPlayerAnimations) для обычного удара, приёма, магии и блока. */
+        public java.util.List<String> weaponAttack = java.util.List.of("SwingLeft", "SwingRight", "SwingDown",
+                "Swing", "Slash", "Attack", "Stab", "Thrust", "Strike", "Punch", "Bash");
+        public java.util.List<String> weaponSkill = java.util.List.of("Charged", "Heavy", "Smash", "Slam",
+                "Overhead", "Spin", "Lunge", "Combo", "SwingDown", "Swing", "Slash", "Attack", "Stab");
+        public java.util.List<String> weaponCast = java.util.List.of("Cast", "Spell", "Shoot", "Throw");
+        public java.util.List<String> weaponParry = java.util.List.of("Block", "Guard", "Parry");
     }
 
     /** Камера: углы в градусах, расстояния в блоках. */
@@ -170,6 +187,7 @@ public final class Settings {
         s.proximityTrigger = Json.bool(m, "proximityTrigger", true);
         s.preBattlePrompt = Json.bool(m, "preBattlePrompt", s.preBattlePrompt);
         s.introFlyby = Json.bool(m, "introFlyby", s.introFlyby);
+        s.squadWander = Json.bool(m, "squadWander", s.squadWander);
         Object an = m.get("animations");
         if (an != null) {
             Map<String, Object> a = Json.obj(an);
@@ -192,6 +210,15 @@ public final class Settings {
             }
             k.stepCount = (int) Math.max(1, Json.num(a, "stepCount", k.stepCount));
             k.stepMs = (long) Math.max(10, Json.num(a, "stepMs", k.stepMs));
+            k.runSpeed = Math.max(1, Json.num(a, "runSpeed", k.runSpeed));
+            k.lieMs = (long) Math.max(300, Json.num(a, "lieMs", k.lieMs));
+            if (a.containsKey("knockdown")) k.knockdown = Json.strings(a, "knockdown");
+            if (a.containsKey("down")) k.down = Json.strings(a, "down");
+            if (a.containsKey("wake")) k.wake = Json.strings(a, "wake");
+            if (a.containsKey("weaponAttack")) k.weaponAttack = Json.strings(a, "weaponAttack");
+            if (a.containsKey("weaponSkill")) k.weaponSkill = Json.strings(a, "weaponSkill");
+            if (a.containsKey("weaponCast")) k.weaponCast = Json.strings(a, "weaponCast");
+            if (a.containsKey("weaponParry")) k.weaponParry = Json.strings(a, "weaponParry");
         }
         return s;
     }

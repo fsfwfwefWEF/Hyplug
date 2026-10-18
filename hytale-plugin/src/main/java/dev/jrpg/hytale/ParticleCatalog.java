@@ -13,7 +13,9 @@ import java.util.Map;
  * (имена ассетов заранее неизвестны, поэтому мод ищет их сам при первом бое и пишет выбор в лог).
  * Любой выбор можно заменить в settings.json → "particles" (ключи как в {@link #KEYWORDS}),
  * пустая строка там — выключить эффект. Берутся только короткие системы (живут до 4 с), чтобы
- * случайно не поставить вечный эмиттер вроде костра.
+ * случайно не поставить вечный эмиттер вроде костра, и не берутся служебные/чужие (Example_, Warning,
+ * Prefire, Signature…). Для обычных ударов оружием («physical») сам ничего не подбирает: в 0.7.0 это
+ * давало «ледяную» вспышку на каждом ударе мечом. Частица ударов — только если задать её в settings.json.
  */
 final class ParticleCatalog {
     static final Map<String, List<String>> KEYWORDS = new LinkedHashMap<>();
@@ -38,6 +40,11 @@ final class ParticleCatalog {
     /** Слова, по которым система частиц похожа на постоянный эмиттер — такие не берём. */
     private static final List<String> LOOPING = List.of("loop", "ambient", "idle", "trail", "weather", "rain",
             "torch", "campfire", "portal", "aura", "beam", "constant", "persistent", "fog", "fireflies", "spawner");
+    /** Служебные и «чужие» системы (примеры, предупреждения, подготовка выстрела, приёмы оружия). */
+    private static final List<String> FOREIGN = List.of("example", "test", "debug", "warning", "prefire",
+            "signature", "_dev", "editor");
+    /** Эффекты, которые подбираются только вручную (settings.json → particles). */
+    private static final List<String> MANUAL = List.of("physical");
 
     private static volatile Map<String, String> picks;
 
@@ -62,10 +69,9 @@ final class ParticleCatalog {
         return p.getOrDefault(key, "");
     }
 
-    /** Частица под стихию способности; неизвестная стихия — как физическая. */
+    /** Частица под стихию способности; для стихии без своей частицы — никакой (не «лёд» на всё). */
     static String element(String element) {
-        String p = element == null ? "" : get(element);
-        return p.isEmpty() ? get("physical") : p;
+        return element == null ? "" : get(element);
     }
 
     /** Сбросить выбор (после /jrpg reload). */
@@ -93,12 +99,16 @@ final class ParticleCatalog {
         List<String> usable = new ArrayList<>();
         all.forEach((id, ps) -> {
             String low = id.toLowerCase(Locale.ROOT);
-            if (LOOPING.stream().anyMatch(low::contains)) return;
+            if (LOOPING.stream().anyMatch(low::contains) || FOREIGN.stream().anyMatch(low::contains)) return;
             float life = ps == null ? 0 : ps.getLifeSpan();
             if (life > 0 && life <= 4) usable.add(id);
         });
         Map<String, String> out = new LinkedHashMap<>();
         for (Map.Entry<String, List<String>> e : KEYWORDS.entrySet()) {
+            if (MANUAL.contains(e.getKey())) {
+                out.put(e.getKey(), "");
+                continue;
+            }
             String best = null;
             for (String word : e.getValue()) {
                 String w = word.toLowerCase(Locale.ROOT);

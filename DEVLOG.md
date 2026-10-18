@@ -300,3 +300,25 @@ jrpg-mod/
 - `DATA_VERSION = 6`.
 
 **Проверено:** 42 теста, голый сервер 0.7.2 грузит 0.7.0. В игре не проверено: имена частиц и анимаций подбираются по логу, движение компаньонов через TransformComponent у Frozen NPC, тайминги окна ответа.
+
+## 2026-10-18: сессия 11, копии компаньонов, ходьба, падение, удары оружием (0.7.1)
+
+Отзыв на 0.7.0 (логи от 17 и 18.10): при входе в мир появляется около 10 копий союзника, и они нападают; враги и герои «бегут на месте»; при сбитии нет анимации лежания; ближние удары выглядят как ледяная магия.
+
+**Причины**
+- Бег на месте: `MovementStatesSystems.AddSystem` при появлении NPC ставит `idle = true` только если у заготовки уже есть `Frozen`. Мы добавляли `Frozen` после `spawnEntity`, поэтому поза оставалась «не стоит» (все флаги false), а ИИ заморожен и её не исправлял.
+- Копии: компоненты (`Frozen`, `NonSerialized`) ставились после появления NPC, а `CompanionFollowers` пересоздавал всю группу, как только ссылка на куклу становилась недействительной, и мог копить шаги в очереди мира при входе (в логе три задачи по 40–90 мс подряд). Потерянные куклы без заморозки (Брам — `Trork_Warrior`, враждебная роль) нападают.
+- «Лёд» на ударах: для `physical` подбиралась частица `Example_Projectile_Impact`; у героя-игрока в модели нет анимаций ударов (был только DashForward).
+
+**Сделано**
+- `Fx.spawnPuppet(..., nameplate)`: перегрузка `NPCPlugin.spawnEntity(store, role, pos, rot, model, preAdd, postAdd)`; `Frozen`, `Invulnerable`, `NonSerialized` и подпись ставятся на `Holder` до `store.addEntity`. После спавна `Fx.setMovement(idle)`. Новые помощники: `Fx.setMovement(store, ref, idle|walk|run)`, `Fx.place` (плавная позиция через `TransformComponent`, игрок — телепорт), `Fx.animateIn(slot, …)`, `Fx.stopAnimation`.
+- `CompanionFollowers`: не больше одного шага в очереди мира на игрока; спавн через 3 с после входа и не чаще раза в 5 с; пропавшая кукла забывается, группа пересоздаётся после паузы; раз в 2 с `sweep` удаляет в радиусе 96 блоков NPC с подписью «Лира»/«Брам», которых нет в группе и в идущих боях (`JrpgPlugin.isBattlePuppet`), в лог «Убраны лишние копии компаньонов».
+- `NpcMover` (новый): движения по времени (за durationMs), шаг каждые 50 мс в потоке мира (одна задача на мир), поза run/walk в пути и idle в конце; `slide` — сдвиг без позы (отлёт от удара). На арене: `BattleSession.walk` возвращает время подхода (дистанция / `animations.runSpeed`, 250–1600 мс), игрок подходит мелкими телепортами. Отряды: NPC бродят шагом (1.4 бл/с) в 0.8–3.2 блока от места, с паузами (`settings.json → squadWander`).
+- `WeaponAnims` (новый): ванильные удары. Набор `ItemPlayerAnimations` берётся у предмета в руке (`LivingEntity.getInventory().getItemInHand().getItem().getPlayerAnimationsId()`), иначе первый существующий из подсказок (`animations.heroes.<id>.weapon`, `enemies.json → anim.weapon`). Анимация внутри набора — по словам (`weaponAttack` для «Атаки», `weaponSkill` для физических приёмов, `weaponCast`, `weaponParry`), без поз/ходьбы/зарядки; случайная из совпадений. Наборы и их анимации пишутся в лог («Наборы анимаций оружия», «Анимации оружия <набор>»). `animateAs`: оружие → свои анимации модели → общие → оружие в руке (если у модели нет своих ударов).
+- Падение: убитый ударом падает в момент удара (`fallen` из `present`/`counterAttack`, иначе сразу в `onCombatantDown`), поза смерти в слоте `Status` держится; враг лежит `lieMs` (2600), надписи добычи, потом исчезает; павший герой лежит до конца боя. Оглушение (`stun` в `statusesApplied`): `knockdown` → через 550 мс поза `down` в `Status`; `onStatusExpired(stun)` → `stopAnimation(Status)` + `wake`. При выходе из боя с игрока снимается `Status`.
+- `ParticleCatalog`: `physical` сам не подбирается (только из settings), системы с Example/Test/Debug/Warning/Prefire/Signature не берутся, `element()` без запасной физической частицы.
+- Данные: `settings.json → animations` (weapon*, death/knockdown/down/wake, lieMs, runSpeed, stepCount 7 / stepMs 50, heroes.*.weapon), `squadWander`; `enemies.json`: волк Threaten/Howl, паук Threaten/JumpRun, слизень Tongue, скелет и трорк с `weapon`, у трорка Knockedout*. `DATA_VERSION = 7`.
+
+**Проверено:** 42 теста, голый сервер 0.7.2 грузит 0.7.1. В игре не проверено: имена анимаций оружия (подбираются по словам, смотреть лог), держится ли поза в слоте Status, уборка копий.
+
+**Как перенести:** куклы спавнить только через `Fx.spawnPuppet` (компоненты до появления). Любое движение куклы — через `NpcMover` или `Fx.place` + `Fx.setMovement`, и в конце обязательно `idle`.

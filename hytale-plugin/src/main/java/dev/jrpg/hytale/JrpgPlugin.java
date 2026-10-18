@@ -35,7 +35,7 @@ public final class JrpgPlugin extends JavaPlugin {
      * Версия встроенных файлов данных. Если копия в папке мода старее, она сохраняется в backup-vN/
      * и заменяется новой (иначе новые враги/настройки не появятся у тех, кто уже запускал мод).
      */
-    private static final int DATA_VERSION = 6;
+    private static final int DATA_VERSION = 7;
     /** Автосохранение загруженных игроков, с. */
     private static final long AUTOSAVE_S = 60;
     private static JrpgPlugin instance;
@@ -51,6 +51,7 @@ public final class JrpgPlugin extends JavaPlugin {
     private final ConcurrentHashMap<UUID, java.util.Map<String, Object>> flags = new ConcurrentHashMap<>();
     private Saves saves;
     private final CompanionFollowers followers = new CompanionFollowers(this);
+    private final NpcMover mover = new NpcMover(this);
     /** Свой планировщик для пауз между ходами; всё, что трогает мир, переносится в world.execute. */
     private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor(r -> {
         Thread t = new Thread(r, "jrpg-scheduler");
@@ -80,6 +81,7 @@ public final class JrpgPlugin extends JavaPlugin {
         scheduler.scheduleAtFixedRate(watcher::tickSafe, 2, 1, TimeUnit.SECONDS);
         scheduler.scheduleAtFixedRate(this::autosave, AUTOSAVE_S, AUTOSAVE_S, TimeUnit.SECONDS);
         followers.start();
+        mover.start();
         getEventRegistry().register(PlayerDisconnectEvent.class, e -> onDisconnect(e.getPlayerRef()));
         getLogger().at(Level.INFO).log("JRPG Battles: загружено встреч " + data.encounters().size());
     }
@@ -321,6 +323,13 @@ public final class JrpgPlugin extends JavaPlugin {
     }
 
     CompanionFollowers followers() { return followers; }
+    NpcMover mover() { return mover; }
+
+    /** Эта сущность — кукла чьего-то идущего боя (её не трогают уборка компаньонов и т.п.). */
+    boolean isBattlePuppet(Ref<EntityStore> ref) {
+        for (BattleSession s : sessions.values()) if (s.owns(ref)) return true;
+        return false;
+    }
 
     /** Открыть рюкзак (вызывать в потоке мира). */
     public void openBackpack(PlayerRef playerRef, Ref<EntityStore> ref, Store<EntityStore> store) {

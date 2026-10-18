@@ -23,11 +23,14 @@ import java.util.concurrent.ConcurrentHashMap;
  * Раз в секунду (из {@link EncounterWatcher}, в потоке мира игрока): убираем далёкие и старые отряды,
  * иногда ставим новый на землю в minDistance..maxDistance блоков от игрока, и если игрок подошёл
  * к отряду ближе triggerRadius — возвращаем его, чтобы показать окно «Сражаться / Сбежать».
- * NPC отряда — такие же «куклы», как в бою: стоят на месте и неуязвимы.
+ * NPC отряда — такие же «куклы», как в бою (неуязвимы, без своего ИИ), но не стоят столбом:
+ * бродят шагом вокруг своего места (settings.json → squadWander).
  */
 final class SquadSpawner {
     static final String ID_PREFIX = "squad:";
     private static final long RETRY_MS = 5000;
+    /** Скорость, с которой бродят NPC отряда, блоков в секунду. */
+    private static final double WANDER_SPEED = 1.4;
 
     /** Отряд в мире. encounter — готовая встреча для боя (центр — где стоит отряд). */
     static final class Squad {
@@ -36,6 +39,9 @@ final class SquadSpawner {
         final String world;
         final Vector3d pos;
         final List<Ref<EntityStore>> npcs = new ArrayList<>();
+        /** Где каждый NPC появился (бродит вокруг) и до какого времени стоит, отдыхая. */
+        final List<Vector3d> homes = new ArrayList<>();
+        final List<Long> restUntil = new ArrayList<>();
         final long bornAt = System.currentTimeMillis();
 
         Squad(String id, Squads.Template template, String world, Vector3d pos) {
@@ -70,6 +76,7 @@ final class SquadSpawner {
             boolean old = now - s.bornAt > cfg.lifetimeMinutes * 60_000;
             if (gone || far || old || !cfg.enabled) remove(p.getUuid(), s, store);
         }
+        if (plugin.settings().squadWander) for (Squad s : list) if (s.world.equals(world.getName())) wander(s, store, world, now);
         for (Squad s : list) {
             if (s.world.equals(world.getName()) && dist2(s.pos, pos) <= cfg.triggerRadius * cfg.triggerRadius
                     && Math.abs(s.pos.y - pos.y) < 6) return s;
@@ -124,10 +131,35 @@ final class SquadSpawner {
             Double y = Fx.groundY(world, x, z, s.pos.y);
             Vector3d at = new Vector3d(x, y == null || Math.abs(y - s.pos.y) > 4 ? s.pos.y : y, z);
             EnemyTemplate e = plugin.data().enemy(s.template.enemies().get(i));
-            Ref<EntityStore> ref = Fx.spawnPuppet(store, e.role(), e.name(), at, Fx.yawTowards(at, playerPos));
+            Ref<EntityStore> ref = Fx.spawnPuppet(store, e.role(), e.name(), at, Fx.yawTowards(at, playerPos),
+                    i == n / 2 ? s.template.name() + "\n" + e.name() : e.name());
             if (ref == null) continue;
-            Fx.nameplate(store, ref, i == n / 2 ? s.template.name() + "\n" + e.name() : e.name());
             s.npcs.add(ref);
+            s.homes.add(at);
+            s.restUntil.add(System.currentTimeMillis() + 1500 + random.nextInt(3000));
+        }
+    }
+
+    /** NPC отряда бродят шагом в паре блоков от своего места, с передышками (раз в секунду из tick). */
+    private void wander(Squad s, Store<EntityStore> store, World world, long now) {
+        for (int i = 0; i < s.npcs.size(); i++) {
+            Ref<EntityStore> r = s.npcs.get(i);
+            if (!r.isValid() || plugin.mover().moving(r) || now < s.restUntil.get(i)) continue;
+            if (random.nextDouble() < 0.4) {
+                s.restUntil.set(i, now + 1000 + random.nextInt(2500));
+                continue;
+            }
+            Vector3d home = s.homes.get(i);
+            double a = random.nextDouble() * Math.PI * 2, d = 0.8 + random.nextDouble() * 2.4;
+            double x = home.x + Math.cos(a) * d, z = home.z + Math.sin(a) * d;
+            Double y = Fx.groundY(world, x, z, home.y);
+            if (y == null || Math.abs(y - home.y) > 1.6) continue;
+            Vector3d from = Fx.position(store, r), to = new Vector3d(x, y, z);
+            double dist = Math.hypot(to.x - from.x, to.z - from.z);
+            if (dist < 0.4) continue;
+            long dur = Math.round(dist / WANDER_SPEED * 1000);
+            plugin.mover().go(store, world, r, from, to, dur, false, true, null);
+            s.restUntil.set(i, now + dur + 2500 + random.nextInt(4000));
         }
     }
 
@@ -139,7 +171,10 @@ final class SquadSpawner {
     void remove(UUID player, Squad s, Store<EntityStore> store) {
         List<Squad> list = byPlayer.get(player);
         if (list != null) list.remove(s);
-        for (Ref<EntityStore> r : s.npcs) Fx.remove(store, r);
+        for (Ref<EntityStore> r : s.npcs) {
+            plugin.mover().stop(r);
+            Fx.remove(store, r);
+        }
         s.npcs.clear();
     }
 

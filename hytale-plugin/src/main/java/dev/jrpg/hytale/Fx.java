@@ -1,5 +1,6 @@
 package dev.jrpg.hytale;
 
+import com.hypixel.hytale.component.Holder;
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
 import org.joml.Vector3d;
@@ -10,6 +11,10 @@ import com.hypixel.hytale.protocol.CombatTextUpdate;
 import com.hypixel.hytale.protocol.AnimationSlot;
 import com.hypixel.hytale.server.core.entity.AnimationUtils;
 import com.hypixel.hytale.server.core.entity.Frozen;
+import com.hypixel.hytale.server.core.entity.movement.MovementStatesComponent;
+import com.hypixel.hytale.function.consumer.TriConsumer;
+import com.hypixel.hytale.protocol.MovementStates;
+import com.hypixel.hytale.server.core.modules.entity.component.HeadRotation;
 import com.hypixel.hytale.server.core.entity.nameplate.Nameplate;
 import com.hypixel.hytale.server.core.modules.entity.component.Invulnerable;
 import com.hypixel.hytale.server.npc.NPCPlugin;
@@ -131,29 +136,95 @@ public final class Fx {
      * null — роль не нашлась или спавн не удался (причина в логе).
      */
     public static Ref<EntityStore> spawnPuppet(Store<EntityStore> store, String roleSpec, String who, Vector3d pos, float yaw) {
+        return spawnPuppet(store, roleSpec, who, pos, yaw, null);
+    }
+
+    /**
+     * То же, с подписью над головой. Frozen, Invulnerable, NonSerialized и подпись ставятся на заготовку
+     * ДО появления NPC в мире (в 0.7.0 — после): так у куклы не бывает ни одного тика своего ИИ (раньше
+     * трорк-компаньон успевал «проснуться» и напасть), она сразу стоит в позе покоя, а не бежит на месте
+     * (поза выбирается при появлении: Frozen есть — Idle), и никогда не сохраняется в мир.
+     */
+    public static Ref<EntityStore> spawnPuppet(Store<EntityStore> store, String roleSpec, String who, Vector3d pos, float yaw,
+                                               String nameplate) {
         try {
             String role = resolveRole(roleSpec, who);
             if (role == null || pos == null) return null;
             NPCPlugin npcs = NPCPlugin.get();
+            TriConsumer<NPCEntity, Holder<EntityStore>, Store<EntityStore>> prepare = (npc, holder, st) -> {
+                holder.putComponent(Frozen.getComponentType(), Frozen.get());
+                holder.putComponent(Invulnerable.getComponentType(), Invulnerable.INSTANCE);
+                try {
+                    holder.putComponent(EntityStore.REGISTRY.getNonSerializedComponentType(),
+                            com.hypixel.hytale.component.NonSerialized.get());
+                } catch (Throwable t) {
+                    warnOnce("Не удалось пометить NPC как временного", t);
+                }
+                if (nameplate != null) holder.putComponent(Nameplate.getComponentType(), new Nameplate(nameplate));
+            };
+            TriConsumer<NPCEntity, Ref<EntityStore>, Store<EntityStore>> after = null;
             Pair<Ref<EntityStore>, NPCEntity> spawned = npcs.spawnEntity(store, npcs.getIndex(role), pos,
-                    new Rotation3f(0, yaw, 0), null, null);
-            if (spawned == null) return null;
+                    new Rotation3f(0, yaw, 0), null, prepare, after);
+            if (spawned == null || spawned.first() == null) return null;
             Ref<EntityStore> ref = spawned.first();
-            store.putComponent(ref, Frozen.getComponentType(), Frozen.get());
-            store.putComponent(ref, Invulnerable.getComponentType(), Invulnerable.INSTANCE);
-            try {
-                // Куклы не сохраняются в мир: если сервер упадёт посреди боя, они не останутся стоять.
-                store.putComponent(ref, EntityStore.REGISTRY.getNonSerializedComponentType(),
-                        com.hypixel.hytale.component.NonSerialized.get());
-            } catch (Throwable t) {
-                warnOnce("Не удалось пометить NPC как временного", t);
+            // На всякий случай ещё раз (если заготовку кто-то переписал): кукла заморожена и стоит.
+            if (store.getComponent(ref, Frozen.getComponentType()) == null) {
+                store.putComponent(ref, Frozen.getComponentType(), Frozen.get());
             }
+            setMovement(store, ref, "idle");
+            // Роль могла поставить свою подпись — наша важнее.
+            if (nameplate != null) nameplate(store, ref, nameplate);
             // Поворот ещё раз телепортом: при спавне NPC иногда разворачивается сам.
             teleport(store, ref, pos, yaw);
             return ref;
         } catch (Throwable t) {
             JrpgPlugin.get().warn("Не удалось заспавнить " + who + " (роль " + roleSpec + ")", t);
             return null;
+        }
+    }
+
+    /**
+     * Поза движения NPC для клиента: "idle" (стоит), "walk" (идёт), "run" (бежит). Клиент сам играет
+     * Idle/Walk/Run модели. Состояние надо снимать, когда NPC остановился, иначе он «бежит на месте».
+     */
+    public static void setMovement(Store<EntityStore> store, Ref<EntityStore> ref, String state) {
+        try {
+            if (ref == null || !ref.isValid()) return;
+            MovementStatesComponent mc = store.getComponent(ref, MovementStatesComponent.getComponentType());
+            if (mc == null) return;
+            MovementStates ms = mc.getMovementStates();
+            ms.idle = state.equals("idle");
+            ms.horizontalIdle = ms.idle;
+            ms.walking = state.equals("walk");
+            ms.running = state.equals("run");
+            ms.sprinting = false;
+            ms.onGround = true;
+            ms.falling = false;
+            ms.jumping = false;
+        } catch (Throwable t) {
+            warnOnce("Поза движения NPC не сработала", t);
+        }
+    }
+
+    /**
+     * Плавно поставить NPC в точку (как двигаются обычные NPC: клиент сглаживает между тиками).
+     * Для игрока — телепорт (его позицией управляет клиент).
+     */
+    public static void place(Store<EntityStore> store, Ref<EntityStore> ref, Vector3d pos, float yaw) {
+        try {
+            if (ref == null || !ref.isValid()) return;
+            if (store.getComponent(ref, Player.getComponentType()) != null) {
+                teleportPlayer(store, ref, pos, yaw);
+                return;
+            }
+            TransformComponent t = store.getComponent(ref, TransformComponent.getComponentType());
+            if (t == null) return;
+            t.setPosition(pos);
+            t.getRotation().setYaw(yaw);
+            HeadRotation head = store.getComponent(ref, HeadRotation.getComponentType());
+            if (head != null) head.getRotation().setYaw(yaw);
+        } catch (Throwable t) {
+            warnOnce("NPC не двигается", t);
         }
     }
 
@@ -271,23 +342,39 @@ public final class Fx {
      * чтобы удары не были одинаковыми; если ни одной нет у модели — первая подходящая из общего списка.
      */
     public static boolean animate(Store<EntityStore> store, Ref<EntityStore> ref, List<String> own, List<String> common) {
+        return animateIn(store, ref, AnimationSlot.Action, own, common) != null;
+    }
+
+    /** То же в нужном слоте (Status держит позу, например «лежит»). Возвращает имя анимации или null. */
+    public static String animateIn(Store<EntityStore> store, Ref<EntityStore> ref, AnimationSlot slot,
+                                   List<String> own, List<String> common) {
+        String id = null;
         if (own != null && !own.isEmpty()) {
             List<String> have = new java.util.ArrayList<>();
             for (String want : own) {
-                String id = pickAnimation(store, ref, List.of(want));
-                if (id != null && id.equalsIgnoreCase(want) && !have.contains(id)) have.add(id);
+                String found = pickAnimation(store, ref, List.of(want));
+                if (found != null && found.equalsIgnoreCase(want) && !have.contains(found)) have.add(found);
             }
-            if (!have.isEmpty()) {
-                String id = have.get(RND.nextInt(have.size()));
-                try {
-                    AnimationUtils.playAnimation(ref, AnimationSlot.Action, id, true, store);
-                    return true;
-                } catch (Throwable t) {
-                    warnOnce("Анимация " + id + " не сработала", t);
-                }
-            }
+            if (!have.isEmpty()) id = have.get(RND.nextInt(have.size()));
         }
-        return animate(store, ref, common);
+        if (id == null) id = pickAnimation(store, ref, common);
+        if (id == null) return null;
+        try {
+            AnimationUtils.playAnimation(ref, slot, id, true, store);
+            return id;
+        } catch (Throwable t) {
+            warnOnce("Анимация " + id + " не сработала", t);
+            return null;
+        }
+    }
+
+    /** Снять анимацию слота (встать после «лежит», вернуть обычную позу). */
+    public static void stopAnimation(Store<EntityStore> store, Ref<EntityStore> ref, AnimationSlot slot) {
+        try {
+            if (ref != null && ref.isValid()) AnimationUtils.stopAnimation(ref, slot, true, store);
+        } catch (Throwable t) {
+            warnOnce("Не удалось снять анимацию", t);
+        }
     }
 
     /** Частица на высоте груди бойца (pos — точка у ног). */

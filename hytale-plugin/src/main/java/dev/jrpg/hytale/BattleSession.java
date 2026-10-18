@@ -55,7 +55,13 @@ public final class BattleSession implements BattleListener {
     private final Store<EntityStore> store;
     private final World world;
     private final Vector3d center;
-    private final Map<String, Ref<EntityStore>> puppets = new HashMap<>();
+    private final Map<String, Ref<EntityStore>> puppets = new java.util.concurrent.ConcurrentHashMap<>();
+    /** Кто сейчас лежит, сбитый с ног оглушением (встанет, когда оглушение пройдёт). */
+    private final java.util.Set<String> downed = new java.util.HashSet<>();
+    /** Добыча поверженных врагов, пока её надписи не показаны. */
+    private final Map<String, Map<String, Integer>> dropsOf = new HashMap<>();
+    /** Последнее выполненное действие (кого оно убило, покажет present). */
+    private ActionResult current;
     private final Map<String, Vector3d> homes = new HashMap<>();
     private final Deque<String> log = new ArrayDeque<>();
     private Battle battle;
@@ -244,10 +250,9 @@ public final class BattleSession implements BattleListener {
     // ---------- NPC-куклы ----------
 
     private void spawnPuppet(Combatant c, String roleSpec, Vector3d pos, float yaw) {
-        Ref<EntityStore> ref = Fx.spawnPuppet(store, roleSpec, c.name, pos, yaw);
+        Ref<EntityStore> ref = Fx.spawnPuppet(store, roleSpec, c.name, pos, yaw, BattleText.nameplate(c, false));
         if (ref == null) return;
         puppets.put(c.id, ref);
-        Fx.nameplate(store, ref, BattleText.nameplate(c, false));
     }
 
     private void despawn(String id) {
@@ -525,6 +530,7 @@ public final class BattleSession implements BattleListener {
     @Override
     public void onStatusExpired(Combatant t, StatusInstance s) {
         addLog(t.name + ": " + s.def.name() + " прошло");
+        if (s.def.id().equals(STUN) && t.isAlive()) wake(t);
     }
 
     @Override
@@ -535,6 +541,7 @@ public final class BattleSession implements BattleListener {
 
     @Override
     public void onActionExecuted(ActionResult r) {
+        current = r;
         addLog(BattleText.describe(r));
         boolean afterWindup = answered != null && answered.actor == r.actor();
         presentDelay = r.actor().side == Side.ENEMY && !afterWindup ? plugin.settings().ms(plugin.settings().enemyThinkMs) : 0;
@@ -579,10 +586,10 @@ public final class BattleSession implements BattleListener {
             // Точка удара: перед целью (для удара по всем — перед центром врагов).
             Vector3d aim = ab.target() == TargetType.ALL_ENEMIES ? (actor.side == Side.PARTY ? enemyCenter : center) : targetPos;
             strikeAt = strikePoint(home, aim);
-            walk(actorRef, home, strikeAt, Fx.yawTowards(strikeAt, aim), 0);
-            long arrive = (long) an.stepCount * an.stepMs;
-            later(arrive, () -> animateAs(actor, actorRef, "attack"));
-            hitAt = arrive + 250;
+            long arrive = walk(actorRef, home, strikeAt, Fx.yawTowards(strikeAt, aim));
+            String kind = isBasicAttack(actor, ab) ? "attack" : "skill";
+            later(arrive, () -> animateAs(actor, actorRef, kind));
+            hitAt = arrive + 300;
         } else {
             animateAs(actor, actorRef, "cast");
             if (ab != null && !item && (ab.magical() || ab.damagePower() <= 0)) {
@@ -604,11 +611,15 @@ public final class BattleSession implements BattleListener {
                 else if (!h.statusesApplied().isEmpty() && h.target().side == actor.side) {
                     Fx.particleAt(ParticleCatalog.get("buff"), pos, 0.4, playerEntity, store);
                 }
-                if (answeredHit) {
+                if (h.killed()) {
+                    fallen(h.target(), true);
+                } else if (answeredHit) {
                     showReaction(reaction, h.target(), tRef, pos);
+                } else if (h.statusesApplied().contains(STUN) && tRef != null && h.target().isAlive()) {
+                    knockDown(h.target(), tRef);
                 } else if (h.damage() > 0 && tRef != null && h.target() != actor) {
-                    animateAs(h.target(), tRef, h.killed() ? "death" : "hurt");
-                    if (!h.killed() && pos != null && from != null) knockback(h.target(), tRef, pos, from);
+                    animateAs(h.target(), tRef, "hurt");
+                    if (pos != null && from != null) knockback(h.target(), tRef, pos, from);
                 }
                 if (!(answeredHit && reaction == Battle.Reaction.PARRY)) popHit(h, 0);
             }
@@ -617,11 +628,11 @@ public final class BattleSession implements BattleListener {
         });
         refresh();
         Vector3d back = strikeAt;
-        later(plugin.settings().ms(plugin.settings().actionDelayMs), () -> {
-            if (back != null) walk(actorRef, back, home, yawOf(actor), 0);
+        long returnAt = Math.max(plugin.settings().ms(plugin.settings().actionDelayMs), hitAt + 900);
+        later(returnAt, () -> {
+            long settle = back != null ? walk(actorRef, back, home, yawOf(actor)) : 0;
             banner = "";
             bannerSub = "";
-            long settle = back != null ? (long) an.stepCount * an.stepMs : 0;
             later(settle, () -> {
                 if (back != null) Fx.teleport(store, actorRef, home, yawOf(actor));
                 if (battle.phase() == Battle.Phase.PRESENTING) battle.acknowledge();
@@ -639,28 +650,46 @@ public final class BattleSession implements BattleListener {
         return new Vector3d(aim.x + (home.x - aim.x) * 0.25, aim.y, aim.z + (home.z - aim.z) * 0.25);
     }
 
-    /** Частица попадания: стихия способности (огонь, лёд…), для обычных ударов — физическая. */
+    /**
+     * Частица попадания: стихия способности (огонь, лёд…). У обычных ударов оружием частиц нет
+     * (в 0.7.0 сюда подбиралась «ледяная» вспышка) — только если задать settings.json → particles.physical.
+     */
     private String impactParticle(Ability ab) {
-        if (ab == null) return ParticleCatalog.get("physical");
-        String element = battle.content().element(ab);
-        if ((element == null || element.equals(Element.PHYSICAL)) && !plugin.settings().hitFx.isBlank()) {
-            return plugin.settings().hitFx;
+        String element = ab == null ? null : battle.content().element(ab);
+        if (element == null || element.equals(Element.PHYSICAL)) {
+            return plugin.settings().hitFx.isBlank() ? ParticleCatalog.get("physical") : plugin.settings().hitFx;
         }
         return ParticleCatalog.element(element);
     }
 
-    /** Анимация бойца: сначала свои имена (enemies.json "anim", settings.json animations.heroes), потом общие. */
+    /** Обычная «Атака» — простой замах; физические приёмы — «сильный» удар (другие анимации оружия). */
+    private static boolean isBasicAttack(Combatant actor, Ability ab) {
+        return ab == null || ab.id().equals(Content.ATTACK);
+    }
+
+    /**
+     * Анимация бойца. Удары (attack/skill), магия и блок — сначала ванильная анимация оружия (если у бойца
+     * задано "weapon" или в руке оружие), потом свои имена модели (enemies.json "anim", settings.json
+     * animations.heroes), потом общие имена из settings.json.
+     */
     private void animateAs(Combatant c, Ref<EntityStore> ref, String kind) {
         Settings.Animations an = plugin.settings().anim;
         if (!an.enabled || ref == null) return;
-        List<String> own = List.of();
-        try {
-            if (c.side == Side.ENEMY && c.templateId != null) own = plugin.data().enemy(c.templateId).anim(kind);
-            else if (an.heroes.containsKey(c.id)) own = an.heroes.get(c.id).getOrDefault(kind, List.of());
-        } catch (RuntimeException ignored) {
-            // неизвестный шаблон — только общие имена
-        }
-        List<String> common = switch (kind) {
+        String modelKind = kind.equals("skill") ? "attack" : kind;
+        List<String> own = ownAnims(c, kind);
+        if (own.isEmpty() && !modelKind.equals(kind)) own = ownAnims(c, modelKind);
+        List<String> weaponWords = switch (kind) {
+            case "attack" -> an.weaponAttack;
+            case "skill" -> an.weaponSkill;
+            case "cast" -> an.weaponCast;
+            case "parry" -> an.weaponParry;
+            default -> List.of();
+        };
+        List<String> weapon = ownAnims(c, "weapon");
+        boolean useWeapon = !weaponWords.isEmpty() && (!weapon.isEmpty()
+                || (own.isEmpty() && !kind.equals("cast") && WeaponAnims.holdsWeapon(store, ref)));
+        if (useWeapon && WeaponAnims.play(store, ref, weapon, weaponWords)) return;
+        List<String> common = switch (modelKind) {
             case "attack" -> an.attack;
             case "cast" -> an.cast;
             case "hurt" -> an.hurt;
@@ -670,7 +699,61 @@ public final class BattleSession implements BattleListener {
             case "parry" -> an.parry;
             default -> List.of();
         };
-        Fx.animate(store, ref, own, common);
+        if (Fx.animate(store, ref, own, common)) return;
+        // У модели нет своих ударов (скелет, трорк) — пробуем оружие в руке.
+        if (!useWeapon && !weaponWords.isEmpty()) WeaponAnims.play(store, ref, weapon, weaponWords);
+    }
+
+    /** Свои имена анимаций бойца вида kind: enemies.json → anim, для героев settings.json → animations.heroes. */
+    private List<String> ownAnims(Combatant c, String kind) {
+        Settings.Animations an = plugin.settings().anim;
+        try {
+            if (c.side == Side.ENEMY && c.templateId != null) return plugin.data().enemy(c.templateId).anim(kind);
+            if (an.heroes.containsKey(c.id)) return an.heroes.get(c.id).getOrDefault(kind, List.of());
+        } catch (RuntimeException ignored) {
+            // неизвестный шаблон — только общие имена
+        }
+        return List.of();
+    }
+
+    // ---------- сбит с ног / повержен ----------
+
+    private static final String STUN = "stun";
+
+    /**
+     * Поверженный боец падает и лежит (поза в слоте Status держится, пока её не снимут): враг — пока не
+     * исчезнет, герой — до конца боя. fall — сначала проиграть падение (смерть от удара).
+     */
+    private void lieDown(Combatant c, Ref<EntityStore> ref, boolean fall) {
+        Settings.Animations an = plugin.settings().anim;
+        if (!an.enabled || ref == null) return;
+        downed.remove(c.id);
+        if (Fx.animateIn(store, ref, com.hypixel.hytale.protocol.AnimationSlot.Status, ownAnims(c, "death"), an.death) == null && fall) {
+            animateAs(c, ref, "hurt");
+        }
+    }
+
+    /** Оглушили ударом: падает и лежит, пока оглушение не пройдёт (тогда {@link #wake}). */
+    private void knockDown(Combatant c, Ref<EntityStore> ref) {
+        Settings.Animations an = plugin.settings().anim;
+        if (!an.enabled || ref == null || !downed.add(c.id)) return;
+        Fx.animate(store, ref, ownAnims(c, "knockdown"), an.knockdown);
+        pop(c, 0, "Сбит с ног!", STATUS);
+        later(550, () -> {
+            if (downed.contains(c.id) && c.isAlive()) {
+                Fx.animateIn(store, ref, com.hypixel.hytale.protocol.AnimationSlot.Status, ownAnims(c, "down"), an.down);
+            }
+        });
+    }
+
+    /** Встать после оглушения. */
+    private void wake(Combatant c) {
+        if (!downed.remove(c.id)) return;
+        Ref<EntityStore> ref = puppets.get(c.id);
+        if (ref == null) return;
+        Fx.stopAnimation(store, ref, com.hypixel.hytale.protocol.AnimationSlot.Status);
+        Fx.animate(store, ref, ownAnims(c, "wake"), plugin.settings().anim.wake);
+        pop(c, 0, "Встаёт", STATUS);
     }
 
     // ---------- уклонение и парирование ----------
@@ -706,10 +789,10 @@ public final class BattleSession implements BattleListener {
         if (!w.ability.magical() && actorRef != null && home != null && targetPos != null) {
             Vector3d aim = w.targets.size() > 1 ? center : targetPos;
             w.strikeAt = strikePoint(home, aim);
-            walk(actorRef, home, w.strikeAt, Fx.yawTowards(w.strikeAt, aim), 0);
-            long arrive = (long) an.stepCount * an.stepMs;
-            later(arrive, () -> animateAs(actor, actorRef, "attack"));
-            impactIn = arrive + 250;
+            long arrive = walk(actorRef, home, w.strikeAt, Fx.yawTowards(w.strikeAt, aim));
+            String kind = isBasicAttack(actor, w.ability) ? "attack" : "skill";
+            later(arrive, () -> animateAs(actor, actorRef, kind));
+            impactIn = arrive + 300;
         } else {
             animateAs(actor, actorRef, "cast");
             Fx.particleAt(ParticleCatalog.get("cast"), home, 1.0, playerEntity, store);
@@ -783,7 +866,8 @@ public final class BattleSession implements BattleListener {
             Ref<EntityStore> ref = puppets.get(enemy.id);
             Vector3d at = ref == null ? enemyHome : Fx.position(store, ref);
             Fx.particleAt(ParticleCatalog.get("physical"), at, 1.0, playerEntity, store);
-            animateAs(enemy, ref, c.killed() ? "death" : "hurt");
+            if (c.killed()) fallen(enemy, true);
+            else animateAs(enemy, ref, "hurt");
             if (!c.killed() && ref != null && by != null) {
                 // Отбросить от героя на полблока, дальше враг всё равно пойдёт домой.
                 double dx = at.x - by.x, dz = at.z - by.z, len = Math.max(0.01, Math.hypot(dx, dz));
@@ -801,23 +885,39 @@ public final class BattleSession implements BattleListener {
         }
     }
 
-    /** Перемещение маленькими шагами (телепортами) — выглядит как быстрый шаг, а не прыжок. */
-    private void walk(Ref<EntityStore> ref, Vector3d from, Vector3d to, float yaw, long startMs) {
-        if (ref == null || from == null || to == null) return;
+    /**
+     * Подойти из from в to бегом. NPC идут плавно (поза «бег», дошёл — «стоит»), игрок — мелкими телепортами.
+     * Возвращает, через сколько мс боец будет на месте.
+     */
+    private long walk(Ref<EntityStore> ref, Vector3d from, Vector3d to, float yaw) {
+        if (ref == null || from == null || to == null) return 0;
         Settings.Animations an = plugin.settings().anim;
-        int n = Math.max(1, an.stepCount);
+        double dist = Math.hypot(to.x - from.x, to.z - from.z);
+        long dur = Math.max(250, Math.min(1600, Math.round(dist / an.runSpeed * 1000)));
+        if (ref != playerEntity) {
+            plugin.mover().go(store, world, ref, from, to, dur, dist > 1.5, false, yaw);
+            return dur;
+        }
+        int n = (int) Math.max(an.stepCount, dur / Math.max(10, an.stepMs));
         for (int i = 1; i <= n; i++) {
             double t = i / (double) n;
             Vector3d p = new Vector3d(from.x + (to.x - from.x) * t, from.y + (to.y - from.y) * t, from.z + (to.z - from.z) * t);
-            if (startMs + (i - 1) * an.stepMs <= 0) Fx.teleport(store, ref, p, yaw);
-            else later(startMs + (i - 1) * an.stepMs, () -> Fx.teleport(store, ref, p, yaw));
+            later(Math.round(dur * (i - 1) / (double) n), () -> Fx.teleport(store, ref, p, yaw));
         }
+        return dur;
     }
 
-    /** Цель отлетает на полблока от удара и через мгновение возвращается. */
+    /** Цель отлетает на полблока от удара и через мгновение возвращается (NPC — плавно, игрок — телепортом). */
     private void knockback(Combatant target, Ref<EntityStore> ref, Vector3d pos, Vector3d from) {
         double dx = pos.x - from.x, dz = pos.z - from.z, len = Math.max(0.01, Math.hypot(dx, dz));
         Vector3d pushed = new Vector3d(pos.x + dx / len * 0.5, pos.y, pos.z + dz / len * 0.5);
+        if (ref != playerEntity) {
+            plugin.mover().slide(store, world, ref, pos, pushed, 120, yawOf(target));
+            later(320, () -> {
+                if (target.isAlive() && !downed.contains(target.id)) plugin.mover().slide(store, world, ref, pushed, pos, 260, yawOf(target));
+            });
+            return;
+        }
         Fx.teleport(store, ref, pushed, yawOf(target));
         later(220, () -> {
             if (target.isAlive()) Fx.teleport(store, ref, pos, yawOf(target));
@@ -827,7 +927,23 @@ public final class BattleSession implements BattleListener {
     @Override
     public void onCombatantDown(Combatant c) {
         addLog(c.name + " повержен!");
-        Map<String, Integer> got = c.side == Side.ENEMY ? rollDrops(c) : Map.of();
+        if (c.side == Side.ENEMY) dropsOf.put(c.id, rollDrops(c));
+        downed.remove(c.id);
+        ActionResult r = current;
+        boolean shownByHit = r != null && (r.hits().stream().anyMatch(h -> h.killed() && h.target() == c)
+                || (r.counter() != null && r.counter().killed() && r.counter().target() == c));
+        // Убит ударом — упадёт в момент удара (present/counterAttack); иначе (яд, горение) — сейчас.
+        if (!shownByHit) fallen(c, true);
+    }
+
+    /**
+     * Боец повержен на глазах: падает и лежит. Враг лежит lieMs, над ним всплывает добыча, потом он
+     * исчезает; павший герой лежит до конца боя.
+     */
+    private void fallen(Combatant c, boolean fall) {
+        lieDown(c, puppets.get(c.id), fall);
+        if (c.side != Side.ENEMY) return;
+        Map<String, Integer> got = dropsOf.getOrDefault(c.id, Map.of());
         Vector3d pos = homes.get(c.id);
         long popsFrom = 600;
         if (!got.isEmpty()) {
@@ -838,10 +954,9 @@ public final class BattleSession implements BattleListener {
                 at += POP_STEP_MS;
             }
         }
-        // Анимация смерти уже проиграна в момент удара — убираем куклу чуть позже (после надписей добычи).
-        long gone = Math.max(900, popsFrom + got.size() * POP_STEP_MS + 250);
+        long gone = Math.max(plugin.settings().anim.lieMs, popsFrom + got.size() * POP_STEP_MS + 400);
         later(gone, () -> {
-            if (c.side == Side.ENEMY) Fx.particleAt(ParticleCatalog.get("death"), pos, 0.5, playerEntity, store);
+            Fx.particleAt(ParticleCatalog.get("death"), pos, 0.5, playerEntity, store);
             despawn(c.id);
             refresh();
         });
@@ -1006,6 +1121,8 @@ public final class BattleSession implements BattleListener {
         closed = true;
         plugin.sessions().remove(player.getUuid(), this);
         plugin.markBattleEnded(player.getUuid());
+        // Игрок мог «лежать» (повержен или оглушён) — вернуть обычную позу.
+        Fx.stopAnimation(store, playerEntity, com.hypixel.hytale.protocol.AnimationSlot.Status);
         despawnPuppets();
         plugin.followers().resume(player.getUuid());
         if (camera != null) camera.reset();
@@ -1019,6 +1136,13 @@ public final class BattleSession implements BattleListener {
     }
 
     boolean isClosed() { return closed; }
+
+    /** Это кукла (или игрок) этого боя. */
+    boolean owns(Ref<EntityStore> ref) {
+        if (ref == null) return false;
+        for (Ref<EntityStore> r : puppets.values()) if (r == ref || (r.isValid() && ref.isValid() && r.getIndex() == ref.getIndex())) return true;
+        return false;
+    }
     PlayerRef player() { return player; }
 
     // ---------- утилиты ----------

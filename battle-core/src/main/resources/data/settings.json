@@ -30,8 +30,9 @@
 
   // Частицы: кольцо под тем, чей ход / под целью, и эффект удара. Имена — id ассетов ParticleSystem
   // из Assets.zip игры (пустая строка — выключено). Проверить имя в игре: /jrpg particle <имя>.
-  // Эффекты ударов и магии (physical, fire, ice, thunder, water, earth, poison, heal, cast, buff, loot,
-  // dodge, parry, death) мод подбирает сам по именам частиц игры и пишет выбор в лог («Частицы боя»).
+  // Эффекты магии и стихий (fire, ice, thunder, water, earth, poison, heal, cast, buff, loot, dodge,
+  // parry, death) мод подбирает сам по именам частиц игры и пишет выбор в лог («Частицы боя»).
+  // Обычные удары оружием частиц не дают (physical — только если задать вручную).
   // Чтобы заменить — добавь ключ сюда, например "fire": "Explosion_Small"; "" — выключить.
   // Найти имена: /jrpg particles <слово>.
   "particles": { "turnRing": "", "targetRing": "", "hit": "" },
@@ -52,27 +53,45 @@
   // Всплывающие цифры урона, лечения и названия эффектов над бойцами.
   "combatText": true,
 
-  // Анимации атак: берётся первое имя из списка, которое есть у модели NPC (настоящие имена мод пишет
-  // в лог сервера строкой «Анимации модели ...»). stepCount/stepMs — плавность подхода к цели.
+  // Анимации. Удары, приёмы и блок сначала берутся у оружия, как в обычном бою Hytale: набор анимаций
+  // предмета в руке (меч игрока, дубина трорка) или первый существующий из "weapon" (наборы в логе:
+  // «Наборы анимаций оружия», их анимации — «Анимации оружия <набор>»). weaponAttack — слова для обычной
+  // «Атаки», weaponSkill — для физических приёмов, weaponCast — магия, weaponParry — блок.
+  // Остальное — анимации модели: берётся первое имя из списка, которое есть у модели (имена в логе:
+  // «Анимации модели ...»). death — поза «повержен» (держится, пока боец лежит), knockdown/down/wake —
+  // сбит с ног оглушением: падает, лежит, пока оглушён, встаёт. lieMs — сколько лежит поверженный враг.
+  // runSpeed — скорость подхода к цели на арене (блоков в секунду); stepCount/stepMs — шаги самого игрока.
   "animations": {
     "enabled": true,
+    "weaponAttack": ["SwingLeft", "SwingRight", "SwingDown", "Swing", "Slash", "Attack", "Stab", "Thrust", "Strike", "Punch", "Bash"],
+    "weaponSkill": ["Charged", "Heavy", "Smash", "Slam", "Overhead", "Spin", "Lunge", "Combo", "SwingDown", "Swing", "Slash", "Attack", "Stab"],
+    "weaponCast": ["Cast", "Spell", "Shoot", "Throw"],
+    "weaponParry": ["Block", "Guard", "Parry"],
     "attack": ["Attack", "Swing", "Slash", "Strike", "Punch", "Bite", "Melee", "Hit"],
     "cast": ["Cast", "Spell", "Magic", "Shoot", "Throw", "Roar", "Attack"],
     "hurt": ["Hurt", "Damage", "Flinch"],
-    "death": ["Death", "Die"],
+    "death": ["Death", "Die", "Knockedout", "KnockedoutLaydown", "Laydown", "Sleep"],
+    "knockdown": ["HurtFall", "Knockedout", "Hurt"],
+    "down": ["KnockedoutLaydown", "Laydown", "Sleep"],
+    "wake": ["KnockedoutWake", "Wake", "GetUp", "Getup"],
     "victory": ["Cheer", "Celebrate", "Victory", "Wave", "Emote", "Roar"],
     "dodge": ["RollBackward", "DashBackward", "Roll", "Dodge"],
     "parry": ["Block", "Parry", "Guard", "SwingWeaponAir", "Attack"],
-    // Свои анимации героев (герой — модель игрока, Лира — Kweebec_Seedling, Брам — Trork_Warrior).
-    // У врагов свои списки — в enemies.json, поле "anim".
+    // Герой — сам игрок (оружие — что в руке, иначе "weapon"), Лира — Kweebec_Seedling, Брам — Trork_Warrior.
+    // У врагов свои списки — в enemies.json, поле "anim" (там же "weapon").
     "heroes": {
-      "hero": { "attack": ["SwingWeaponAir", "DashForward"], "dodge": ["RollBackward", "Roll"] },
-      "lyra": { "attack": ["TauntSpear", "DashForward"], "cast": ["Cheer", "Celebrate", "Happy"], "dodge": ["Roll"] },
-      "bram": { "attack": ["DashForward", "BrawlTaunt"], "cast": ["Roar", "BrawlCheer"] }
+      "hero": { "weapon": ["Sword", "Longsword", "Shortsword", "Default"], "dodge": ["RollBackward", "Roll"] },
+      "lyra": { "weapon": ["Spear", "Staff", "Default"], "cast": ["Cheer", "Celebrate", "Happy"], "dodge": ["Roll"] },
+      "bram": { "weapon": ["Battleaxe", "Axe", "Mace", "Club", "Hammer", "Default"], "cast": ["Roar", "BrawlCheer"] }
     },
-    "stepCount": 5,
-    "stepMs": 70
+    "lieMs": 2600,
+    "runSpeed": 6.5,
+    "stepCount": 7,
+    "stepMs": 50
   },
+
+  // NPC случайных отрядов бродят шагом у своего места (false — стоят на месте).
+  "squadWander": true,
 
   // Автостарт боя, когда игрок подходит к встрече из encounters.json или к отряду из squads.json.
   "proximityTrigger": true,
