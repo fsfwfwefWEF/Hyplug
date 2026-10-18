@@ -1,3 +1,4 @@
 build/
 .gradle/
 hytale-plugin/libs/*.jar
+__pycache__/
