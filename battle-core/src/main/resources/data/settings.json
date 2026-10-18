@@ -31,9 +31,9 @@
   // Интерфейс: icons — картинки иконок, bars — полоски HP/MP. Если меню не открывается
   // или вместо картинок ошибки — поставь false и сделай /jrpg reload.
   // hud — баннер хода, очередь и книга журнала поверх экрана с анимациями (false — всё в окне боя);
-  // animations — сдвиг очереди, выезд баннера, перелистывание книги; titleFont — шрифт заголовков
+  // animations — сдвиг очереди, выезд баннера, перелистывание книги; titleFont — не используется (клиент запрещает менять шрифт с сервера); skinButtons — кнопки на своих текстурах, выключено до проверки в игре
   // ("Secondary" или "Default"); skinButtons — кнопки меню на своих текстурах (false — кнопки игры).
-  "ui": { "icons": true, "bars": true, "hud": true, "animations": true, "titleFont": "Secondary", "skinButtons": true },
+  "ui": { "icons": true, "bars": true, "hud": true, "animations": true, "titleFont": "", "skinButtons": false },
 
   // Частицы: кольцо под тем, чей ход / под целью, и эффект удара. Имена — id ассетов ParticleSystem
   // из Assets.zip игры (пустая строка — выключено). Проверить имя в игре: /jrpg particle <имя>.

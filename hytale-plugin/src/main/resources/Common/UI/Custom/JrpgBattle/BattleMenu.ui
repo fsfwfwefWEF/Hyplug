@@ -1123,12 +1123,12 @@ Group {
     Anchor: (Full: 0);
     LayoutMode: Top;
 
-    Group #Sp0Top { FlexWeight: 500; }
+    Group #Sp0Top { Anchor: (Height: 500); }
     Group {
       Anchor: (Height: 80);
       LayoutMode: Left;
 
-      Group #Sp0Left { FlexWeight: 500; }
+      Group #Sp0Left { Anchor: (Width: 800); }
       Group #Sp0 {
         Anchor: (Width: 300, Height: 80);
         LayoutMode: Top;
@@ -1163,20 +1163,20 @@ Group {
           Group { FlexWeight: 1; }
         }
       }
-      Group #Sp0Right { FlexWeight: 500; }
+      Group #Sp0Right { FlexWeight: 1; }
     }
-    Group #Sp0Bottom { FlexWeight: 500; }
+    Group #Sp0Bottom { FlexWeight: 1; }
   }
   Group #SpLayer1 {
     Anchor: (Full: 0);
     LayoutMode: Top;
 
-    Group #Sp1Top { FlexWeight: 500; }
+    Group #Sp1Top { Anchor: (Height: 500); }
     Group {
       Anchor: (Height: 80);
       LayoutMode: Left;
 
-      Group #Sp1Left { FlexWeight: 500; }
+      Group #Sp1Left { Anchor: (Width: 800); }
       Group #Sp1 {
         Anchor: (Width: 300, Height: 80);
         LayoutMode: Top;
@@ -1211,20 +1211,20 @@ Group {
           Group { FlexWeight: 1; }
         }
       }
-      Group #Sp1Right { FlexWeight: 500; }
+      Group #Sp1Right { FlexWeight: 1; }
     }
-    Group #Sp1Bottom { FlexWeight: 500; }
+    Group #Sp1Bottom { FlexWeight: 1; }
   }
   Group #SpLayer2 {
     Anchor: (Full: 0);
     LayoutMode: Top;
 
-    Group #Sp2Top { FlexWeight: 500; }
+    Group #Sp2Top { Anchor: (Height: 500); }
     Group {
       Anchor: (Height: 80);
       LayoutMode: Left;
 
-      Group #Sp2Left { FlexWeight: 500; }
+      Group #Sp2Left { Anchor: (Width: 800); }
       Group #Sp2 {
         Anchor: (Width: 300, Height: 80);
         LayoutMode: Top;
@@ -1259,8 +1259,8 @@ Group {
           Group { FlexWeight: 1; }
         }
       }
-      Group #Sp2Right { FlexWeight: 500; }
+      Group #Sp2Right { FlexWeight: 1; }
     }
-    Group #Sp2Bottom { FlexWeight: 500; }
+    Group #Sp2Bottom { FlexWeight: 1; }
   }
 }

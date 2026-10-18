@@ -428,3 +428,11 @@ jrpg-mod/
 - Парирование/уклонение выключены: `BattleSession` всегда `battle.setReactions(false)` (код реакций в battle-core остался, но не используется).
 - Влит редизайн интерфейса из треда «Новый стиль интерфейса» (сессия 17, папка jrpg-mod-ui): BattleHud, RichText, рамки jr_*.png, новые иконки, книга журнала. Их копия уже содержала выключенные реакции, конфликтов не было; gen_battle_ui.py воспроизводит BattleMenu.ui один в один.
 - tools/__pycache__ исключён из репозитория.
+
+## Сессия 19 (2026-10-18): 0.9.1 — краш клиента при открытии боя
+
+- Лог клиента: `Disconnecting with error during stage InGame: CustomUI is not allowed to change this property. Selector: #Banner.Style.FontName`. Клиент отключает игрока (left with reason: Crash), если плагин через `cmd.set` меняет запрещённое свойство.
+- Запрещено точно: `Style.FontName`. Разрешено (проверено в игре): `.Text`, `.Visible`, `.TextSpans`, `.Style.TextColor`, `setObject(".Anchor", Anchor)`. Ванильные страницы ещё меняют `.Style` целиком на `Value.ref("файл.ui", "ИмяСтиля")` и `.Style.Default.LabelStyle.TextColor`.
+- Не проверено и потому убрано или выключено: `FlexWeight` (окна реплик теперь ставятся через Anchor распорок #Sp<i>Top/#Sp<i>Left в пикселях 1920×1080), `Style.*.Background` у кнопок (`ui.skinButtons` по умолчанию false).
+- Правило: новые свойства из плагина менять только после проверки в игре; стиль лучше задавать в разметке .ui.
+- DATA_VERSION 11 (обновляет settings.json у игрока).

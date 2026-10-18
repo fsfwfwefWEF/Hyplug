@@ -28,7 +28,7 @@ public final class Settings {
     /** Шрифт заголовков: "Secondary" (второй шрифт игры), "Default" или пусто — как в разметке. */
     public String uiTitleFont = "Secondary";
     /** Кнопки меню на своих текстурах (jr_btn*.png); false — стандартные кнопки игры. */
-    public boolean uiSkinButtons = true;
+    public boolean uiSkinButtons = false;
     public String turnRing = "", targetRing = "", hitFx = "";
     /** Частицы эффектов боя по ключам {@link ParticleCatalog#KEYWORDS}; чего нет — подбирается само. */
     public final Map<String, String> fx = new HashMap<>();

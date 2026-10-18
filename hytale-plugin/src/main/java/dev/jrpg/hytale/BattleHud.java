@@ -73,12 +73,8 @@ final class BattleHud extends CustomUIHud {
         fillBook(cmd);
     }
 
+    /** Шрифт с сервера менять нельзя: клиент отключает игрока («CustomUI is not allowed to change this property»). */
     private void fonts(UICommandBuilder cmd) {
-        String f = session.settings().uiTitleFont;
-        if (f == null || f.isEmpty()) return;
-        for (String id : new String[]{"#HBanner", "#HQueueTitle", "#HBookLHead", "#HBookRHead"}) {
-            cmd.set(id + ".Style.FontName", f);
-        }
     }
 
     /** Обычное обновление (после любого события боя): тексты, книга; очередь — если не идёт анимация. */

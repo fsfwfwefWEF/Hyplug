@@ -225,8 +225,8 @@ SP_W, SP_H = 300, 80
 
 
 def speech_layer(i):
-    """Окно реплики над головой (как в FF): слой на весь экран, положение задают FlexWeight распорок
-    #Sp<i>Top/#Sp<i>Bottom и #Sp<i>Left/#Sp<i>Right (доли экрана), так что размер экрана знать не нужно."""
+    """Окно реплики над головой (как в FF): слой на весь экран, положение задаёт Anchor распорок
+    #Sp<i>Top (высота) и #Sp<i>Left (ширина) в пикселях экрана 1920×1080, #Sp<i>Bottom/#Sp<i>Right тянутся."""
     box = group(f"Sp{i}", [f"Anchor: (Width: {SP_W}, Height: {SP_H});", "LayoutMode: Top;"], [
         group("", [f"Anchor: (Height: {SP_H - 14});", "LayoutMode: Top;", skin("jr_bubble", 16),
                    "Padding: (Left: 12, Right: 10, Top: 7, Bottom: 6);"], [
@@ -240,13 +240,13 @@ def speech_layer(i):
         ]),
     ])
     return group(f"SpLayer{i}", ["Anchor: (Full: 0);", "LayoutMode: Top;"], [
-        f"Group #Sp{i}Top {{ FlexWeight: 500; }}",
+        f"Group #Sp{i}Top {{ Anchor: (Height: 500); }}",
         group("", [f"Anchor: (Height: {SP_H});", "LayoutMode: Left;"], [
-            f"Group #Sp{i}Left {{ FlexWeight: 500; }}",
+            f"Group #Sp{i}Left {{ Anchor: (Width: 800); }}",
             box,
-            f"Group #Sp{i}Right {{ FlexWeight: 500; }}",
+            f"Group #Sp{i}Right {{ FlexWeight: 1; }}",
         ]),
-        f"Group #Sp{i}Bottom {{ FlexWeight: 500; }}",
+        f"Group #Sp{i}Bottom {{ FlexWeight: 1; }}",
     ])
 
 

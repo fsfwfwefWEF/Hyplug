@@ -87,13 +87,7 @@ public final class BattleMenuPage extends InteractiveCustomUIPage<BattleMenuPage
     /** Шрифт заголовков и кнопки на своих текстурах (settings.json → ui.titleFont, ui.skinButtons). */
     private void style(UICommandBuilder cmd) {
         Settings s = session.settings();
-        if (s.uiTitleFont != null && !s.uiTitleFont.isEmpty()) {
-            List<String> titles = new ArrayList<>(List.of("#Banner", "#MenuTitle", "#InfoTitle", "#InsTitle", "#InsHeader",
-                    "#QueueTitle", "#LogTitle"));
-            for (int i = 0; i < ENEMIES; i++) titles.add("#E" + i + "Name");
-            for (int i = 0; i < PARTY; i++) titles.add("#P" + i + "Name");
-            for (String id : titles) cmd.set(id + ".Style.FontName", s.uiTitleFont);
-        }
+        // Style.FontName из плагина клиент запрещает и рвёт соединение (краш 0.9.0), шрифт только в разметке .ui.
         if (s.uiSkinButtons) {
             List<String> buttons = new ArrayList<>();
             for (int i = 0; i < BUTTONS; i++) buttons.add("#Opt" + i);
@@ -156,7 +150,7 @@ public final class BattleMenuPage extends InteractiveCustomUIPage<BattleMenuPage
     }
 
     /**
-     * Окна реплик над головами: слой на весь экран, окно ставят доли распорок (FlexWeight) по тому, где голова
+     * Окна реплик над головами: слой на весь экран, окно ставят размеры распорок (Anchor) по тому, где голова
      * на экране (BattleCamera.project). Поправка на размер окна посчитана для экрана 1920×1080.
      */
     private void fillSpeech(UICommandBuilder cmd) {
@@ -169,11 +163,13 @@ public final class BattleMenuPage extends InteractiveCustomUIPage<BattleMenuPage
             cmd.set(sp + "Name.Style.TextColor", b.party() ? "#e8c46a" : "#ff9c8a");
             cmd.set(sp + "Text.Text", b.text());
             double fx = clamp((b.x() * 1920 - 150) / 1620.0), fy = clamp((b.y() * 1080 - 76) / 1004.0);
-            int left = (int) Math.round(fx * 1000), top = (int) Math.round(fy * 1000);
-            cmd.set(sp + "Left.FlexWeight", left);
-            cmd.set(sp + "Right.FlexWeight", 1000 - left);
-            cmd.set(sp + "Top.FlexWeight", top);
-            cmd.set(sp + "Bottom.FlexWeight", 1000 - top);
+            // Распорки слева и сверху получают размер через Anchor (проверенный способ), правая и нижняя тянутся.
+            Anchor w = new Anchor();
+            w.setWidth(Value.of((int) Math.round(fx * 1620)));
+            cmd.setObject(sp + "Left.Anchor", w);
+            Anchor h = new Anchor();
+            h.setHeight(Value.of((int) Math.round(fy * 1004)));
+            cmd.setObject(sp + "Top.Anchor", h);
         }
     }
 
