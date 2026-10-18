@@ -1,0 +1,4 @@
+Group {
+  Anchor: (Width: 30, Height: 30);
+  Background: (TexturePath: "pt_wolf.png");
+}

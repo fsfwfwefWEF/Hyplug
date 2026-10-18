@@ -9,31 +9,39 @@ Group {
 
   Group { FlexWeight: 1; }
   Group {
-    Anchor: (Height: 514);
+    Anchor: (Height: 544);
     LayoutMode: Left;
 
     Group { FlexWeight: 1; }
     Group #Window {
       Anchor: (Width: 1000);
       LayoutMode: Top;
-      Background: #070b12(0.95);
-      Padding: (Full: 12);
+      Background: (TexturePath: "jr_panel_gold.png", Border: 22);
+      Padding: (Left: 16, Right: 16, Top: 10, Bottom: 16);
 
       Group {
-        Anchor: (Height: 32);
+        Anchor: (Height: 52);
         LayoutMode: Left;
 
-        Label {
-          Text: "РЮКЗАК";
-          Anchor: (Height: 30);
-          FlexWeight: 1;
-          Style: (FontSize: 22, TextColor: #e8c46a, RenderBold: true);
+        Group { FlexWeight: 1; }
+        Group {
+          Anchor: (Width: 560, Height: 52);
+          LayoutMode: Top;
+          Background: (TexturePath: "jr_banner.png");
+          Padding: (Top: 6);
+
+          Label {
+            Text: "РЮКЗАК";
+            Anchor: (Height: 26);
+            Style: (FontSize: 21, TextColor: #e8c46a, RenderBold: true, HorizontalAlignment: Center);
+          }
+          Label #Total {
+            Text: "";
+            Anchor: (Height: 16);
+            Style: (FontSize: 12, TextColor: #b4c2d6, HorizontalAlignment: Center);
+          }
         }
-        Label #Total {
-          Text: "";
-          Anchor: (Width: 360, Height: 30);
-          Style: (FontSize: 13, TextColor: #9fb0c6);
-        }
+        Group { FlexWeight: 1; }
       }
       Group #Tabs {
         Anchor: (Height: 34);
@@ -53,7 +61,7 @@ Group {
         Label {
           Text: "Сортировка:";
           Anchor: (Width: 100, Height: 32);
-          Style: (FontSize: 13, TextColor: #9fb0c6);
+          Style: (FontSize: 13, TextColor: #b4c2d6);
         }
         $C.@SecondaryTextButton #SortKind { @Text = "Тип"; Anchor: (Width: 96, Height: 32); }
         Group { Anchor: (Width: 4); }
@@ -70,7 +78,7 @@ Group {
         Group #GridCol {
           Anchor: (Width: 536);
           LayoutMode: Top;
-          Background: #0b111c(0.82);
+          Background: (TexturePath: "jr_panel.png", Border: 22);
           Padding: (Full: 10);
 
           Group #Grid {
@@ -79,10 +87,8 @@ Group {
             Group #S0 {
               Anchor: (Left: 0, Top: 0, Width: 80, Height: 80);
 
-              Group #S0Sel { Anchor: (Left: 0, Top: 0, Width: 80, Height: 80); Background: #e8c46a(0.35);
-                Group { Anchor: (Left: 2, Top: 2, Width: 76, Height: 76); Background: #fff0b0(0.45); }
-              }
-              Group #S0Back { Anchor: (Left: 4, Top: 4, Width: 72, Height: 72); Background: #1a2438; }
+              Group #S0Back { Anchor: (Left: 2, Top: 2, Width: 76, Height: 76); Background: (TexturePath: "jr_slot.png", Border: 8); }
+              Group #S0Sel { Anchor: (Left: 0, Top: 0, Width: 80, Height: 80); Background: (TexturePath: "jr_panel_gold.png", Border: 16); }
               $C.@SecondaryTextButton #S0Btn { @Text = ""; Anchor: (Left: 8, Top: 8, Width: 64, Height: 64); }
               Group #S0Icon { Anchor: (Left: 16, Top: 14, Width: 48, Height: 48); }
               Label #S0Count { Text: ""; Anchor: (Left: 44, Top: 58, Width: 34, Height: 18); Style: (FontSize: 13, TextColor: #ffffff, RenderBold: true); }
@@ -90,10 +96,8 @@ Group {
             Group #S1 {
               Anchor: (Left: 86, Top: 0, Width: 80, Height: 80);
 
-              Group #S1Sel { Anchor: (Left: 0, Top: 0, Width: 80, Height: 80); Background: #e8c46a(0.35);
-                Group { Anchor: (Left: 2, Top: 2, Width: 76, Height: 76); Background: #fff0b0(0.45); }
-              }
-              Group #S1Back { Anchor: (Left: 4, Top: 4, Width: 72, Height: 72); Background: #1a2438; }
+              Group #S1Back { Anchor: (Left: 2, Top: 2, Width: 76, Height: 76); Background: (TexturePath: "jr_slot.png", Border: 8); }
+              Group #S1Sel { Anchor: (Left: 0, Top: 0, Width: 80, Height: 80); Background: (TexturePath: "jr_panel_gold.png", Border: 16); }
               $C.@SecondaryTextButton #S1Btn { @Text = ""; Anchor: (Left: 8, Top: 8, Width: 64, Height: 64); }
               Group #S1Icon { Anchor: (Left: 16, Top: 14, Width: 48, Height: 48); }
               Label #S1Count { Text: ""; Anchor: (Left: 44, Top: 58, Width: 34, Height: 18); Style: (FontSize: 13, TextColor: #ffffff, RenderBold: true); }
@@ -101,10 +105,8 @@ Group {
             Group #S2 {
               Anchor: (Left: 172, Top: 0, Width: 80, Height: 80);
 
-              Group #S2Sel { Anchor: (Left: 0, Top: 0, Width: 80, Height: 80); Background: #e8c46a(0.35);
-                Group { Anchor: (Left: 2, Top: 2, Width: 76, Height: 76); Background: #fff0b0(0.45); }
-              }
-              Group #S2Back { Anchor: (Left: 4, Top: 4, Width: 72, Height: 72); Background: #1a2438; }
+              Group #S2Back { Anchor: (Left: 2, Top: 2, Width: 76, Height: 76); Background: (TexturePath: "jr_slot.png", Border: 8); }
+              Group #S2Sel { Anchor: (Left: 0, Top: 0, Width: 80, Height: 80); Background: (TexturePath: "jr_panel_gold.png", Border: 16); }
               $C.@SecondaryTextButton #S2Btn { @Text = ""; Anchor: (Left: 8, Top: 8, Width: 64, Height: 64); }
               Group #S2Icon { Anchor: (Left: 16, Top: 14, Width: 48, Height: 48); }
               Label #S2Count { Text: ""; Anchor: (Left: 44, Top: 58, Width: 34, Height: 18); Style: (FontSize: 13, TextColor: #ffffff, RenderBold: true); }
@@ -112,10 +114,8 @@ Group {
             Group #S3 {
               Anchor: (Left: 258, Top: 0, Width: 80, Height: 80);
 
-              Group #S3Sel { Anchor: (Left: 0, Top: 0, Width: 80, Height: 80); Background: #e8c46a(0.35);
-                Group { Anchor: (Left: 2, Top: 2, Width: 76, Height: 76); Background: #fff0b0(0.45); }
-              }
-              Group #S3Back { Anchor: (Left: 4, Top: 4, Width: 72, Height: 72); Background: #1a2438; }
+              Group #S3Back { Anchor: (Left: 2, Top: 2, Width: 76, Height: 76); Background: (TexturePath: "jr_slot.png", Border: 8); }
+              Group #S3Sel { Anchor: (Left: 0, Top: 0, Width: 80, Height: 80); Background: (TexturePath: "jr_panel_gold.png", Border: 16); }
               $C.@SecondaryTextButton #S3Btn { @Text = ""; Anchor: (Left: 8, Top: 8, Width: 64, Height: 64); }
               Group #S3Icon { Anchor: (Left: 16, Top: 14, Width: 48, Height: 48); }
               Label #S3Count { Text: ""; Anchor: (Left: 44, Top: 58, Width: 34, Height: 18); Style: (FontSize: 13, TextColor: #ffffff, RenderBold: true); }
@@ -123,10 +123,8 @@ Group {
             Group #S4 {
               Anchor: (Left: 344, Top: 0, Width: 80, Height: 80);
 
-              Group #S4Sel { Anchor: (Left: 0, Top: 0, Width: 80, Height: 80); Background: #e8c46a(0.35);
-                Group { Anchor: (Left: 2, Top: 2, Width: 76, Height: 76); Background: #fff0b0(0.45); }
-              }
-              Group #S4Back { Anchor: (Left: 4, Top: 4, Width: 72, Height: 72); Background: #1a2438; }
+              Group #S4Back { Anchor: (Left: 2, Top: 2, Width: 76, Height: 76); Background: (TexturePath: "jr_slot.png", Border: 8); }
+              Group #S4Sel { Anchor: (Left: 0, Top: 0, Width: 80, Height: 80); Background: (TexturePath: "jr_panel_gold.png", Border: 16); }
               $C.@SecondaryTextButton #S4Btn { @Text = ""; Anchor: (Left: 8, Top: 8, Width: 64, Height: 64); }
               Group #S4Icon { Anchor: (Left: 16, Top: 14, Width: 48, Height: 48); }
               Label #S4Count { Text: ""; Anchor: (Left: 44, Top: 58, Width: 34, Height: 18); Style: (FontSize: 13, TextColor: #ffffff, RenderBold: true); }
@@ -134,10 +132,8 @@ Group {
             Group #S5 {
               Anchor: (Left: 430, Top: 0, Width: 80, Height: 80);
 
-              Group #S5Sel { Anchor: (Left: 0, Top: 0, Width: 80, Height: 80); Background: #e8c46a(0.35);
-                Group { Anchor: (Left: 2, Top: 2, Width: 76, Height: 76); Background: #fff0b0(0.45); }
-              }
-              Group #S5Back { Anchor: (Left: 4, Top: 4, Width: 72, Height: 72); Background: #1a2438; }
+              Group #S5Back { Anchor: (Left: 2, Top: 2, Width: 76, Height: 76); Background: (TexturePath: "jr_slot.png", Border: 8); }
+              Group #S5Sel { Anchor: (Left: 0, Top: 0, Width: 80, Height: 80); Background: (TexturePath: "jr_panel_gold.png", Border: 16); }
               $C.@SecondaryTextButton #S5Btn { @Text = ""; Anchor: (Left: 8, Top: 8, Width: 64, Height: 64); }
               Group #S5Icon { Anchor: (Left: 16, Top: 14, Width: 48, Height: 48); }
               Label #S5Count { Text: ""; Anchor: (Left: 44, Top: 58, Width: 34, Height: 18); Style: (FontSize: 13, TextColor: #ffffff, RenderBold: true); }
@@ -145,10 +141,8 @@ Group {
             Group #S6 {
               Anchor: (Left: 0, Top: 86, Width: 80, Height: 80);
 
-              Group #S6Sel { Anchor: (Left: 0, Top: 0, Width: 80, Height: 80); Background: #e8c46a(0.35);
-                Group { Anchor: (Left: 2, Top: 2, Width: 76, Height: 76); Background: #fff0b0(0.45); }
-              }
-              Group #S6Back { Anchor: (Left: 4, Top: 4, Width: 72, Height: 72); Background: #1a2438; }
+              Group #S6Back { Anchor: (Left: 2, Top: 2, Width: 76, Height: 76); Background: (TexturePath: "jr_slot.png", Border: 8); }
+              Group #S6Sel { Anchor: (Left: 0, Top: 0, Width: 80, Height: 80); Background: (TexturePath: "jr_panel_gold.png", Border: 16); }
               $C.@SecondaryTextButton #S6Btn { @Text = ""; Anchor: (Left: 8, Top: 8, Width: 64, Height: 64); }
               Group #S6Icon { Anchor: (Left: 16, Top: 14, Width: 48, Height: 48); }
               Label #S6Count { Text: ""; Anchor: (Left: 44, Top: 58, Width: 34, Height: 18); Style: (FontSize: 13, TextColor: #ffffff, RenderBold: true); }
@@ -156,10 +150,8 @@ Group {
             Group #S7 {
               Anchor: (Left: 86, Top: 86, Width: 80, Height: 80);
 
-              Group #S7Sel { Anchor: (Left: 0, Top: 0, Width: 80, Height: 80); Background: #e8c46a(0.35);
-                Group { Anchor: (Left: 2, Top: 2, Width: 76, Height: 76); Background: #fff0b0(0.45); }
-              }
-              Group #S7Back { Anchor: (Left: 4, Top: 4, Width: 72, Height: 72); Background: #1a2438; }
+              Group #S7Back { Anchor: (Left: 2, Top: 2, Width: 76, Height: 76); Background: (TexturePath: "jr_slot.png", Border: 8); }
+              Group #S7Sel { Anchor: (Left: 0, Top: 0, Width: 80, Height: 80); Background: (TexturePath: "jr_panel_gold.png", Border: 16); }
               $C.@SecondaryTextButton #S7Btn { @Text = ""; Anchor: (Left: 8, Top: 8, Width: 64, Height: 64); }
               Group #S7Icon { Anchor: (Left: 16, Top: 14, Width: 48, Height: 48); }
               Label #S7Count { Text: ""; Anchor: (Left: 44, Top: 58, Width: 34, Height: 18); Style: (FontSize: 13, TextColor: #ffffff, RenderBold: true); }
@@ -167,10 +159,8 @@ Group {
             Group #S8 {
               Anchor: (Left: 172, Top: 86, Width: 80, Height: 80);
 
-              Group #S8Sel { Anchor: (Left: 0, Top: 0, Width: 80, Height: 80); Background: #e8c46a(0.35);
-                Group { Anchor: (Left: 2, Top: 2, Width: 76, Height: 76); Background: #fff0b0(0.45); }
-              }
-              Group #S8Back { Anchor: (Left: 4, Top: 4, Width: 72, Height: 72); Background: #1a2438; }
+              Group #S8Back { Anchor: (Left: 2, Top: 2, Width: 76, Height: 76); Background: (TexturePath: "jr_slot.png", Border: 8); }
+              Group #S8Sel { Anchor: (Left: 0, Top: 0, Width: 80, Height: 80); Background: (TexturePath: "jr_panel_gold.png", Border: 16); }
               $C.@SecondaryTextButton #S8Btn { @Text = ""; Anchor: (Left: 8, Top: 8, Width: 64, Height: 64); }
               Group #S8Icon { Anchor: (Left: 16, Top: 14, Width: 48, Height: 48); }
               Label #S8Count { Text: ""; Anchor: (Left: 44, Top: 58, Width: 34, Height: 18); Style: (FontSize: 13, TextColor: #ffffff, RenderBold: true); }
@@ -178,10 +168,8 @@ Group {
             Group #S9 {
               Anchor: (Left: 258, Top: 86, Width: 80, Height: 80);
 
-              Group #S9Sel { Anchor: (Left: 0, Top: 0, Width: 80, Height: 80); Background: #e8c46a(0.35);
-                Group { Anchor: (Left: 2, Top: 2, Width: 76, Height: 76); Background: #fff0b0(0.45); }
-              }
-              Group #S9Back { Anchor: (Left: 4, Top: 4, Width: 72, Height: 72); Background: #1a2438; }
+              Group #S9Back { Anchor: (Left: 2, Top: 2, Width: 76, Height: 76); Background: (TexturePath: "jr_slot.png", Border: 8); }
+              Group #S9Sel { Anchor: (Left: 0, Top: 0, Width: 80, Height: 80); Background: (TexturePath: "jr_panel_gold.png", Border: 16); }
               $C.@SecondaryTextButton #S9Btn { @Text = ""; Anchor: (Left: 8, Top: 8, Width: 64, Height: 64); }
               Group #S9Icon { Anchor: (Left: 16, Top: 14, Width: 48, Height: 48); }
               Label #S9Count { Text: ""; Anchor: (Left: 44, Top: 58, Width: 34, Height: 18); Style: (FontSize: 13, TextColor: #ffffff, RenderBold: true); }
@@ -189,10 +177,8 @@ Group {
             Group #S10 {
               Anchor: (Left: 344, Top: 86, Width: 80, Height: 80);
 
-              Group #S10Sel { Anchor: (Left: 0, Top: 0, Width: 80, Height: 80); Background: #e8c46a(0.35);
-                Group { Anchor: (Left: 2, Top: 2, Width: 76, Height: 76); Background: #fff0b0(0.45); }
-              }
-              Group #S10Back { Anchor: (Left: 4, Top: 4, Width: 72, Height: 72); Background: #1a2438; }
+              Group #S10Back { Anchor: (Left: 2, Top: 2, Width: 76, Height: 76); Background: (TexturePath: "jr_slot.png", Border: 8); }
+              Group #S10Sel { Anchor: (Left: 0, Top: 0, Width: 80, Height: 80); Background: (TexturePath: "jr_panel_gold.png", Border: 16); }
               $C.@SecondaryTextButton #S10Btn { @Text = ""; Anchor: (Left: 8, Top: 8, Width: 64, Height: 64); }
               Group #S10Icon { Anchor: (Left: 16, Top: 14, Width: 48, Height: 48); }
               Label #S10Count { Text: ""; Anchor: (Left: 44, Top: 58, Width: 34, Height: 18); Style: (FontSize: 13, TextColor: #ffffff, RenderBold: true); }
@@ -200,10 +186,8 @@ Group {
             Group #S11 {
               Anchor: (Left: 430, Top: 86, Width: 80, Height: 80);
 
-              Group #S11Sel { Anchor: (Left: 0, Top: 0, Width: 80, Height: 80); Background: #e8c46a(0.35);
-                Group { Anchor: (Left: 2, Top: 2, Width: 76, Height: 76); Background: #fff0b0(0.45); }
-              }
-              Group #S11Back { Anchor: (Left: 4, Top: 4, Width: 72, Height: 72); Background: #1a2438; }
+              Group #S11Back { Anchor: (Left: 2, Top: 2, Width: 76, Height: 76); Background: (TexturePath: "jr_slot.png", Border: 8); }
+              Group #S11Sel { Anchor: (Left: 0, Top: 0, Width: 80, Height: 80); Background: (TexturePath: "jr_panel_gold.png", Border: 16); }
               $C.@SecondaryTextButton #S11Btn { @Text = ""; Anchor: (Left: 8, Top: 8, Width: 64, Height: 64); }
               Group #S11Icon { Anchor: (Left: 16, Top: 14, Width: 48, Height: 48); }
               Label #S11Count { Text: ""; Anchor: (Left: 44, Top: 58, Width: 34, Height: 18); Style: (FontSize: 13, TextColor: #ffffff, RenderBold: true); }
@@ -211,10 +195,8 @@ Group {
             Group #S12 {
               Anchor: (Left: 0, Top: 172, Width: 80, Height: 80);
 
-              Group #S12Sel { Anchor: (Left: 0, Top: 0, Width: 80, Height: 80); Background: #e8c46a(0.35);
-                Group { Anchor: (Left: 2, Top: 2, Width: 76, Height: 76); Background: #fff0b0(0.45); }
-              }
-              Group #S12Back { Anchor: (Left: 4, Top: 4, Width: 72, Height: 72); Background: #1a2438; }
+              Group #S12Back { Anchor: (Left: 2, Top: 2, Width: 76, Height: 76); Background: (TexturePath: "jr_slot.png", Border: 8); }
+              Group #S12Sel { Anchor: (Left: 0, Top: 0, Width: 80, Height: 80); Background: (TexturePath: "jr_panel_gold.png", Border: 16); }
               $C.@SecondaryTextButton #S12Btn { @Text = ""; Anchor: (Left: 8, Top: 8, Width: 64, Height: 64); }
               Group #S12Icon { Anchor: (Left: 16, Top: 14, Width: 48, Height: 48); }
               Label #S12Count { Text: ""; Anchor: (Left: 44, Top: 58, Width: 34, Height: 18); Style: (FontSize: 13, TextColor: #ffffff, RenderBold: true); }
@@ -222,10 +204,8 @@ Group {
             Group #S13 {
               Anchor: (Left: 86, Top: 172, Width: 80, Height: 80);
 
-              Group #S13Sel { Anchor: (Left: 0, Top: 0, Width: 80, Height: 80); Background: #e8c46a(0.35);
-                Group { Anchor: (Left: 2, Top: 2, Width: 76, Height: 76); Background: #fff0b0(0.45); }
-              }
-              Group #S13Back { Anchor: (Left: 4, Top: 4, Width: 72, Height: 72); Background: #1a2438; }
+              Group #S13Back { Anchor: (Left: 2, Top: 2, Width: 76, Height: 76); Background: (TexturePath: "jr_slot.png", Border: 8); }
+              Group #S13Sel { Anchor: (Left: 0, Top: 0, Width: 80, Height: 80); Background: (TexturePath: "jr_panel_gold.png", Border: 16); }
               $C.@SecondaryTextButton #S13Btn { @Text = ""; Anchor: (Left: 8, Top: 8, Width: 64, Height: 64); }
               Group #S13Icon { Anchor: (Left: 16, Top: 14, Width: 48, Height: 48); }
               Label #S13Count { Text: ""; Anchor: (Left: 44, Top: 58, Width: 34, Height: 18); Style: (FontSize: 13, TextColor: #ffffff, RenderBold: true); }
@@ -233,10 +213,8 @@ Group {
             Group #S14 {
               Anchor: (Left: 172, Top: 172, Width: 80, Height: 80);
 
-              Group #S14Sel { Anchor: (Left: 0, Top: 0, Width: 80, Height: 80); Background: #e8c46a(0.35);
-                Group { Anchor: (Left: 2, Top: 2, Width: 76, Height: 76); Background: #fff0b0(0.45); }
-              }
-              Group #S14Back { Anchor: (Left: 4, Top: 4, Width: 72, Height: 72); Background: #1a2438; }
+              Group #S14Back { Anchor: (Left: 2, Top: 2, Width: 76, Height: 76); Background: (TexturePath: "jr_slot.png", Border: 8); }
+              Group #S14Sel { Anchor: (Left: 0, Top: 0, Width: 80, Height: 80); Background: (TexturePath: "jr_panel_gold.png", Border: 16); }
               $C.@SecondaryTextButton #S14Btn { @Text = ""; Anchor: (Left: 8, Top: 8, Width: 64, Height: 64); }
               Group #S14Icon { Anchor: (Left: 16, Top: 14, Width: 48, Height: 48); }
               Label #S14Count { Text: ""; Anchor: (Left: 44, Top: 58, Width: 34, Height: 18); Style: (FontSize: 13, TextColor: #ffffff, RenderBold: true); }
@@ -244,10 +222,8 @@ Group {
             Group #S15 {
               Anchor: (Left: 258, Top: 172, Width: 80, Height: 80);
 
-              Group #S15Sel { Anchor: (Left: 0, Top: 0, Width: 80, Height: 80); Background: #e8c46a(0.35);
-                Group { Anchor: (Left: 2, Top: 2, Width: 76, Height: 76); Background: #fff0b0(0.45); }
-              }
-              Group #S15Back { Anchor: (Left: 4, Top: 4, Width: 72, Height: 72); Background: #1a2438; }
+              Group #S15Back { Anchor: (Left: 2, Top: 2, Width: 76, Height: 76); Background: (TexturePath: "jr_slot.png", Border: 8); }
+              Group #S15Sel { Anchor: (Left: 0, Top: 0, Width: 80, Height: 80); Background: (TexturePath: "jr_panel_gold.png", Border: 16); }
               $C.@SecondaryTextButton #S15Btn { @Text = ""; Anchor: (Left: 8, Top: 8, Width: 64, Height: 64); }
               Group #S15Icon { Anchor: (Left: 16, Top: 14, Width: 48, Height: 48); }
               Label #S15Count { Text: ""; Anchor: (Left: 44, Top: 58, Width: 34, Height: 18); Style: (FontSize: 13, TextColor: #ffffff, RenderBold: true); }
@@ -255,10 +231,8 @@ Group {
             Group #S16 {
               Anchor: (Left: 344, Top: 172, Width: 80, Height: 80);
 
-              Group #S16Sel { Anchor: (Left: 0, Top: 0, Width: 80, Height: 80); Background: #e8c46a(0.35);
-                Group { Anchor: (Left: 2, Top: 2, Width: 76, Height: 76); Background: #fff0b0(0.45); }
-              }
-              Group #S16Back { Anchor: (Left: 4, Top: 4, Width: 72, Height: 72); Background: #1a2438; }
+              Group #S16Back { Anchor: (Left: 2, Top: 2, Width: 76, Height: 76); Background: (TexturePath: "jr_slot.png", Border: 8); }
+              Group #S16Sel { Anchor: (Left: 0, Top: 0, Width: 80, Height: 80); Background: (TexturePath: "jr_panel_gold.png", Border: 16); }
               $C.@SecondaryTextButton #S16Btn { @Text = ""; Anchor: (Left: 8, Top: 8, Width: 64, Height: 64); }
               Group #S16Icon { Anchor: (Left: 16, Top: 14, Width: 48, Height: 48); }
               Label #S16Count { Text: ""; Anchor: (Left: 44, Top: 58, Width: 34, Height: 18); Style: (FontSize: 13, TextColor: #ffffff, RenderBold: true); }
@@ -266,10 +240,8 @@ Group {
             Group #S17 {
               Anchor: (Left: 430, Top: 172, Width: 80, Height: 80);
 
-              Group #S17Sel { Anchor: (Left: 0, Top: 0, Width: 80, Height: 80); Background: #e8c46a(0.35);
-                Group { Anchor: (Left: 2, Top: 2, Width: 76, Height: 76); Background: #fff0b0(0.45); }
-              }
-              Group #S17Back { Anchor: (Left: 4, Top: 4, Width: 72, Height: 72); Background: #1a2438; }
+              Group #S17Back { Anchor: (Left: 2, Top: 2, Width: 76, Height: 76); Background: (TexturePath: "jr_slot.png", Border: 8); }
+              Group #S17Sel { Anchor: (Left: 0, Top: 0, Width: 80, Height: 80); Background: (TexturePath: "jr_panel_gold.png", Border: 16); }
               $C.@SecondaryTextButton #S17Btn { @Text = ""; Anchor: (Left: 8, Top: 8, Width: 64, Height: 64); }
               Group #S17Icon { Anchor: (Left: 16, Top: 14, Width: 48, Height: 48); }
               Label #S17Count { Text: ""; Anchor: (Left: 44, Top: 58, Width: 34, Height: 18); Style: (FontSize: 13, TextColor: #ffffff, RenderBold: true); }
@@ -277,10 +249,8 @@ Group {
             Group #S18 {
               Anchor: (Left: 0, Top: 258, Width: 80, Height: 80);
 
-              Group #S18Sel { Anchor: (Left: 0, Top: 0, Width: 80, Height: 80); Background: #e8c46a(0.35);
-                Group { Anchor: (Left: 2, Top: 2, Width: 76, Height: 76); Background: #fff0b0(0.45); }
-              }
-              Group #S18Back { Anchor: (Left: 4, Top: 4, Width: 72, Height: 72); Background: #1a2438; }
+              Group #S18Back { Anchor: (Left: 2, Top: 2, Width: 76, Height: 76); Background: (TexturePath: "jr_slot.png", Border: 8); }
+              Group #S18Sel { Anchor: (Left: 0, Top: 0, Width: 80, Height: 80); Background: (TexturePath: "jr_panel_gold.png", Border: 16); }
               $C.@SecondaryTextButton #S18Btn { @Text = ""; Anchor: (Left: 8, Top: 8, Width: 64, Height: 64); }
               Group #S18Icon { Anchor: (Left: 16, Top: 14, Width: 48, Height: 48); }
               Label #S18Count { Text: ""; Anchor: (Left: 44, Top: 58, Width: 34, Height: 18); Style: (FontSize: 13, TextColor: #ffffff, RenderBold: true); }
@@ -288,10 +258,8 @@ Group {
             Group #S19 {
               Anchor: (Left: 86, Top: 258, Width: 80, Height: 80);
 
-              Group #S19Sel { Anchor: (Left: 0, Top: 0, Width: 80, Height: 80); Background: #e8c46a(0.35);
-                Group { Anchor: (Left: 2, Top: 2, Width: 76, Height: 76); Background: #fff0b0(0.45); }
-              }
-              Group #S19Back { Anchor: (Left: 4, Top: 4, Width: 72, Height: 72); Background: #1a2438; }
+              Group #S19Back { Anchor: (Left: 2, Top: 2, Width: 76, Height: 76); Background: (TexturePath: "jr_slot.png", Border: 8); }
+              Group #S19Sel { Anchor: (Left: 0, Top: 0, Width: 80, Height: 80); Background: (TexturePath: "jr_panel_gold.png", Border: 16); }
               $C.@SecondaryTextButton #S19Btn { @Text = ""; Anchor: (Left: 8, Top: 8, Width: 64, Height: 64); }
               Group #S19Icon { Anchor: (Left: 16, Top: 14, Width: 48, Height: 48); }
               Label #S19Count { Text: ""; Anchor: (Left: 44, Top: 58, Width: 34, Height: 18); Style: (FontSize: 13, TextColor: #ffffff, RenderBold: true); }
@@ -299,10 +267,8 @@ Group {
             Group #S20 {
               Anchor: (Left: 172, Top: 258, Width: 80, Height: 80);
 
-              Group #S20Sel { Anchor: (Left: 0, Top: 0, Width: 80, Height: 80); Background: #e8c46a(0.35);
-                Group { Anchor: (Left: 2, Top: 2, Width: 76, Height: 76); Background: #fff0b0(0.45); }
-              }
-              Group #S20Back { Anchor: (Left: 4, Top: 4, Width: 72, Height: 72); Background: #1a2438; }
+              Group #S20Back { Anchor: (Left: 2, Top: 2, Width: 76, Height: 76); Background: (TexturePath: "jr_slot.png", Border: 8); }
+              Group #S20Sel { Anchor: (Left: 0, Top: 0, Width: 80, Height: 80); Background: (TexturePath: "jr_panel_gold.png", Border: 16); }
               $C.@SecondaryTextButton #S20Btn { @Text = ""; Anchor: (Left: 8, Top: 8, Width: 64, Height: 64); }
               Group #S20Icon { Anchor: (Left: 16, Top: 14, Width: 48, Height: 48); }
               Label #S20Count { Text: ""; Anchor: (Left: 44, Top: 58, Width: 34, Height: 18); Style: (FontSize: 13, TextColor: #ffffff, RenderBold: true); }
@@ -310,10 +276,8 @@ Group {
             Group #S21 {
               Anchor: (Left: 258, Top: 258, Width: 80, Height: 80);
 
-              Group #S21Sel { Anchor: (Left: 0, Top: 0, Width: 80, Height: 80); Background: #e8c46a(0.35);
-                Group { Anchor: (Left: 2, Top: 2, Width: 76, Height: 76); Background: #fff0b0(0.45); }
-              }
-              Group #S21Back { Anchor: (Left: 4, Top: 4, Width: 72, Height: 72); Background: #1a2438; }
+              Group #S21Back { Anchor: (Left: 2, Top: 2, Width: 76, Height: 76); Background: (TexturePath: "jr_slot.png", Border: 8); }
+              Group #S21Sel { Anchor: (Left: 0, Top: 0, Width: 80, Height: 80); Background: (TexturePath: "jr_panel_gold.png", Border: 16); }
               $C.@SecondaryTextButton #S21Btn { @Text = ""; Anchor: (Left: 8, Top: 8, Width: 64, Height: 64); }
               Group #S21Icon { Anchor: (Left: 16, Top: 14, Width: 48, Height: 48); }
               Label #S21Count { Text: ""; Anchor: (Left: 44, Top: 58, Width: 34, Height: 18); Style: (FontSize: 13, TextColor: #ffffff, RenderBold: true); }
@@ -321,10 +285,8 @@ Group {
             Group #S22 {
               Anchor: (Left: 344, Top: 258, Width: 80, Height: 80);
 
-              Group #S22Sel { Anchor: (Left: 0, Top: 0, Width: 80, Height: 80); Background: #e8c46a(0.35);
-                Group { Anchor: (Left: 2, Top: 2, Width: 76, Height: 76); Background: #fff0b0(0.45); }
-              }
-              Group #S22Back { Anchor: (Left: 4, Top: 4, Width: 72, Height: 72); Background: #1a2438; }
+              Group #S22Back { Anchor: (Left: 2, Top: 2, Width: 76, Height: 76); Background: (TexturePath: "jr_slot.png", Border: 8); }
+              Group #S22Sel { Anchor: (Left: 0, Top: 0, Width: 80, Height: 80); Background: (TexturePath: "jr_panel_gold.png", Border: 16); }
               $C.@SecondaryTextButton #S22Btn { @Text = ""; Anchor: (Left: 8, Top: 8, Width: 64, Height: 64); }
               Group #S22Icon { Anchor: (Left: 16, Top: 14, Width: 48, Height: 48); }
               Label #S22Count { Text: ""; Anchor: (Left: 44, Top: 58, Width: 34, Height: 18); Style: (FontSize: 13, TextColor: #ffffff, RenderBold: true); }
@@ -332,10 +294,8 @@ Group {
             Group #S23 {
               Anchor: (Left: 430, Top: 258, Width: 80, Height: 80);
 
-              Group #S23Sel { Anchor: (Left: 0, Top: 0, Width: 80, Height: 80); Background: #e8c46a(0.35);
-                Group { Anchor: (Left: 2, Top: 2, Width: 76, Height: 76); Background: #fff0b0(0.45); }
-              }
-              Group #S23Back { Anchor: (Left: 4, Top: 4, Width: 72, Height: 72); Background: #1a2438; }
+              Group #S23Back { Anchor: (Left: 2, Top: 2, Width: 76, Height: 76); Background: (TexturePath: "jr_slot.png", Border: 8); }
+              Group #S23Sel { Anchor: (Left: 0, Top: 0, Width: 80, Height: 80); Background: (TexturePath: "jr_panel_gold.png", Border: 16); }
               $C.@SecondaryTextButton #S23Btn { @Text = ""; Anchor: (Left: 8, Top: 8, Width: 64, Height: 64); }
               Group #S23Icon { Anchor: (Left: 16, Top: 14, Width: 48, Height: 48); }
               Label #S23Count { Text: ""; Anchor: (Left: 44, Top: 58, Width: 34, Height: 18); Style: (FontSize: 13, TextColor: #ffffff, RenderBold: true); }
@@ -352,28 +312,33 @@ Group {
               Text: "";
               Anchor: (Height: 28);
               FlexWeight: 1;
-              Style: (FontSize: 13, TextColor: #9fb0c6);
+              Style: (FontSize: 13, TextColor: #b4c2d6, HorizontalAlignment: Center);
             }
             $C.@SecondaryTextButton #NextPage { @Text = ">"; Anchor: (Width: 60, Height: 28); }
           }
           Label #Empty {
             Text: "";
             Anchor: (Height: 24);
-            Style: (FontSize: 13, TextColor: #9fb0c6);
+            Style: (FontSize: 13, TextColor: #b4c2d6);
           }
         }
         Group { Anchor: (Width: 10); }
         Group #DetailCol {
           FlexWeight: 1;
           LayoutMode: Top;
-          Background: #141d2e(0.88);
+          Background: (TexturePath: "jr_panel.png", Border: 22);
           Padding: (Full: 12);
 
           Group {
             Anchor: (Height: 68);
             LayoutMode: Left;
 
-            Group #SelIcon { Anchor: (Width: 64, Height: 64); }
+            Group {
+              Anchor: (Width: 68, Height: 68);
+              Background: (TexturePath: "jr_slot.png", Border: 8);
+
+              Group #SelIcon { Anchor: (Left: 10, Top: 10, Width: 48, Height: 48); }
+            }
             Group { Anchor: (Width: 10); }
             Group {
               FlexWeight: 1;
@@ -387,11 +352,14 @@ Group {
               Label #SelKind {
                 Text: "";
                 Anchor: (Height: 20);
-                Style: (FontSize: 12, TextColor: #9fb0c6);
+                Style: (FontSize: 12, TextColor: #b4c2d6);
               }
             }
           }
-          Group { Anchor: (Height: 8); }
+          Group { Anchor: (Height: 6); }
+          Group { Anchor: (Height: 1); Background: #e8c46a(0.40); }
+          Group { Anchor: (Height: 1); Background: #000000(0.35); }
+          Group { Anchor: (Height: 6); }
           Label #SelText {
             Text: "";
             FlexWeight: 1;

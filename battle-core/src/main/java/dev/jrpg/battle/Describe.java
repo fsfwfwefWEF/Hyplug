@@ -181,7 +181,46 @@ public final class Describe {
     public static String itemIcon(Content content, Item item) {
         String explicit = content.icon(item.id());
         if (explicit != null) return explicit;
+        if (item.kind() == Item.Kind.GEAR && content.hasGear(item.id())) return gearIcon(content.gear(item.id()));
         return item.effect() == null ? "bag" : abilityIcon(content, item.effect());
+    }
+
+    /** Иконка вещи снаряжения: оружие по типу, броня по слоту, аксессуар — кольцо или амулет. */
+    public static String gearIcon(Equipment.Gear g) {
+        return switch (g.slot()) {
+            case WEAPON, OFFHAND -> switch (g.type() == null ? "" : g.type()) {
+                case "shield" -> "shield";
+                case "axe", "mace", "spear", "staff", "daggers" -> "gear_" + g.type();
+                default -> "sword";
+            };
+            case HEAD -> "gear_helm";
+            case CHEST -> "gear_chest";
+            case HANDS -> "gear_gloves";
+            case LEGS -> "gear_boots";
+            case ACC1, ACC2 -> g.id().contains("ring") ? "gear_ring" : "gear_amulet";
+        };
+    }
+
+    /** Уровень рамки иконки вещи: 0 — обычная (без рамки), 1–3 — редкая, эпическая, легендарная. */
+    public static int gearTier(Equipment.Gear g) {
+        return g.quality().ordinal();
+    }
+
+    /**
+     * Уровень рамки иконки способности: по самому внутреннему кольцу сетки, где её можно открыть.
+     * Кольца 0–1 и способности не из сетки — без рамки, кольцо 2 — 1, 3 — 2, 4 — 3.
+     */
+    public static int abilityTier(Content content, String abilityId) {
+        int best = Integer.MAX_VALUE;
+        for (Progression.HeroDef h : content.heroes()) {
+            for (int i = 0; i < h.grid().size(); i++) {
+                Progression.GridNode n = h.grid().get(i);
+                if (n.kind() == Progression.NodeKind.ABILITY && abilityId.equals(n.ref())) {
+                    best = Math.min(best, Progression.Grid.ring(i));
+                }
+            }
+        }
+        return best == Integer.MAX_VALUE ? 0 : Math.max(0, Math.min(3, best - 1));
     }
 
     /** Описание вещи снаряжения: слот, качество, мощь и классы, статы, навыки, иммунитеты. */

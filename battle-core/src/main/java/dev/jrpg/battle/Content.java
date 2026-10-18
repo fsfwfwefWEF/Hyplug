@@ -378,6 +378,22 @@ public final class Content {
         c.icon("ether", "ether");
         c.icon("antidote", "antidote");
         c.icon("bomb", "bomb");
+        // 0.10: свои иконки у новых способностей
+        c.icon("meteor", "meteor");
+        c.icon("shadow_strike", "shadow");
+        c.icon("frost_nova", "nova");
+        c.icon("tempest", "tempest");
+        c.icon("earth_spike", "spike");
+        c.icon("war_cry", "warcry");
+        c.icon("shield_wall", "wall");
+        c.icon("mass_cure", "regen");
+        c.icon("haste_all", "haste");
+        c.icon("bone_wall", "wall");
+        c.icon("war_stomp", "quake");
+        c.icon("goblin_bomb", "bomb");
+        c.icon("frenzy_roar", "roar");
+        c.icon("pounce", "claw");
+        c.icon("slime_split", "split");
         c.icon("queen_fang", "fang");
         c.icon("thunder", "thunder");
         c.icon("earthquake", "quake");

@@ -728,14 +728,40 @@ Group {
       }
       Group #LogPanel {
         Anchor: (Width: 440, Height: 280);
-        Background: (TexturePath: "jr_book.png");
+        LayoutMode: Top;
+        Background: (TexturePath: "jr_panel.png", Border: 22);
+        Padding: (Left: 14, Right: 12, Top: 10, Bottom: 8);
 
-        Label #BookLHead { Text: ""; Anchor: (Left: 28, Top: 16, Width: 176, Height: 16); Style: (FontSize: 12, TextColor: #7a6040, RenderBold: true, HorizontalAlignment: Center); }
-        Label #BookRHead { Text: ""; Anchor: (Left: 238, Top: 16, Width: 176, Height: 16); Style: (FontSize: 12, TextColor: #7a6040, RenderBold: true, HorizontalAlignment: Center); }
-        Label #BookL { Text: ""; Anchor: (Left: 28, Top: 36, Width: 176, Height: 212); Style: (FontSize: 13, TextColor: #3a2a1a, Wrap: true); }
-        Label #BookR { Text: ""; Anchor: (Left: 238, Top: 36, Width: 176, Height: 212); Style: (FontSize: 13, TextColor: #3a2a1a, Wrap: true); }
-        Label #BookLNum { Text: ""; Anchor: (Left: 28, Top: 252, Width: 176, Height: 14); Style: (FontSize: 11, TextColor: #8a7050, HorizontalAlignment: Center); }
-        Label #BookRNum { Text: ""; Anchor: (Left: 238, Top: 252, Width: 176, Height: 14); Style: (FontSize: 11, TextColor: #8a7050, HorizontalAlignment: Center); }
+        Group {
+          Anchor: (Height: 20);
+          LayoutMode: Left;
+
+          Label #LogTitle {
+            Text: "ЖУРНАЛ БОЯ";
+            Anchor: (Width: 130, Height: 20);
+            Style: (FontSize: 13, TextColor: #e8c46a, RenderBold: true);
+          }
+          Label #LogSub {
+            Text: "";
+            Anchor: (Height: 20);
+            FlexWeight: 1;
+            Style: (FontSize: 12, TextColor: #b4c2d6);
+          }
+          Label #LogTurn {
+            Text: "";
+            Anchor: (Width: 80, Height: 20);
+            Style: (FontSize: 12, TextColor: #e8c46a);
+          }
+        }
+        Group { Anchor: (Height: 3); }
+        Group { Anchor: (Height: 1); Background: #e8c46a(0.45); }
+        Group { Anchor: (Height: 1); Background: #000000(0.35); }
+        Group { Anchor: (Height: 4); }
+        Label #LogText {
+          Text: "";
+          FlexWeight: 1;
+          Style: (FontSize: 13, TextColor: #e9eef6, Wrap: true);
+        }
       }
       Group { FlexWeight: 1; }
       Group #PartyPanel {

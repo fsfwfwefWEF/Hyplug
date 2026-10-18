@@ -193,7 +193,7 @@ public final class ProgressionPage extends InteractiveCustomUIPage<BattleMenuPag
         cmd.set("#HeroTitle.Text", h.def.title() + " · роль: " + h.def.role().label);
         cmd.set("#HeroLevel.Text", "Уровень " + h.level + "   опыт " + h.exp + " / " + Progression.expToNext(h.level));
         cmd.set("#Points.Text", "Очки сетки: " + h.points);
-        icon(cmd, "#HeroIcon", "pt_" + h.def.id(), "l");
+        icon(cmd, "#HeroIcon", "pt_" + h.def.id(), "l", 0);
         if (plugin.settings().uiBars) {
             Anchor a = new Anchor();
             a.setWidth(Value.of((int) Math.round(EXP_BAR * Math.min(1.0, h.exp / (double) Progression.expToNext(h.level)))));
@@ -222,7 +222,7 @@ public final class ProgressionPage extends InteractiveCustomUIPage<BattleMenuPag
             cmd.set(g + "Avail.Visible", avail);
             cmd.set(g + "Lock.Visible", !open && !avail);
             GridNode n = h.node(i);
-            icon(cmd, g + "Icon", BattleMenuPage.iconKey(Describe.nodeIcon(content, h, n)), "m");
+            icon(cmd, g + "Icon", BattleMenuPage.iconKey(Describe.nodeIcon(content, h, n)), "m", nodeTier(n));
         }
         for (int k = 0; k < edges.size(); k++) {
             int[] e = edges.get(k);
@@ -236,17 +236,18 @@ public final class ProgressionPage extends InteractiveCustomUIPage<BattleMenuPag
         cmd.set("#SelKind.Text", Describe.nodeKind(n) + (selected == 0 ? "" : "   " + Describe.sector(selected)
                 + ", кольцо " + Grid.ring(selected)));
         cmd.set("#SelText.Text", Describe.node(content, h, selected));
-        icon(cmd, "#SelIcon", BattleMenuPage.iconKey(Describe.nodeIcon(content, h, n)), "m");
+        icon(cmd, "#SelIcon", BattleMenuPage.iconKey(Describe.nodeIcon(content, h, n)), "m", nodeTier(n));
         cmd.set("#Learn.Visible", h.whyCantUnlock(selected) == null);
         cmd.set("#Message.Text", message);
     }
 
-    private void icon(UICommandBuilder cmd, String slot, String key, String size) {
+    private void icon(UICommandBuilder cmd, String slot, String key, String size, int tier) {
         if (!plugin.settings().uiIcons || key == null || !Icons.exists(key)) return;
-        String want = key + "_" + size;
-        if (want.equals(shownIcons.get(slot))) return;
-        shownIcons.put(slot, want);
-        cmd.clear(slot);
-        cmd.append(slot, BattleMenuPage.ICONS + want + ".ui");
+        BattleMenuPage.putIcon(cmd, shownIcons, slot, key, size, tier);
+    }
+
+    /** Рамка уровня у способности из сетки (по кольцу, где она открывается). */
+    private int nodeTier(Progression.GridNode n) {
+        return n != null && n.kind() == Progression.NodeKind.ABILITY ? Describe.abilityTier(content, n.ref()) : 0;
     }
 }

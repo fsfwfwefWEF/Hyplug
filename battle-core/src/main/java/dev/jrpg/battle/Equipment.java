@@ -162,15 +162,9 @@ public final class Equipment {
         }
     }
 
+    /** Иконка по умолчанию: тип оружия или слот брони (Describe.gearIcon); "icon" в json её заменяет. */
     private static String defaultIcon(Gear g) {
-        return switch (g.type()) {
-            case "axe", "mace", "hammer", "battleaxe" -> "cleave";
-            case "daggers" -> "bleed";
-            case "staff" -> "magic";
-            case "shield", "armor" -> "shield";
-            case "accessory" -> "star";
-            default -> "sword";
-        };
+        return Describe.gearIcon(g);
     }
 
     private static Gear parse(Map<String, Object> m) {

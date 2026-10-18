@@ -56,6 +56,7 @@ public final class EquipmentPage extends InteractiveCustomUIPage<BattleMenuPage.
     public void build(@Nonnull Ref<EntityStore> ref, @Nonnull UICommandBuilder cmd, @Nonnull UIEventBuilder evt,
                       @Nonnull Store<EntityStore> store) {
         cmd.append(LAYOUT);
+        shownIcons.clear();
         for (int i = 0; i < TABS; i++) bind(evt, "#Tab" + i, "tab", i);
         for (int i = 0; i < SLOTS; i++) bind(evt, "#Slot" + i + "Btn", "slot", i);
         for (int i = 0; i < ITEMS; i++) bind(evt, "#Item" + i + "Btn", "item", i);
@@ -173,6 +174,7 @@ public final class EquipmentPage extends InteractiveCustomUIPage<BattleMenuPage.
             Equipment.Gear g = h.gear(s);
             cmd.set("#Slot" + i + "Sel.Visible", i == slot);
             cmd.set("#Slot" + i + "Btn.Text", s.label + ": " + (g == null ? "пусто" : g.name()));
+            icon(cmd, "#Slot" + i + "Icon", g == null ? "" : Describe.gearIcon(g), "r", g == null ? 0 : Describe.gearTier(g));
         }
         Stats st = h.stats();
         Equipment.Gear w = h.gear(Equipment.Slot.WEAPON);
@@ -198,6 +200,7 @@ public final class EquipmentPage extends InteractiveCustomUIPage<BattleMenuPage.
             cmd.set("#Item" + i + "Btn.Text", g.name() + (n > 1 ? "  x" + n : ""));
             cmd.set("#Item" + i + "Q.Text", g.quality().label);
             cmd.set("#Item" + i + "Q.Style.TextColor", g.quality().color);
+            icon(cmd, "#Item" + i + "Icon", Describe.gearIcon(g), "r", Describe.gearTier(g));
         }
         cmd.set("#Page.Text", pages > 1 ? "Страница " + (pageNo + 1) + " из " + pages : "");
         cmd.set("#PrevPage.Visible", pages > 1);
@@ -213,7 +216,9 @@ public final class EquipmentPage extends InteractiveCustomUIPage<BattleMenuPage.
             cmd.set("#CmpTitle.Style.TextColor", GOLD);
             cmd.set("#CmpSub.Text", "");
             cmd.set("#CmpDesc.Text", "");
+            icon(cmd, "#CmpIcon", "", "m", 0);
         } else {
+            icon(cmd, "#CmpIcon", Describe.gearIcon(show), "m", Describe.gearTier(show));
             cmd.set("#CmpTitle.Text", show.name());
             cmd.set("#CmpTitle.Style.TextColor", show.quality().color);
             cmd.set("#CmpSub.Text", (show.accessory() ? "Аксессуар" : show.slot().label) + " · " + show.quality().label
@@ -243,6 +248,13 @@ public final class EquipmentPage extends InteractiveCustomUIPage<BattleMenuPage.
         cmd.set("#Equip.Visible", picked != null && !busy);
         cmd.set("#Unequip.Visible", cur != null && sel != Equipment.Slot.WEAPON && !busy);
         cmd.set("#Message.Text", busy && message.isEmpty() ? "Идёт бой: менять снаряжение можно после боя." : message);
+    }
+
+    private final Map<String, String> shownIcons = new java.util.HashMap<>();
+
+    private void icon(UICommandBuilder cmd, String slot, String key, String size, int tier) {
+        if (!plugin.settings().uiIcons) return;
+        BattleMenuPage.putIcon(cmd, shownIcons, slot, Icons.exists(key) ? key : "", size, tier);
     }
 
     private static String delta(Equipment.Diff d) {

@@ -1,86 +1,135 @@
 $C = "../Common.ui";
 
-// Меню героя на клавише режима (MainMenuPage). Написано вручную, не через tools/gen_battle_ui.py.
-// Кнопки: #Party, #Gear, #Bag, #Follow, #Mode, #Close; тексты #Follow и #Mode ставит код.
+// Меню героя на клавише режима (MainMenuPage). Кнопки: #Party, #Gear, #Bag, #Follow, #Mode, #Close;
+// тексты #Follow и #Mode ставит код. Собрано tools/gen_battle_ui.py — правь скрипт.
 
 Group {
   LayoutMode: Top;
 
   Group { FlexWeight: 1; }
   Group {
-    Anchor: (Height: 448);
+    Anchor: (Height: 470);
     LayoutMode: Left;
 
     Group { FlexWeight: 1; }
     Group #Window {
-      Anchor: (Width: 420);
+      Anchor: (Width: 450);
       LayoutMode: Top;
-      Background: #070b12(0.94);
-      Padding: (Full: 16);
+      Background: (TexturePath: "jr_panel_gold.png", Border: 22);
+      Padding: (Left: 16, Right: 16, Top: 10, Bottom: 16);
 
-      Label #Title {
-        Text: "Меню героя";
-        Anchor: (Height: 30);
-        Style: (FontSize: 22, TextColor: #e8c46a, RenderBold: true);
-      }
-      Label #Sub {
-        Text: "Открывается клавишей режима. Креатив включается кнопкой ниже.";
-        Anchor: (Height: 36);
-        Style: (FontSize: 13, TextColor: #9fb0c6, Wrap: true);
-      }
-      Group { Anchor: (Height: 8); }
       Group {
-        Anchor: (Height: 40);
+        Anchor: (Height: 52);
         LayoutMode: Left;
 
         Group { FlexWeight: 1; }
-        $C.@SecondaryTextButton #Party { @Text = "Прокачка партии"; Anchor: (Width: 340, Height: 40); }
+        Group {
+          Anchor: (Width: 400, Height: 52);
+          LayoutMode: Top;
+          Background: (TexturePath: "jr_banner.png");
+          Padding: (Top: 6);
+
+          Label {
+            Text: "МЕНЮ ГЕРОЯ";
+            Anchor: (Height: 26);
+            Style: (FontSize: 21, TextColor: #e8c46a, RenderBold: true, HorizontalAlignment: Center);
+          }
+          Label #Sub {
+            Text: "клавиша O · креатив — кнопкой «Режим игры»";
+            Anchor: (Height: 16);
+            Style: (FontSize: 12, TextColor: #b4c2d6, HorizontalAlignment: Center);
+          }
+        }
         Group { FlexWeight: 1; }
       }
-      Group { Anchor: (Height: 8); }
+      Group { Anchor: (Height: 4); }
       Group {
-        Anchor: (Height: 40);
-        LayoutMode: Left;
+        Anchor: (Height: 344);
+        LayoutMode: Top;
+        Background: (TexturePath: "jr_panel.png", Border: 22);
+        Padding: (Full: 14);
 
-        Group { FlexWeight: 1; }
-        $C.@SecondaryTextButton #Gear { @Text = "Экипировка"; Anchor: (Width: 340, Height: 40); }
-        Group { FlexWeight: 1; }
-      }
-      Group { Anchor: (Height: 8); }
-      Group {
-        Anchor: (Height: 40);
-        LayoutMode: Left;
+        Group {
+          Anchor: (Height: 46);
+          LayoutMode: Left;
 
-        Group { FlexWeight: 1; }
-        $C.@SecondaryTextButton #Bag { @Text = "Рюкзак"; Anchor: (Width: 340, Height: 40); }
-        Group { FlexWeight: 1; }
-      }
-      Group { Anchor: (Height: 8); }
-      Group {
-        Anchor: (Height: 40);
-        LayoutMode: Left;
+          Group {
+            Anchor: (Width: 46, Height: 46);
+            Background: (TexturePath: "jr_slot.png", Border: 8);
 
-        Group { FlexWeight: 1; }
-        $C.@SecondaryTextButton #Follow { @Text = "Компаньоны"; Anchor: (Width: 340, Height: 40); }
-        Group { FlexWeight: 1; }
-      }
-      Group { Anchor: (Height: 8); }
-      Group {
-        Anchor: (Height: 40);
-        LayoutMode: Left;
+            Group { Anchor: (Left: 5, Top: 5, Width: 36, Height: 36); Background: (TexturePath: "Icons/levelup.png"); }
+          }
+          Group { Anchor: (Width: 8); }
+          $C.@SecondaryTextButton #Party { @Text = "Прокачка партии"; Anchor: (Width: 330, Height: 42); }
+        }
+        Group { Anchor: (Height: 6); }
+        Group {
+          Anchor: (Height: 46);
+          LayoutMode: Left;
 
-        Group { FlexWeight: 1; }
-        $C.@SecondaryTextButton #Mode { @Text = "Режим игры"; Anchor: (Width: 340, Height: 40); }
-        Group { FlexWeight: 1; }
-      }
-      Group { Anchor: (Height: 14); }
-      Group {
-        Anchor: (Height: 40);
-        LayoutMode: Left;
+          Group {
+            Anchor: (Width: 46, Height: 46);
+            Background: (TexturePath: "jr_slot.png", Border: 8);
 
-        Group { FlexWeight: 1; }
-        $C.@CancelTextButton #Close { @Text = "Закрыть"; Anchor: (Width: 340, Height: 40); }
-        Group { FlexWeight: 1; }
+            Group { Anchor: (Left: 5, Top: 5, Width: 36, Height: 36); Background: (TexturePath: "Icons/sword.png"); }
+          }
+          Group { Anchor: (Width: 8); }
+          $C.@SecondaryTextButton #Gear { @Text = "Экипировка"; Anchor: (Width: 330, Height: 42); }
+        }
+        Group { Anchor: (Height: 6); }
+        Group {
+          Anchor: (Height: 46);
+          LayoutMode: Left;
+
+          Group {
+            Anchor: (Width: 46, Height: 46);
+            Background: (TexturePath: "jr_slot.png", Border: 8);
+
+            Group { Anchor: (Left: 5, Top: 5, Width: 36, Height: 36); Background: (TexturePath: "Icons/bag.png"); }
+          }
+          Group { Anchor: (Width: 8); }
+          $C.@SecondaryTextButton #Bag { @Text = "Рюкзак"; Anchor: (Width: 330, Height: 42); }
+        }
+        Group { Anchor: (Height: 6); }
+        Group {
+          Anchor: (Height: 46);
+          LayoutMode: Left;
+
+          Group {
+            Anchor: (Width: 46, Height: 46);
+            Background: (TexturePath: "jr_slot.png", Border: 8);
+
+            Group { Anchor: (Left: 5, Top: 5, Width: 36, Height: 36); Background: (TexturePath: "Icons/pt_bram.png"); }
+          }
+          Group { Anchor: (Width: 8); }
+          $C.@SecondaryTextButton #Follow { @Text = "Компаньоны"; Anchor: (Width: 330, Height: 42); }
+        }
+        Group { Anchor: (Height: 6); }
+        Group {
+          Anchor: (Height: 46);
+          LayoutMode: Left;
+
+          Group {
+            Anchor: (Width: 46, Height: 46);
+            Background: (TexturePath: "jr_slot.png", Border: 8);
+
+            Group { Anchor: (Left: 5, Top: 5, Width: 36, Height: 36); Background: (TexturePath: "Icons/info.png"); }
+          }
+          Group { Anchor: (Width: 8); }
+          $C.@SecondaryTextButton #Mode { @Text = "Режим игры"; Anchor: (Width: 330, Height: 42); }
+        }
+        Group { Anchor: (Height: 6); }
+        Group { Anchor: (Height: 4); }
+        Group { Anchor: (Height: 1); Background: #e8c46a(0.40); }
+        Group { Anchor: (Height: 1); Background: #000000(0.35); }
+        Group { Anchor: (Height: 8); }
+        Group {
+          Anchor: (Height: 42);
+          LayoutMode: Left;
+
+          Group { Anchor: (Width: 54); }
+          $C.@CancelTextButton #Close { @Text = "Закрыть"; Anchor: (Width: 330, Height: 42); }
+        }
       }
     }
     Group { FlexWeight: 1; }

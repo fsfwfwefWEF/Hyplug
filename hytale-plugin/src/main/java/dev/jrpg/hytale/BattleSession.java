@@ -66,7 +66,13 @@ public final class BattleSession implements BattleListener {
     private final Deque<String> log = new ArrayDeque<>();
     /** Журнал боя для окна слева: строки уже разбиты по ширине окна, у каждой свой цвет. */
     private final Deque<LogEntry> journal = new ArrayDeque<>();
-    record LogEntry(String text, String color) {}
+    /** Строка журнала; turn — номер хода, когда она появилась (старые ходы журнал показывает тусклее). */
+    record LogEntry(String text, String color, int turn) {
+        LogEntry(String text, String color) {
+            this(text, color, 0);
+        }
+    }
+    private int turnNo;
     /** Журнал для книги в HUD: строки целиком (книга переносит сама), без обрезки по 60. */
     private final List<LogEntry> book = new java.util.ArrayList<>();
     /** Реплика, которая сейчас печатается в окне над бойцом (id → видимая часть). */
@@ -570,6 +576,7 @@ public final class BattleSession implements BattleListener {
         return from >= book.size() ? List.of() : List.copyOf(book.subList(Math.max(0, from), book.size()));
     }
     String encounterName() { return encounter.name(); }
+    int turnNo() { return turnNo; }
     boolean hudShown() { return hud != null; }
 
     /** Шаг анимации HUD в потоке мира (не выполняется после конца боя). */
@@ -705,6 +712,7 @@ public final class BattleSession implements BattleListener {
 
     @Override
     public void onTurnStart(Combatant actor, List<Combatant> forecast) {
+        turnNo++;
         Vector3d pos = homes.get(actor.id);
         camera.focus(pos, actor.side == Side.PARTY);
         banner = "Ход: " + actor.name;
@@ -1769,8 +1777,8 @@ public final class BattleSession implements BattleListener {
         for (String l : line.split("\n")) {
             log.addLast(l);
             while (log.size() > 7) log.removeFirst();
-            book.add(new LogEntry(l.strip(), color));
-            for (String part : wrap(l, LOG_WIDTH)) journal.addLast(new LogEntry(part, color));
+            book.add(new LogEntry(l.strip(), color, turnNo));
+            for (String part : wrap(l, LOG_WIDTH)) journal.addLast(new LogEntry(part, color, turnNo));
             while (journal.size() > 60) journal.removeFirst();
         }
     }

@@ -18,7 +18,12 @@ public final class BattleMenu {
      * Пункт меню. hint — короткая подпись справа (стоимость), icon — ключ иконки (см. {@link Describe}),
      * info — полное описание для окна описаний (наведение мыши).
      */
-    public record Option(String label, boolean enabled, String hint, String icon, String info) {
+    /** tier — рамка уровня у иконки (0 — без рамки, см. Describe.abilityTier). */
+    public record Option(String label, boolean enabled, String hint, String icon, String info, int tier) {
+        public Option(String label, boolean enabled, String hint, String icon, String info) {
+            this(label, enabled, hint, icon, info, 0);
+        }
+
         public Option(String label, boolean enabled, String hint) {
             this(label, enabled, hint, "", "");
         }
@@ -114,7 +119,8 @@ public final class BattleMenu {
                 Ability a = k.ability(id);
                 String cost = (a.apCost() > 0 ? a.apCost() + " AP " : "") + (a.mpCost() > 0 ? a.mpCost() + " MP" : "");
                 out.add(new Option(a.name(), battle.canAfford(v, a), cost.trim(), Describe.abilityIcon(k, a),
-                        Describe.ability(k, a) + (battle.canAfford(v, a) ? "" : "\nСейчас не хватает AP/MP.")));
+                        Describe.ability(k, a) + (battle.canAfford(v, a) ? "" : "\nСейчас не хватает AP/MP."),
+                        Describe.abilityTier(k, id)));
             }
             return out;
         }
@@ -138,7 +144,7 @@ public final class BattleMenu {
                     Ability a = k.ability(id);
                     String cost = (a.apCost() > 0 ? a.apCost() + " AP " : "") + (a.mpCost() > 0 ? a.mpCost() + " MP" : "");
                     out.add(new Option(a.name(), battle.canAfford(c, a), cost.trim(),
-                            Describe.abilityIcon(k, a), Describe.ability(k, a)));
+                            Describe.abilityIcon(k, a), Describe.ability(k, a), Describe.abilityTier(k, id)));
                 }
             }
             case ITEMS -> {

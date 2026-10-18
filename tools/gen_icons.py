@@ -19,7 +19,7 @@ import art  # noqa: E402
 OUT = os.path.join(os.path.dirname(__file__), "..", "hytale-plugin", "src", "main", "resources",
                    "Common", "UI", "Custom", "JrpgBattle", "Icons")
 SS = 3  # суперсэмплинг
-SIZES = {"s": 22, "m": 40, "g": 48, "l": 88}
+SIZES = {"s": 22, "r": 30, "m": 40, "g": 48, "l": 88}
 
 GOLD = (222, 184, 96)
 GOLD_D = (120, 88, 36)
@@ -421,6 +421,182 @@ def p_trork(d, S):
     d.polygon(P(S, [(0.66, 0.66), (0.60, 0.56), (0.58, 0.68)]), fill=WHITE)
 
 
+
+# ---------- снаряжение (0.10.3) ----------
+
+STEEL, STEEL_D, WOOD, LEATHER = (214, 222, 236), (130, 142, 166), (120, 78, 44), (150, 100, 60)
+
+
+def g_axe(d, S):
+    d.line(P(S, [(0.30, 0.88), (0.62, 0.20)]), fill=WOOD, width=int(S * 0.07))
+    d.polygon(P(S, [(0.52, 0.22), (0.80, 0.14), (0.88, 0.40), (0.64, 0.46)]), fill=STEEL)
+    d.polygon(P(S, [(0.80, 0.14), (0.88, 0.40), (0.76, 0.34)]), fill=STEEL_D)
+    d.line(P(S, [(0.80, 0.15), (0.88, 0.39)]), fill=(255, 255, 255), width=int(S * 0.02))
+
+
+def g_mace(d, S):
+    d.line(P(S, [(0.28, 0.86), (0.56, 0.44)]), fill=WOOD, width=int(S * 0.07))
+    for k in range(8):
+        a = k * math.pi / 4
+        cx, cy = 0.62 + math.cos(a) * 0.17, 0.34 + math.sin(a) * 0.17
+        d.polygon(P(S, [(cx, cy), (0.62 + math.cos(a + 0.3) * 0.1, 0.34 + math.sin(a + 0.3) * 0.1),
+                        (0.62 + math.cos(a - 0.3) * 0.1, 0.34 + math.sin(a - 0.3) * 0.1)]), fill=STEEL_D)
+    d.ellipse(P(S, [(0.49, 0.21), (0.75, 0.47)]), fill=STEEL)
+    d.ellipse(P(S, [(0.54, 0.25), (0.62, 0.33)]), fill=(255, 255, 255))
+
+
+def g_spear(d, S):
+    d.line(P(S, [(0.18, 0.86), (0.66, 0.30)]), fill=WOOD, width=int(S * 0.05))
+    d.polygon(P(S, [(0.84, 0.12), (0.72, 0.38), (0.60, 0.30)]), fill=STEEL)
+    d.polygon(P(S, [(0.84, 0.12), (0.72, 0.38), (0.68, 0.32)]), fill=STEEL_D)
+    d.line(P(S, [(0.58, 0.40), (0.66, 0.46)]), fill=(200, 60, 50), width=int(S * 0.04))
+
+
+def g_staff(d, S):
+    d.line(P(S, [(0.26, 0.88), (0.58, 0.32)]), fill=WOOD, width=int(S * 0.06))
+    d.arc(P(S, [(0.48, 0.10), (0.80, 0.42)]), 120, 420, fill=(232, 186, 90), width=int(S * 0.04))
+    d.ellipse(P(S, [(0.56, 0.18), (0.72, 0.34)]), fill=(150, 110, 255))
+    d.ellipse(P(S, [(0.59, 0.21), (0.64, 0.26)]), fill=(240, 230, 255))
+
+
+def g_daggers(d, S):
+    for flip in (False, True):
+        def X(x):
+            return 1 - x if flip else x
+        d.polygon(P(S, [(X(0.70), 0.14), (X(0.76), 0.18), (X(0.46), 0.60), (X(0.40), 0.54)]), fill=STEEL)
+        d.line(P(S, [(X(0.34), 0.52), (X(0.50), 0.66)]), fill=(232, 186, 90), width=int(S * 0.04))
+        d.line(P(S, [(X(0.42), 0.60), (X(0.28), 0.80)]), fill=LEATHER, width=int(S * 0.05))
+
+
+def g_helm(d, S):
+    d.chord(P(S, [(0.20, 0.18), (0.80, 0.82)]), 180, 360, fill=STEEL)
+    d.rectangle(P(S, [(0.20, 0.49), (0.80, 0.74)]), fill=STEEL)
+    d.rectangle(P(S, [(0.28, 0.50), (0.72, 0.58)]), fill=INK)
+    d.rectangle(P(S, [(0.46, 0.56), (0.54, 0.76)]), fill=INK)
+    d.line(P(S, [(0.5, 0.18), (0.5, 0.48)]), fill=(232, 186, 90), width=int(S * 0.05))
+    d.chord(P(S, [(0.26, 0.24), (0.74, 0.70)]), 200, 250, fill=(255, 255, 255, 140))
+
+
+def g_chest(d, S):
+    d.polygon(P(S, [(0.30, 0.18), (0.42, 0.24), (0.58, 0.24), (0.70, 0.18), (0.86, 0.30), (0.78, 0.46),
+                    (0.72, 0.42), (0.72, 0.84), (0.28, 0.84), (0.28, 0.42), (0.22, 0.46), (0.14, 0.30)]), fill=STEEL)
+    d.polygon(P(S, [(0.50, 0.30), (0.72, 0.42), (0.72, 0.84), (0.50, 0.84)]), fill=STEEL_D)
+    d.line(P(S, [(0.28, 0.62), (0.72, 0.62)]), fill=(232, 186, 90), width=int(S * 0.04))
+
+
+def g_gloves(d, S):
+    d.rounded_rectangle(P(S, [(0.30, 0.36), (0.70, 0.76)]), radius=int(S * 0.08), fill=LEATHER)
+    for k in range(4):
+        x = 0.31 + k * 0.10
+        d.rounded_rectangle(P(S, [(x, 0.16 + (0.04 if k in (0, 3) else 0)), (x + 0.08, 0.44)]), radius=int(S * 0.04), fill=LEATHER)
+    d.rounded_rectangle(P(S, [(0.16, 0.44), (0.32, 0.56)]), radius=int(S * 0.05), fill=LEATHER)
+    d.rectangle(P(S, [(0.28, 0.72), (0.72, 0.86)]), fill=STEEL)
+
+
+def g_boots(d, S):
+    d.polygon(P(S, [(0.30, 0.14), (0.56, 0.14), (0.56, 0.62), (0.84, 0.70), (0.84, 0.86), (0.30, 0.86)]), fill=LEATHER)
+    d.rectangle(P(S, [(0.28, 0.80), (0.86, 0.88)]), fill=(70, 46, 26))
+    d.rectangle(P(S, [(0.28, 0.14), (0.58, 0.24)]), fill=STEEL)
+
+
+def g_ring(d, S):
+    d.ellipse(P(S, [(0.20, 0.34), (0.80, 0.90)]), outline=(232, 186, 90), width=int(S * 0.08))
+    d.polygon(P(S, [(0.5, 0.12), (0.64, 0.26), (0.5, 0.42), (0.36, 0.26)]), fill=(255, 90, 120))
+    d.polygon(P(S, [(0.5, 0.12), (0.64, 0.26), (0.5, 0.26)]), fill=(255, 190, 200))
+
+
+def g_amulet(d, S):
+    d.arc(P(S, [(0.20, 0.06), (0.80, 0.60)]), 0, 180, fill=(232, 186, 90), width=int(S * 0.03))
+    d.arc(P(S, [(0.20, 0.06), (0.80, 0.60)]), 180, 360, fill=(232, 186, 90), width=int(S * 0.03))
+    d.ellipse(P(S, [(0.34, 0.46), (0.66, 0.78)]), fill=(232, 186, 90))
+    d.ellipse(P(S, [(0.39, 0.51), (0.61, 0.73)]), fill=(80, 200, 220))
+    d.ellipse(P(S, [(0.43, 0.54), (0.49, 0.60)]), fill=(230, 255, 255))
+
+
+# ---------- новые способности (0.10.3) ----------
+
+def g_meteor(d, S):
+    for k, w in ((0, 0.16), (1, 0.11), (2, 0.07)):
+        off = 0.06 * k
+        d.line(P(S, [(0.18 + off, 0.14 - off * 0.2), (0.58, 0.56)]), fill=(255, 150 + 40 * k, 60 + 60 * k), width=int(S * w))
+    d.ellipse(P(S, [(0.46, 0.46), (0.84, 0.84)]), fill=(120, 60, 40))
+    d.ellipse(P(S, [(0.52, 0.52), (0.66, 0.66)]), fill=(255, 160, 60))
+    d.ellipse(P(S, [(0.68, 0.64), (0.76, 0.72)]), fill=(70, 34, 20))
+
+
+def g_shadow(d, S):
+    d.ellipse(P(S, [(0.14, 0.14), (0.86, 0.86)]), fill=(70, 30, 110, 200))
+    d.ellipse(P(S, [(0.26, 0.20), (0.92, 0.86)]), fill=(0, 0, 0, 0))
+    d.polygon(P(S, [(0.74, 0.16), (0.80, 0.22), (0.42, 0.66), (0.36, 0.60)]), fill=(200, 170, 255))
+    d.line(P(S, [(0.30, 0.56), (0.46, 0.72)]), fill=(232, 186, 90), width=int(S * 0.045))
+    d.line(P(S, [(0.38, 0.64), (0.22, 0.84)]), fill=(60, 40, 70), width=int(S * 0.055))
+
+
+def g_nova(d, S):
+    for k in range(8):
+        a = k * math.pi / 4
+        d.polygon(P(S, [(0.5 + math.cos(a) * 0.40, 0.5 + math.sin(a) * 0.40),
+                        (0.5 + math.cos(a + 0.18) * 0.16, 0.5 + math.sin(a + 0.18) * 0.16),
+                        (0.5 + math.cos(a - 0.18) * 0.16, 0.5 + math.sin(a - 0.18) * 0.16)]), fill=(200, 240, 255))
+    d.ellipse(P(S, [(0.22, 0.22), (0.78, 0.78)]), outline=(120, 210, 255), width=int(S * 0.035))
+    d.ellipse(P(S, [(0.40, 0.40), (0.60, 0.60)]), fill=(255, 255, 255))
+
+
+def g_tempest(d, S):
+    for k, (y, w) in enumerate(((0.20, 0.62), (0.34, 0.50), (0.48, 0.38), (0.62, 0.26), (0.74, 0.16))):
+        x = 0.5 + (0.04 if k % 2 else -0.04)
+        d.arc(P(S, [(x - w / 2, y - 0.06), (x + w / 2, y + 0.06)]), 10, 330, fill=(200, 240, 230), width=int(S * 0.045))
+    d.line(P(S, [(0.70, 0.30), (0.62, 0.50), (0.72, 0.52), (0.60, 0.80)]), fill=(255, 236, 90), width=int(S * 0.04))
+
+
+def g_spike(d, S):
+    d.polygon(P(S, [(0.10, 0.86), (0.90, 0.86), (0.90, 0.78), (0.10, 0.78)]), fill=(120, 86, 56))
+    for x, h, w in ((0.30, 0.42, 0.10), (0.52, 0.14, 0.13), (0.72, 0.36, 0.10)):
+        d.polygon(P(S, [(x, h), (x + w, 0.80), (x - w, 0.80)]), fill=(214, 178, 120))
+        d.polygon(P(S, [(x, h), (x + w, 0.80), (x, 0.80)]), fill=(150, 112, 70))
+
+
+def g_horn(d, S):
+    pts = [(0.18 + 0.6 * t, 0.64 - 0.36 * t + 0.2 * math.sin(t * math.pi)) for t in [i / 20 for i in range(21)]]
+    lower = [(x, y + 0.04 + 0.16 * (i / 20)) for i, (x, y) in enumerate(pts)]
+    d.polygon(P(S, pts + lower[::-1]), fill=(236, 222, 190))
+    d.line(P(S, [(0.40, 0.48), (0.42, 0.66)]), fill=(232, 186, 90), width=int(S * 0.04))
+    for k in range(3):
+        a = -0.6 + k * 0.5
+        d.arc(P(S, [(0.62 - 0.1 * k, 0.10 - 0.06 * k), (0.96 + 0.06 * k, 0.44 + 0.06 * k)]), -70, 20, fill=(255, 220, 140), width=int(S * 0.03))
+
+
+def g_wall(d, S):
+    for x in (0.08, 0.36, 0.64):
+        d.rounded_rectangle(P(S, [(x, 0.22), (x + 0.28, 0.80)]), radius=int(S * 0.05), fill=(232, 186, 90))
+        d.rounded_rectangle(P(S, [(x + 0.03, 0.25), (x + 0.25, 0.77)]), radius=int(S * 0.04), fill=(120, 160, 210))
+        d.rectangle(P(S, [(x + 0.12, 0.30), (x + 0.16, 0.72)]), fill=(232, 186, 90))
+
+
+def g_roar(d, S):
+    d.pieslice(P(S, [(0.08, 0.20), (0.68, 0.80)]), -40, 40, fill=(200, 80, 60))
+    d.polygon(P(S, [(0.40, 0.42), (0.46, 0.50), (0.52, 0.42)]), fill=WHITE)
+    d.polygon(P(S, [(0.40, 0.58), (0.46, 0.50), (0.52, 0.58)]), fill=WHITE)
+    for k in range(3):
+        r = 0.18 + k * 0.1
+        d.arc(P(S, [(0.5 - r, 0.5 - r), (0.5 + r, 0.5 + r)]), -40, 40, fill=(255, 200, 120), width=int(S * 0.035))
+
+
+def g_claw(d, S):
+    for k in range(3):
+        x = 0.28 + k * 0.17
+        d.polygon(P(S, [(x + 0.18, 0.14), (x + 0.22, 0.18), (x - 0.02, 0.86), (x - 0.06, 0.80)]), fill=(255, 120, 110))
+        d.line(P(S, [(x + 0.18, 0.16), (x - 0.03, 0.80)]), fill=(255, 230, 220), width=int(S * 0.015))
+
+
+def g_split(d, S):
+    d.ellipse(P(S, [(0.10, 0.40), (0.48, 0.80)]), fill=(120, 230, 210))
+    d.ellipse(P(S, [(0.52, 0.30), (0.90, 0.70)]), fill=(90, 200, 190))
+    d.ellipse(P(S, [(0.18, 0.48), (0.26, 0.56)]), fill=(255, 255, 255, 170))
+    d.ellipse(P(S, [(0.60, 0.38), (0.68, 0.46)]), fill=(255, 255, 255, 170))
+    d.line(P(S, [(0.5, 0.16), (0.5, 0.86)]), fill=(255, 255, 255, 120), width=int(S * 0.02))
+
+
 ICONS = {
     # способности и действия: (верх, низ, глиф)
     "sword": ("#5b6f8f", "#26304a", g_sword),
@@ -489,10 +665,37 @@ ICONS = {
     "pt_skeleton": ("#4a4a3a", "#1a1a10", p_skeleton),
     "pt_trork": ("#6a4a2a", "#22160a", p_trork),
     "pt_unknown": ("#4a4a5a", "#18181e", lambda d, S: g_letter(d, S, "?")),
+    # снаряжение (0.10.3): тип оружия и слот брони; качество показывает рамка tier_*
+    "gear_axe": ("#6a4a3a", "#22140c", g_axe),
+    "gear_mace": ("#5a5a6a", "#1a1a24", g_mace),
+    "gear_spear": ("#5a6a4a", "#1a2410", g_spear),
+    "gear_staff": ("#5a3a8a", "#1a0e30", g_staff),
+    "gear_daggers": ("#4a5a6a", "#141c24", g_daggers),
+    "gear_helm": ("#4a5a7a", "#141c2a", g_helm),
+    "gear_chest": ("#4a5a7a", "#141c2a", g_chest),
+    "gear_gloves": ("#6a4a2a", "#22160a", g_gloves),
+    "gear_boots": ("#6a4a2a", "#22160a", g_boots),
+    "gear_ring": ("#7a3a5a", "#2a0e1e", g_ring),
+    "gear_amulet": ("#2a6a7a", "#0a222a", g_amulet),
+    # способности 0.10
+    "meteor": ("#c4402a", "#3a0c08", g_meteor),
+    "shadow": ("#4a2a6a", "#140a24", g_shadow),
+    "nova": ("#4aa6d6", "#0c2a44", g_nova),
+    "tempest": ("#2a8a7a", "#0a2a26", g_tempest),
+    "spike": ("#8a6a3a", "#2a1c0c", g_spike),
+    "warcry": ("#a86a2a", "#3a2008", g_horn),
+    "wall": ("#4f7aa8", "#1f3352", g_wall),
+    "roar": ("#a8402a", "#3a0e08", g_roar),
+    "claw": ("#8a3a3a", "#2a0c0c", g_claw),
+    "split": ("#2a7a7a", "#0a2a2a", g_split),
 }
 
+# Рамки уровня: одна прозрачная рамка на уровень поверх любой иконки (иконка + рамка = два слоя в слоте),
+# так уровни не множат текстуры. Цвета — как у качества вещей (Equipment.Quality).
+TIERS = {"t1": ((111, 220, 140), 1), "t2": ((127, 178, 255), 2), "t3": ((255, 184, 74), 3)}
 
-SPARKLY = {"magic", "focus", "ether", "levelup", "star", "st_charged", "haste", "st_haste", "thunder", "ice",
+
+SPARKLY = {"meteor", "nova", "tempest", "magic", "focus", "ether", "levelup", "star", "st_charged", "haste", "st_haste", "thunder", "ice",
            "st_frozen", "heal", "regen", "st_regen"}
 
 
@@ -577,6 +780,30 @@ def render(key, size=128):
     return art.downsample(art.img_of(tile), (size, size))
 
 
+def render_tier(tier, size=96):
+    """Прозрачная рамка уровня: цветная металлическая кайма поверх золотой и ромбики-«звёзды» внизу."""
+    color, pips = TIERS[tier]
+    S = size * SS
+    dim = (S, S)
+    pad = int(S * 0.02)
+    shape = art.rounded_mask(dim, pad, int(S * 0.2))
+    ring, _ = art.bevel_ring(dim, shape, max(4, int(S * 0.075)), base=color)
+    glow = np.clip(art.blur_mask(art.erode(shape, S * 0.075), S * 0.04) - art.erode(shape, S * 0.14), 0, 1)
+    out = art.with_alpha(art.solid(dim, color), glow * 0.55)
+    out = art.over(out, ring)
+    gem = Image.new("RGBA", dim, (0, 0, 0, 0))
+    gd = ImageDraw.Draw(gem)
+    r = S * 0.075
+    for k in range(pips):
+        cx = S * 0.5 + (k - (pips - 1) / 2) * r * 2.3
+        cy = S - pad - r * 1.05
+        gd.polygon([(cx, cy - r), (cx + r, cy), (cx, cy + r), (cx - r, cy)], fill=(20, 16, 24, 255))
+        gd.polygon([(cx, cy - r * 0.7), (cx + r * 0.7, cy), (cx, cy + r * 0.7), (cx - r * 0.7, cy)],
+                   fill=tuple(art.lerp(color, (255, 255, 255), 0.35)) + (255,))
+    out = art.over(out, art.arr(gem))
+    return art.downsample(art.img_of(out), (size, size))
+
+
 UI = """Group {{
   Anchor: (Width: {n}, Height: {n});
   Background: (TexturePath: "{key}.png");
@@ -592,6 +819,11 @@ def main():
         for suffix, n in SIZES.items():
             with open(os.path.join(OUT, f"{key}_{suffix}.ui"), "w", encoding="utf-8") as f:
                 f.write(UI.format(n=n, key=key))
+    for tier in TIERS:
+        render_tier(tier).save(os.path.join(OUT, f"tier_{tier}.png"))
+        for suffix, n in SIZES.items():
+            with open(os.path.join(OUT, f"tier_{tier}_{suffix}.ui"), "w", encoding="utf-8") as f:
+                f.write(UI.format(n=n, key=f"tier_{tier}"))
     # список ключей для плагина (какие иконки существуют)
     idx = os.path.join(os.path.dirname(__file__), "..", "hytale-plugin", "src", "main", "resources", "data", "icons.txt")
     os.makedirs(os.path.dirname(idx), exist_ok=True)
@@ -604,6 +836,14 @@ def main():
     sheet = Image.new("RGBA", (cols * 72, rows * 72), (18, 16, 26, 255))
     for i, k in enumerate(keys):
         sheet.alpha_composite(render(k, 64), ((i % cols) * 72 + 4, (i // cols) * 72 + 4))
+    tiers = Image.new("RGBA", (len(TIERS) * 72 + 4, 72), (18, 16, 26, 255))
+    for i, t in enumerate(TIERS):
+        tiers.alpha_composite(render("gear_helm", 64), (i * 72 + 4, 4))
+        tiers.alpha_composite(render_tier(t, 64), (i * 72 + 4, 4))
+    big = Image.new("RGBA", (sheet.width, sheet.height + 72), (18, 16, 26, 255))
+    big.alpha_composite(sheet, (0, 0))
+    big.alpha_composite(tiers, (0, sheet.height))
+    sheet = big
     preview = sys.argv[1] if len(sys.argv) > 1 else os.path.join(os.path.dirname(__file__), "icons_preview.png")
     sheet.save(preview)
     print("icons:", len(keys), "->", os.path.abspath(OUT))

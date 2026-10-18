@@ -312,7 +312,7 @@ public final class BattleMenuPage extends InteractiveCustomUIPage<BattleMenuPage
             BattleMenu.Option o = opts.get(i);
             cmd.set("#Opt" + i + ".Text", o.label());
             cmd.set("#Opt" + i + "Hint.Text", o.enabled() ? o.hint() : "нельзя");
-            icon(cmd, "#Opt" + i + "Icon", iconKey(o.icon()), "s");
+            icon(cmd, "#Opt" + i + "Icon", iconKey(o.icon()), "s", o.tier());
         }
         cmd.set("#Back.Visible", m.canGoBack());
     }
@@ -334,23 +334,38 @@ public final class BattleMenuPage extends InteractiveCustomUIPage<BattleMenuPage
 
     private static final int INS_LINES = 16;
 
-    /** Журнал боя — книга слева внизу: правая страница текущая, левая прошлая; новая открывается сама. */
+    /** Журнал боя слева внизу: последние строки, свежие (этот и прошлый ход) яркие, старые тусклее. */
     private void fillLog(UICommandBuilder cmd) {
-        List<List<BattleSession.LogEntry>> pages = BookPages.paginate(session.bookSince(0));
-        fillBookPage(cmd, "L", pages, pages.size() - 2);
-        fillBookPage(cmd, "R", pages, pages.size() - 1);
+        List<BattleSession.LogEntry> all = session.journal();
+        List<BattleSession.LogEntry> tail = all.subList(Math.max(0, all.size() - LOG_LINES), all.size());
+        int now = session.turnNo();
+        List<Message> lines = new ArrayList<>();
+        for (BattleSession.LogEntry e : tail) {
+            String base = e.color() == null ? RichText.DARK.text() : e.color();
+            if (e.turn() < now - 1) base = dim(base);
+            lines.add(RichText.line(e.text(), RichText.DARK, base, names(true), names(false)));
+        }
+        cmd.set("#LogText.TextSpans", RichText.lines(lines));
+        cmd.set("#LogSub.Text", session.encounterName());
+        cmd.set("#LogTurn.Text", now > 0 ? "Ход " + now : "");
     }
 
-    private void fillBookPage(UICommandBuilder cmd, String side, List<List<BattleSession.LogEntry>> pages, int index) {
-        List<Message> lines = new ArrayList<>();
-        if (index >= 0) {
-            for (BattleSession.LogEntry e : pages.get(index)) {
-                lines.add(RichText.line(e.text(), RichText.PARCHMENT, BattleHud.ink(e.color()), names(true), names(false)));
-            }
+    /** Строк в журнале (высота панели 280, шрифт 13). */
+    static final int LOG_LINES = 13;
+
+    /** Цвет старой строки: на 45% ближе к фону панели. */
+    static String dim(String hex) {
+        try {
+            int c = Integer.parseInt(hex.substring(1, 7), 16);
+            int r = (c >> 16) & 255, g = (c >> 8) & 255, b = c & 255;
+            int br = 0x10, bg = 0x18, bb = 0x26;
+            r = (int) (r * 0.55 + br * 0.45);
+            g = (int) (g * 0.55 + bg * 0.45);
+            b = (int) (b * 0.55 + bb * 0.45);
+            return String.format("#%02x%02x%02x", r, g, b);
+        } catch (RuntimeException e) {
+            return hex;
         }
-        cmd.set("#Book" + side + ".TextSpans", RichText.lines(lines));
-        cmd.set("#Book" + side + "Num.Text", index >= 0 ? "— " + (index + 1) + " —" : "");
-        cmd.set("#Book" + side + "Head.Text", index == 0 ? session.encounterName() : "");
     }
 
     /** Окно «Осмотр и эффекты»: выбранный боец, его эффекты с ходами и описанием, иммунитеты, слабости. */
@@ -425,12 +440,28 @@ public final class BattleMenuPage extends InteractiveCustomUIPage<BattleMenuPage
     }
 
     private void icon(UICommandBuilder cmd, String slot, String key, String size) {
+        icon(cmd, slot, key, size, 0);
+    }
+
+    private void icon(UICommandBuilder cmd, String slot, String key, String size, int tier) {
         if (!session.settings().uiIcons) return;
-        String want = key == null || key.isEmpty() ? "" : key + "_" + size;
-        if (want.equals(shownIcons.get(slot))) return;
-        shownIcons.put(slot, want);
+        putIcon(cmd, shownIcons, slot, key, size, tier);
+    }
+
+    /**
+     * Вставляет иконку в слот: Icons/&lt;ключ&gt;_&lt;размер&gt;.ui и, если tier &gt; 0, поверх неё рамку уровня
+     * Icons/tier_t&lt;N&gt;_&lt;размер&gt;.ui (одна прозрачная текстура на уровень для всех иконок). shown — что уже стоит в слотах.
+     */
+    static void putIcon(UICommandBuilder cmd, Map<String, String> shown, String slot, String key, String size, int tier) {
+        boolean has = key != null && !key.isEmpty();
+        int t = Math.max(0, Math.min(3, tier));
+        String want = has ? key + "_" + size + (t > 0 ? "+" + t : "") : "";
+        if (want.equals(shown.get(slot))) return;
+        shown.put(slot, want);
         cmd.clear(slot);
-        if (!want.isEmpty()) cmd.append(slot, ICONS + want + ".ui");
+        if (!has) return;
+        cmd.append(slot, ICONS + key + "_" + size + ".ui");
+        if (t > 0) cmd.append(slot, ICONS + "tier_t" + t + "_" + size + ".ui");
     }
 
     private void statusIcons(UICommandBuilder cmd, String slot, Combatant c) {

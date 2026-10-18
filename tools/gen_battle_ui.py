@@ -315,21 +315,21 @@ def battle():
                                  "Padding: (Full: 12);"],
                   [panel_title("ОЧЕРЕДЬ ХОДОВ", "QueueTitle"), spacer(h=4)]
                   + sum(([queue_slot(i), spacer(h=3)] for i in range(QUEUE)), []))
-    # Журнал — раскрытая книга (jr_book.png): слева прошлая страница, справа текущая; новая страница
-    # открывается сама, когда правая заполнена (BookPages.java). HUD клиент прячет при открытом окне,
-    # поэтому книга живёт здесь, без покадровой анимации (обновления окна ждут ответа клиента).
+    # Журнал — тёмная панель в стиле остального окна (jr_panel): заголовок, золотая черта, строки журнала
+    # цветом события; старые строки тусклее (BattleMenuPage.fillLog). Книга-пергамент выбивалась из стиля.
     bh = BOOK_H - 10
-    pl, pr, pt, pw = 28, 238, 20, 176
-    def page_label(id_, left, top, h, size, color, extra=""):
-        return (f'Label #{id_} {{ Text: ""; Anchor: (Left: {left}, Top: {top}, Width: {pw}, Height: {h}); '
-                f"Style: (FontSize: {size}, TextColor: {color}{extra}); }}")
-    log = group("LogPanel", [f"Anchor: (Width: {BOOK_W}, Height: {bh});", tex("jr_book")], [
-        page_label("BookLHead", pl, pt - 4, 16, 12, "#7a6040", ", RenderBold: true, HorizontalAlignment: Center"),
-        page_label("BookRHead", pr, pt - 4, 16, 12, "#7a6040", ", RenderBold: true, HorizontalAlignment: Center"),
-        page_label("BookL", pl, pt + 16, bh - pt - 48, 13, "#3a2a1a", ", Wrap: true"),
-        page_label("BookR", pr, pt + 16, bh - pt - 48, 13, "#3a2a1a", ", Wrap: true"),
-        page_label("BookLNum", pl, bh - 28, 14, 11, "#8a7050", ", HorizontalAlignment: Center"),
-        page_label("BookRNum", pr, bh - 28, 14, 11, "#8a7050", ", HorizontalAlignment: Center"),
+    log = group("LogPanel", [f"Anchor: (Width: {BOOK_W}, Height: {bh});", "LayoutMode: Top;", skin("jr_panel"),
+                             "Padding: (Left: 14, Right: 12, Top: 10, Bottom: 8);"], [
+        group("", ["Anchor: (Height: 20);", "LayoutMode: Left;"], [
+            label("LogTitle", "ЖУРНАЛ БОЯ", 13, INK_TITLE, True, height=20, width=130),
+            label("LogSub", "", 12, SUB, height=20, flex=True),
+            label("LogTurn", "", 12, GOLD, height=20, width=80),
+        ]),
+        spacer(h=3),
+        "Group { Anchor: (Height: 1); Background: #e8c46a(0.45); }",
+        "Group { Anchor: (Height: 1); Background: #000000(0.35); }",
+        spacer(h=4),
+        label("LogText", "", 13, TEXT, flex=True, wrap=True),
     ])
     inspect = group("InsPanel", [f"Anchor: (Width: {INS_W});", "LayoutMode: Top;", skin("jr_panel"),
                                  "Padding: (Full: 13);"], [
@@ -452,6 +452,47 @@ def hud():
           "// Собрано tools/gen_battle_ui.py — правь скрипт.\n\n" + root + "\n")
 
 
+# ---------- общий стиль меню (0.10.3) ----------
+# Меню вне боя в том же стиле, что окно боя: золотая рамка окна jr_panel_gold, заголовок на ленте jr_banner,
+# колонки на jr_panel, ячейки jr_slot, выбор — золотая рамка jr_panel_gold.
+
+def menu_title(text, sub_id=None, sub="", width=560):
+    kids = [label("", text, 21, GOLD, True, height=26, center=True)]
+    kids.append(label(sub_id or "", sub, 12, SUB, height=16, center=True))
+    return group("", ["Anchor: (Height: 52);", "LayoutMode: Left;"], [
+        spacer(flex=True),
+        group("", [f"Anchor: (Width: {width}, Height: 52);", "LayoutMode: Top;", tex("jr_banner"), "Padding: (Top: 6);"], kids),
+        spacer(flex=True),
+    ])
+
+
+def menu_window(width, children, pad=16):
+    return group("Window", [f"Anchor: (Width: {width});", "LayoutMode: Top;", skin("jr_panel_gold"),
+                            f"Padding: (Left: {pad}, Right: {pad}, Top: 10, Bottom: {pad});"], children)
+
+
+def centered(height, window):
+    return group("", ["LayoutMode: Top;"], [
+        spacer(flex=True),
+        group("", [f"Anchor: (Height: {height});", "LayoutMode: Left;"], [spacer(flex=True), window, spacer(flex=True)]),
+        spacer(flex=True),
+    ])
+
+
+def column(id_, props, children, pad=10):
+    return group(id_, props + ["LayoutMode: Top;", skin("jr_panel"), f"Padding: (Full: {pad});"], children)
+
+
+def sel_frame(id_, w, h, border=14):
+    """Подсветка выбора: золотая рамка поверх ячейки (видимость ставит плагин)."""
+    return f"Group #{id_} {{ Anchor: (Left: 0, Top: 0, Width: {w}, Height: {h}); {skin('jr_panel_gold', border)} }}"
+
+
+def divider():
+    return ("Group { Anchor: (Height: 1); Background: #e8c46a(0.40); }\n"
+            "Group { Anchor: (Height: 1); Background: #000000(0.35); }")
+
+
 # ---------- круговая сетка навыков ----------
 
 GRID = 800
@@ -540,12 +581,14 @@ def node(i):
     left, top = int(x) - NODE // 2, int(y) - NODE // 2
     lock = SECTOR_LOCK[sector(i)] if i else SECTOR_LOCK["X"]
     return group(f"G{i}", [f"Anchor: (Left: {left}, Top: {top}, Width: {NODE}, Height: {NODE});"], [
-        # выбранный узел — золотая аура вокруг
-        f"Group #G{i}Sel {{ Anchor: (Left: 0, Top: 0, Width: 72, Height: 72); Background: #e8c46a(0.30);\n"
-        f"  Group {{ Anchor: (Left: 2, Top: 2, Width: 68, Height: 68); Background: #fff0b0(0.55); }}\n}}",
-        f"Group #G{i}Lock {{ Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: {lock}; }}",
-        f"Group #G{i}Avail {{ Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: #3d7bd9; }}",
-        f"Group #G{i}Open {{ Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: {GOLD}; }}",
+        # выбранный узел — мягкое золотое свечение вокруг
+        f"Group #G{i}Sel {{ Anchor: (Left: 0, Top: 0, Width: 72, Height: 72); Background: #e8c46a(0.25);\n"
+        f"  Group {{ Anchor: (Left: 2, Top: 2, Width: 68, Height: 68); Background: #fff0b0(0.35); }}\n}}",
+        # закрыт — тёмная ячейка с оттенком сектора, доступен — синяя рамка, открыт — золотая
+        f"Group #G{i}Lock {{ Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); {skin('jr_slot', 8)}\n"
+        f"  Group {{ Anchor: (Left: 4, Top: 4, Width: 56, Height: 56); Background: {lock}; }}\n}}",
+        f"Group #G{i}Avail {{ Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); {skin('jr_panel_party', 16)} }}",
+        f"Group #G{i}Open {{ Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); {skin('jr_panel_gold', 16)} }}",
         # кнопка шире иконки: край кнопки вокруг иконки всегда кликается
         button(f"G{i}Btn", "", 52, 52, left=10, top=10),
         f"Group #G{i}Icon {{ Anchor: (Left: 16, Top: 16, Width: 40, Height: 40); }}",
@@ -561,21 +604,23 @@ def progression():
     tabs = group("Tabs", ["Anchor: (Height: 34);", "LayoutMode: Left;"],
                  sum(([button(f"Tab{i}", "", 190, 32), spacer(w=6)] for i in range(TABS)), [])
                  + [spacer(flex=True), label("Points", "", 15, GOLD, True, width=260, height=32)])
-    hero = group("HeroCol", ["Anchor: (Width: 290);", "LayoutMode: Top;", f"Background: {PANEL2};", "Padding: (Full: 10);"], [
+    hero = column("HeroCol", ["Anchor: (Width: 290);"], [
         group("", ["Anchor: (Height: 92);", "LayoutMode: Left;"], [
             slot("HeroIcon", 88),
             spacer(w=10),
             group("", ["FlexWeight: 1;", "LayoutMode: Top;"], [
-                label("HeroName", "", 20, TEXT, True, height=28),
+                label("HeroName", "", 20, PARTY_NAME, True, height=28),
                 label("HeroTitle", "", 13, GOLD, height=20),
-                label("HeroLevel", "", 12, DIM, height=36, wrap=True),
+                label("HeroLevel", "", 12, SUB, height=36, wrap=True),
             ]),
         ]),
-        bar("Exp", 266, "#2a2410", GOLD, h=6),
-        spacer(h=8),
+        tbar("Exp", 266, "jr_bar_ap", h=7),
+        spacer(h=6),
+        divider(),
+        spacer(h=6),
         label("HeroStats", "", 12, TEXT, height=96, wrap=True),
-        label("HeroPassives", "", 12, "#c58cff", height=60, wrap=True),
-        label("Known", "", 12, DIM, flex=True, wrap=True),
+        label("HeroPassives", "", 12, "#c9a0ff", height=60, wrap=True),
+        label("Known", "", 12, SUB, flex=True, wrap=True),
         button("AddExp", "+100 опыта (тест)", 266, 30),
         spacer(h=4),
         button("Respec", "Сбросить сетку", 266, 30),
@@ -585,27 +630,29 @@ def progression():
     on = [full(f"Edge{k}", edge_dots(a, b, GOLD)) for k, (a, b) in enumerate(edge_list)]
     rings = full("Rings", sum((ring_dots(r) for r in (1, 2, 3, 4)), []))
     labels = full("Sectors", [
-        sector_label("ЗАЩИТНИК", "#8fbaff", GRID - 150, 8),
-        sector_label("ЦЕЛИТЕЛЬ", "#8fe0a0", GRID - 150, GRID - 30),
-        sector_label("БОЕЦ", "#ff9a8a", 12, 8),
-        sector_label("мосты — гибриды", "#9fb0c6", 12, GRID - 30),
+        sector_label("ЗАЩИТНИК", "#8fbaff", GRID - 150, 10),
+        sector_label("ЦЕЛИТЕЛЬ", "#8fe0a0", GRID - 150, GRID - 32),
+        sector_label("БОЕЦ", "#ff9a8a", 16, 10),
+        sector_label("мосты — гибриды", "#9fb0c6", 16, GRID - 32),
     ])
-    grid = group("Grid", [f"Anchor: (Width: {GRID}, Height: {GRID});", f"Background: {PANEL};"],
+    grid = group("Grid", [f"Anchor: (Width: {GRID}, Height: {GRID});", skin("jr_panel")],
                  [rings, labels, off] + on + [node(i) for i in range(SIZE)])
-    detail = group("DetailCol", ["FlexWeight: 1;", "LayoutMode: Top;", f"Background: {PANEL2};", "Padding: (Full: 10);"], [
+    detail = column("DetailCol", ["FlexWeight: 1;"], [
         group("", ["Anchor: (Height: 44);", "LayoutMode: Left;"], [
             slot("SelIcon", 40),
             spacer(w=8),
             group("", ["FlexWeight: 1;", "LayoutMode: Top;"], [
                 label("SelTitle", "", 16, GOLD, True, height=22),
-                label("SelKind", "", 12, DIM, height=18),
+                label("SelKind", "", 12, SUB, height=18),
             ]),
         ]),
+        spacer(h=4),
+        divider(),
         spacer(h=6),
         label("SelText", "", 12, TEXT, flex=True, wrap=True),
         group("", ["Anchor: (Height: 30);", "LayoutMode: Left;"], [
             button("PrevNode", "<", 60, 28), spacer(w=6),
-            label("", "соседние узлы", 12, DIM, height=28, flex=True),
+            label("", "соседние узлы", 12, SUB, height=28, flex=True),
             button("NextNode", ">", 60, 28),
         ]),
         spacer(h=6),
@@ -615,25 +662,17 @@ def progression():
         spacer(h=4),
         button("Close", "Закрыть", 250, 32, cancel=True),
     ])
-    window = group("Window", ["Anchor: (Width: 1400);", "LayoutMode: Top;", "Background: #070b12(0.95);", "Padding: (Full: 12);"], [
-        group("", ["Anchor: (Height: 32);", "LayoutMode: Left;"], [
-            label("", "СЕТКА НАВЫКОВ", 22, GOLD, True, height=30, flex=True),
-            label("", "открывай узлы рядом с уже открытыми", 12, DIM, width=330, height=30),
-        ]),
+    window = menu_window(1400, [
+        menu_title("СЕТКА НАВЫКОВ", sub="открывай узлы рядом с уже открытыми"),
         tabs,
         spacer(h=8),
         group("", [f"Anchor: (Height: {GRID});", "LayoutMode: Left;"], [hero, spacer(w=10), grid, spacer(w=10), detail]),
-    ])
-    root = group("", ["LayoutMode: Top;"], [
-        spacer(flex=True),
-        group("", [f"Anchor: (Height: {GRID + 110});", "LayoutMode: Left;"], [spacer(flex=True), window, spacer(flex=True)]),
-        spacer(flex=True),
     ])
     text = ('$C = "../Common.ui";\n\n'
             "// Круговая сетка навыков. Собрано tools/gen_battle_ui.py — правь скрипт.\n"
             "// Узел #G<n>: слои #G<n>Sel (выбран), #G<n>Lock/Avail/Open (состояние), кнопка #G<n>Btn, иконка #G<n>Icon.\n"
             "// Рёбра: серые точки #EdgesOff всегда, золотые #Edge<k> — когда оба конца открыты.\n\n"
-            + root + "\n")
+            + centered(GRID + 130, window) + "\n")
     write("Progression.ui", text)
     # порядок рёбер нужен плагину: печатаем для проверки с Progression.Grid.edges()
     print("edges:", edge_list)
@@ -642,12 +681,20 @@ def progression():
 # ---------- окно перед боем ----------
 
 def prebattle():
-    enemies = group("Enemies", ["Anchor: (Height: 74);", "LayoutMode: Left;"], [spacer(flex=True)] + sum((
-        [group(f"En{i}", ["Anchor: (Width: 112);", "LayoutMode: Top;"], [
-            group("", ["Anchor: (Height: 42);", "LayoutMode: Left;"], [spacer(w=34), slot(f"En{i}Icon", 40)]),
-            label(f"En{i}Name", "", 12, "#ffb3a6", True, height=16),
-            label(f"En{i}Hp", "", 11, DIM, height=14),
-        ]), spacer(w=4)] for i in range(ENEMIES)), []) + [spacer(flex=True)])
+    def card(i):
+        return group(f"En{i}", ["Anchor: (Width: 112);", "LayoutMode: Top;"], [
+            group("", ["Anchor: (Height: 52);", "LayoutMode: Left;"], [
+                spacer(flex=True),
+                group("", ["Anchor: (Width: 52, Height: 52);", skin("jr_slot", 8)], [
+                    f"Group #En{i}Icon {{ Anchor: (Left: 6, Top: 6, Width: 40, Height: 40); }}"]),
+                spacer(flex=True),
+            ]),
+            spacer(h=2),
+            label(f"En{i}Name", "", 12, ENEMY_NAME, True, height=16, center=True),
+            label(f"En{i}Hp", "", 11, SUB, height=14, center=True),
+        ])
+    enemies = group("Enemies", ["Anchor: (Height: 86);", "LayoutMode: Left;"], [spacer(flex=True)] + sum((
+        [card(i), spacer(w=4)] for i in range(ENEMIES)), []) + [spacer(flex=True)])
     buttons = group("", ["Anchor: (Height: 50);", "LayoutMode: Left;"], [
         spacer(flex=True),
         aura("FightBox", 244, 48, ["LayoutMode: Left;"], [button("Fight", "Сражаться", 236, 40)], inset=4),
@@ -655,24 +702,26 @@ def prebattle():
         aura("FleeBox", 244, 48, ["LayoutMode: Left;"], [button("Flee", "Сбежать", 236, 40, cancel=True)], inset=4),
         spacer(flex=True),
     ])
-    window = group("Window", ["Anchor: (Width: 640);", "LayoutMode: Top;", "Background: #070b12(0.94);",
-                              "Padding: (Full: 16);"], [
-        label("Title", "", 22, GOLD, True, height=30),
-        label("Sub", "", 13, TEXT, height=36, wrap=True),
+    title = group("", ["Anchor: (Height: 56);", "LayoutMode: Left;"], [
+        spacer(flex=True),
+        group("", ["Anchor: (Width: 600, Height: 56);", "LayoutMode: Top;", tex("jr_banner"), "Padding: (Top: 6);"], [
+            label("Title", "", 21, GOLD, True, height=26, center=True),
+            label("Sub", "", 12, TEXT, height=18, center=True),
+        ]),
+        spacer(flex=True),
+    ])
+    window = menu_window(680, [
+        title,
         spacer(h=6),
-        enemies,
+        group("", ["LayoutMode: Top;", skin("jr_panel"), "Padding: (Full: 8);", "Anchor: (Height: 104);"], [enemies]),
         spacer(h=8),
-        label("Chance", "", 13, TEXT, height=38, wrap=True),
-        spacer(h=8),
+        label("Chance", "", 13, TEXT, height=38, wrap=True, center=True),
+        spacer(h=6),
         buttons,
     ])
-    root = group("", ["LayoutMode: Top;"], [
-        spacer(flex=True),
-        group("", ["Anchor: (Height: 300);", "LayoutMode: Left;"], [spacer(flex=True), window, spacer(flex=True)]),
-        spacer(flex=True),
-    ])
     write("PreBattle.ui", '$C = "../Common.ui";\n\n'
-          "// Окно перед боем: «Сражаться / Сбежать». Собрано tools/gen_battle_ui.py — правь скрипт.\n\n" + root + "\n")
+          "// Окно перед боем: «Сражаться / Сбежать». Собрано tools/gen_battle_ui.py — правь скрипт.\n\n"
+          + centered(330, window) + "\n")
 
 
 # ---------- рюкзак ----------
@@ -685,9 +734,8 @@ BAG_SORTS = [("SortKind", "Тип"), ("SortName", "Имя"), ("SortCount", "Ко
 def bag_cell(i):
     left, top = (i % BAG_COLS) * CELL, (i // BAG_COLS) * CELL
     return group(f"S{i}", [f"Anchor: (Left: {left}, Top: {top}, Width: {CELL - 6}, Height: {CELL - 6});"], [
-        f"Group #S{i}Sel {{ Anchor: (Left: 0, Top: 0, Width: 80, Height: 80); Background: #e8c46a(0.35);\n"
-        f"  Group {{ Anchor: (Left: 2, Top: 2, Width: 76, Height: 76); Background: #fff0b0(0.45); }}\n}}",
-        f"Group #S{i}Back {{ Anchor: (Left: 4, Top: 4, Width: 72, Height: 72); Background: #1a2438; }}",
+        f"Group #S{i}Back {{ Anchor: (Left: 2, Top: 2, Width: 76, Height: 76); {skin('jr_slot', 8)} }}",
+        sel_frame(f"S{i}Sel", 80, 80, 16),
         button(f"S{i}Btn", "", 64, 64, left=8, top=8),
         f"Group #S{i}Icon {{ Anchor: (Left: 16, Top: 14, Width: 48, Height: 48); }}",
         f'Label #S{i}Count {{ Text: ""; Anchor: (Left: 44, Top: 58, Width: 34, Height: 18); '
@@ -698,56 +746,49 @@ def bag_cell(i):
 def backpack():
     tabs = group("Tabs", ["Anchor: (Height: 34);", "LayoutMode: Left;"],
                  sum(([button(f"Tab{i}", t, 112, 32), spacer(w=5)] for i, t in enumerate(BAG_TABS)), [])
-                 + [spacer(flex=True), label("", "Сортировка:", 13, DIM, width=100, height=32)]
+                 + [spacer(flex=True), label("", "Сортировка:", 13, SUB, width=100, height=32)]
                  + sum(([button(bid, t, 96, 32), spacer(w=4)] for bid, t in BAG_SORTS), []))
     grid_w, grid_h = BAG_COLS * CELL, BAG_ROWS * CELL
     grid = group("Grid", [f"Anchor: (Width: {grid_w}, Height: {grid_h});"], [bag_cell(i) for i in range(BAG_COLS * BAG_ROWS)])
-    left = group("GridCol", [f"Anchor: (Width: {grid_w + 20});", "LayoutMode: Top;", f"Background: {PANEL};",
-                             "Padding: (Full: 10);"], [
+    left = column("GridCol", [f"Anchor: (Width: {grid_w + 20});"], [
         grid,
         spacer(h=6),
         group("", ["Anchor: (Height: 30);", "LayoutMode: Left;"], [
             button("PrevPage", "<", 60, 28), spacer(w=6),
-            label("Page", "", 13, DIM, height=28, flex=True),
+            label("Page", "", 13, SUB, height=28, flex=True, center=True),
             button("NextPage", ">", 60, 28),
         ]),
-        label("Empty", "", 13, DIM, height=24),
+        label("Empty", "", 13, SUB, height=24),
     ])
-    detail = group("DetailCol", ["FlexWeight: 1;", "LayoutMode: Top;", f"Background: {PANEL2};", "Padding: (Full: 12);"], [
+    detail = column("DetailCol", ["FlexWeight: 1;"], [
         group("", ["Anchor: (Height: 68);", "LayoutMode: Left;"], [
-            slot("SelIcon", 64),
+            group("", ["Anchor: (Width: 68, Height: 68);", skin("jr_slot", 8)], [
+                "Group #SelIcon { Anchor: (Left: 10, Top: 10, Width: 48, Height: 48); }"]),
             spacer(w=10),
             group("", ["FlexWeight: 1;", "LayoutMode: Top;"], [
                 label("SelName", "", 18, GOLD, True, height=26),
-                label("SelKind", "", 12, DIM, height=20),
+                label("SelKind", "", 12, SUB, height=20),
             ]),
         ]),
-        spacer(h=8),
+        spacer(h=6),
+        divider(),
+        spacer(h=6),
         label("SelText", "", 13, TEXT, flex=True, wrap=True),
         label("Message", "", 12, "#ffd27a", height=36, wrap=True),
         button("Drop", "Выбросить 1", 300, 32),
         spacer(h=6),
         button("Close", "Закрыть", 300, 32, cancel=True),
-    ])
-    window = group("Window", ["Anchor: (Width: 1000);", "LayoutMode: Top;", "Background: #070b12(0.95);",
-                              "Padding: (Full: 12);"], [
-        group("", ["Anchor: (Height: 32);", "LayoutMode: Left;"], [
-            label("", "РЮКЗАК", 22, GOLD, True, height=30, flex=True),
-            label("Total", "", 13, DIM, width=360, height=30),
-        ]),
+    ], pad=12)
+    window = menu_window(1000, [
+        menu_title("РЮКЗАК", "Total"),
         tabs,
         spacer(h=8),
         group("", [f"Anchor: (Height: {grid_h + 84});", "LayoutMode: Left;"], [left, spacer(w=10), detail]),
     ])
-    root = group("", ["LayoutMode: Top;"], [
-        spacer(flex=True),
-        group("", [f"Anchor: (Height: {grid_h + 170});", "LayoutMode: Left;"], [spacer(flex=True), window, spacer(flex=True)]),
-        spacer(flex=True),
-    ])
     write("Backpack.ui", '$C = "../Common.ui";\n\n'
           "// Рюкзак: вкладки-фильтры #Tab0..4, сортировка #SortKind/#SortName/#SortCount, ячейки #S<n>\n"
           "// (#S<n>Sel — выбрана, #S<n>Btn — кнопка, #S<n>Icon — иконка, #S<n>Count — количество).\n"
-          "// Собрано tools/gen_battle_ui.py — правь скрипт.\n\n" + root + "\n")
+          "// Собрано tools/gen_battle_ui.py — правь скрипт.\n\n" + centered(grid_h + 200, window) + "\n")
 
 
 # ---------- экипировка ----------
@@ -755,16 +796,18 @@ def backpack():
 EQ_SLOTS = 8
 EQ_ITEMS = 8
 EQ_CMP = 12
-EQ_ROW = 38
+EQ_ROW = 40
 
 
 def sel_row(id_, w, h, text_w, extra=None):
-    """Строка-кнопка с подсветкой выбора #<id>Sel под ней; extra — подпись справа (#<id>Q)."""
-    kids = [f"Group #{id_}Sel {{ Anchor: (Left: 0, Top: 0, Width: {w}, Height: {h}); Background: #e8c46a(0.35);\n"
-            f"  Group {{ Anchor: (Left: 2, Top: 2, Width: {w - 4}, Height: {h - 4}); Background: #fff0b0(0.30); }}\n}}",
-            button(f"{id_}Btn", "", text_w, h - 6, left=3, top=3)]
+    """Строка: ячейка с иконкой #<id>Icon слева, кнопка #<id>Btn, золотая рамка выбора #<id>Sel;
+    extra — подпись справа (#<id>Q)."""
+    kids = [f"Group {{ Anchor: (Left: 0, Top: 0, Width: {w}, Height: {h}); {skin('jr_slot', 8)} }}",
+            sel_frame(f"{id_}Sel", w, h, 12),
+            f"Group #{id_}Icon {{ Anchor: (Left: 6, Top: 5, Width: 30, Height: 30); }}",
+            button(f"{id_}Btn", "", text_w - 40, h - 8, left=40, top=4)]
     if extra:
-        kids.append(f'Label #{id_}Q {{ Text: ""; Anchor: (Left: {text_w + 10}, Top: 9, Width: {w - text_w - 12}, Height: 20); '
+        kids.append(f'Label #{id_}Q {{ Text: ""; Anchor: (Left: {text_w + 8}, Top: 10, Width: {w - text_w - 12}, Height: 20); '
                     f"Style: (FontSize: 12, TextColor: {DIM}, RenderBold: true); }}")
     return group(id_, [f"Anchor: (Width: {w}, Height: {h});"], kids)
 
@@ -772,34 +815,49 @@ def sel_row(id_, w, h, text_w, extra=None):
 def equipment():
     tabs = group("Tabs", ["Anchor: (Height: 34);", "LayoutMode: Left;"],
                  sum(([button(f"Tab{i}", "", 200, 32), spacer(w=6)] for i in range(PARTY)), [])
-                 + [spacer(flex=True), label("Hint", "", 12, DIM, width=330, height=32, wrap=True)])
-    left = group("SlotCol", ["Anchor: (Width: 330);", "LayoutMode: Top;", f"Background: {PANEL};", "Padding: (Full: 8);"], [
-        label("HeroName", "", 18, GOLD, True, height=24),
-        label("HeroSub", "", 12, DIM, height=18),
+                 + [spacer(flex=True), label("Hint", "", 12, SUB, width=330, height=32, wrap=True)])
+    rows = []
+    for i in range(EQ_SLOTS):
+        rows += [sel_row(f"Slot{i}", 314, EQ_ROW, 310), spacer(h=2)]
+    left = column("SlotCol", ["Anchor: (Width: 334);"], [
+        label("HeroName", "", 18, PARTY_NAME, True, height=24),
+        label("HeroSub", "", 12, SUB, height=18),
         spacer(h=4),
-    ] + [sel_row(f"Slot{i}", 314, EQ_ROW, 308) for i in range(EQ_SLOTS)] + [
-        spacer(h=4),
+    ] + rows + [
+        spacer(h=2),
         label("HeroStats", "", 12, TEXT, height=52, wrap=True),
     ])
-    middle = group("ListCol", ["FlexWeight: 1;", "LayoutMode: Top;", f"Background: {PANEL2};", "Padding: (Full: 8);"], [
+    items = []
+    for i in range(EQ_ITEMS):
+        items += [sel_row(f"Item{i}", 380, EQ_ROW, 270, extra=True), spacer(h=2)]
+    middle = column("ListCol", ["FlexWeight: 1;"], [
         label("ListTitle", "", 16, GOLD, True, height=24),
-        label("ListSub", "", 12, DIM, height=18),
+        label("ListSub", "", 12, SUB, height=18),
         spacer(h=4),
-    ] + [sel_row(f"Item{i}", 380, EQ_ROW, 262, extra=True) for i in range(EQ_ITEMS)] + [
-        spacer(h=4),
+    ] + items + [
+        spacer(h=2),
         group("", ["Anchor: (Height: 30);", "LayoutMode: Left;"], [
             button("PrevPage", "<", 50, 28), spacer(w=6),
-            label("Page", "", 12, DIM, height=28, flex=True),
+            label("Page", "", 12, SUB, height=28, flex=True, center=True),
             button("NextPage", ">", 50, 28),
         ]),
-        label("Empty", "", 12, DIM, height=40, wrap=True),
+        label("Empty", "", 12, SUB, height=40, wrap=True),
     ])
-    right = group("CmpCol", ["Anchor: (Width: 360);", "LayoutMode: Top;", f"Background: {PANEL};", "Padding: (Full: 10);"], [
-        label("CmpTitle", "", 17, GOLD, True, height=24),
-        label("CmpSub", "", 12, DIM, height=18),
+    right = column("CmpCol", ["Anchor: (Width: 364);"], [
+        group("", ["Anchor: (Height: 44);", "LayoutMode: Left;"], [
+            group("", ["Anchor: (Width: 44, Height: 44);", skin("jr_slot", 8)], [
+                "Group #CmpIcon { Anchor: (Left: 2, Top: 2, Width: 40, Height: 40); }"]),
+            spacer(w=8),
+            group("", ["FlexWeight: 1;", "LayoutMode: Top;"], [
+                label("CmpTitle", "", 17, GOLD, True, height=24),
+                label("CmpSub", "", 12, SUB, height=18),
+            ]),
+        ]),
+        spacer(h=4),
+        divider(),
         spacer(h=4),
     ] + [label(f"Cmp{i}", "", 13, TEXT, height=19) for i in range(EQ_CMP)] + [
-        label("CmpDesc", "", 12, DIM, height=58, wrap=True),
+        label("CmpDesc", "", 12, SUB, height=58, wrap=True),
         label("Message", "", 12, "#ffd27a", height=32, wrap=True),
         group("", ["Anchor: (Height: 34);", "LayoutMode: Left;"], [
             button("Equip", "Надеть", 168, 32), spacer(w=4), button("Unequip", "Снять", 168, 32)]),
@@ -807,25 +865,53 @@ def equipment():
         group("", ["Anchor: (Height: 34);", "LayoutMode: Left;"], [
             button("Back", "Меню героя", 168, 32), spacer(w=4), button("Close", "Закрыть", 168, 32, cancel=True)]),
     ])
-    body_h = 24 + 18 + 4 + EQ_SLOTS * EQ_ROW + 4 + 52 + 16
-    window = group("Window", ["Anchor: (Width: 1130);", "LayoutMode: Top;", "Background: #070b12(0.95);",
-                              "Padding: (Full: 12);"], [
-        group("", ["Anchor: (Height: 32);", "LayoutMode: Left;"], [
-            label("", "ЭКИПИРОВКА", 22, GOLD, True, height=30, flex=True),
-        ]),
+    body_h = 24 + 18 + 4 + EQ_SLOTS * (EQ_ROW + 2) + 2 + 52 + 22
+    window = menu_window(1150, [
+        menu_title("ЭКИПИРОВКА", sub="оружие, броня и аксессуары партии"),
         tabs,
         spacer(h=8),
         group("", [f"Anchor: (Height: {body_h});", "LayoutMode: Left;"], [left, spacer(w=8), middle, spacer(w=8), right]),
     ])
-    root = group("", ["LayoutMode: Top;"], [
-        spacer(flex=True),
-        group("", [f"Anchor: (Height: {body_h + 110});", "LayoutMode: Left;"], [spacer(flex=True), window, spacer(flex=True)]),
-        spacer(flex=True),
-    ])
     write("Equipment.ui", '$C = "../Common.ui";\n\n'
-          "// Экипировка: вкладки героев #Tab0..2, слоты #Slot0..7 (#Slot<n>Sel, #Slot<n>Btn), вещи из рюкзака\n"
-          "// #Item0..7 (+ #Item<n>Q — качество), сравнение #Cmp0..11, кнопки #Equip/#Unequip/#Back/#Close.\n"
-          "// Собрано tools/gen_battle_ui.py — правь скрипт.\n\n" + root + "\n")
+          "// Экипировка: вкладки героев #Tab0..2, слоты #Slot0..7 (#Slot<n>Sel, #Slot<n>Btn, #Slot<n>Icon), вещи из\n"
+          "// рюкзака #Item0..7 (+ #Item<n>Q — качество, #Item<n>Icon), сравнение #Cmp0..11 и #CmpIcon,\n"
+          "// кнопки #Equip/#Unequip/#Back/#Close. Собрано tools/gen_battle_ui.py — правь скрипт.\n\n"
+          + centered(body_h + 140, window) + "\n")
+
+
+# ---------- меню героя (клавиша O) ----------
+
+MAIN_BUTTONS = [("Party", "Прокачка партии", "levelup"), ("Gear", "Экипировка", "sword"), ("Bag", "Рюкзак", "bag"),
+                ("Follow", "Компаньоны", "pt_bram"), ("Mode", "Режим игры", "info")]
+
+
+def mainmenu():
+    rows = []
+    for bid, text, icon in MAIN_BUTTONS:
+        rows += [group("", ["Anchor: (Height: 46);", "LayoutMode: Left;"], [
+            group("", ["Anchor: (Width: 46, Height: 46);", skin("jr_slot", 8)], [
+                f'Group {{ Anchor: (Left: 5, Top: 5, Width: 36, Height: 36); Background: (TexturePath: "Icons/{icon}.png"); }}']),
+            spacer(w=8),
+            f'$C.@SecondaryTextButton #{bid} {{ @Text = "{text}"; Anchor: (Width: 330, Height: 42); }}',
+        ]), spacer(h=6)]
+    body = column("", [f"Anchor: (Height: {len(MAIN_BUTTONS) * 52 + 56 + 28});"], rows + [
+        spacer(h=4),
+        divider(),
+        spacer(h=8),
+        group("", ["Anchor: (Height: 42);", "LayoutMode: Left;"], [
+            spacer(w=54),
+            '$C.@CancelTextButton #Close { @Text = "Закрыть"; Anchor: (Width: 330, Height: 42); }',
+        ]),
+    ], pad=14)
+    window = menu_window(450, [
+        menu_title("МЕНЮ ГЕРОЯ", "Sub", "клавиша O · креатив — кнопкой «Режим игры»", width=400),
+        spacer(h=4),
+        body,
+    ])
+    write("MainMenu.ui", '$C = "../Common.ui";\n\n'
+          "// Меню героя на клавише режима (MainMenuPage). Кнопки: #Party, #Gear, #Bag, #Follow, #Mode, #Close;\n"
+          "// тексты #Follow и #Mode ставит код. Собрано tools/gen_battle_ui.py — правь скрипт.\n\n"
+          + centered(470, window) + "\n")
 
 
 def ring_dots(r):
@@ -854,3 +940,4 @@ if __name__ == "__main__":
     prebattle()
     backpack()
     equipment()
+    mainmenu()

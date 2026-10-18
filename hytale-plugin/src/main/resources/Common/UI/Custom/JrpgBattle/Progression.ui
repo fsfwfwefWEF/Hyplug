@@ -9,31 +9,39 @@ Group {
 
   Group { FlexWeight: 1; }
   Group {
-    Anchor: (Height: 910);
+    Anchor: (Height: 930);
     LayoutMode: Left;
 
     Group { FlexWeight: 1; }
     Group #Window {
       Anchor: (Width: 1400);
       LayoutMode: Top;
-      Background: #070b12(0.95);
-      Padding: (Full: 12);
+      Background: (TexturePath: "jr_panel_gold.png", Border: 22);
+      Padding: (Left: 16, Right: 16, Top: 10, Bottom: 16);
 
       Group {
-        Anchor: (Height: 32);
+        Anchor: (Height: 52);
         LayoutMode: Left;
 
-        Label {
-          Text: "СЕТКА НАВЫКОВ";
-          Anchor: (Height: 30);
-          FlexWeight: 1;
-          Style: (FontSize: 22, TextColor: #e8c46a, RenderBold: true);
+        Group { FlexWeight: 1; }
+        Group {
+          Anchor: (Width: 560, Height: 52);
+          LayoutMode: Top;
+          Background: (TexturePath: "jr_banner.png");
+          Padding: (Top: 6);
+
+          Label {
+            Text: "СЕТКА НАВЫКОВ";
+            Anchor: (Height: 26);
+            Style: (FontSize: 21, TextColor: #e8c46a, RenderBold: true, HorizontalAlignment: Center);
+          }
+          Label {
+            Text: "открывай узлы рядом с уже открытыми";
+            Anchor: (Height: 16);
+            Style: (FontSize: 12, TextColor: #b4c2d6, HorizontalAlignment: Center);
+          }
         }
-        Label {
-          Text: "открывай узлы рядом с уже открытыми";
-          Anchor: (Width: 330, Height: 30);
-          Style: (FontSize: 12, TextColor: #9fb0c6);
-        }
+        Group { FlexWeight: 1; }
       }
       Group #Tabs {
         Anchor: (Height: 34);
@@ -60,7 +68,7 @@ Group {
         Group #HeroCol {
           Anchor: (Width: 290);
           LayoutMode: Top;
-          Background: #141d2e(0.88);
+          Background: (TexturePath: "jr_panel.png", Border: 22);
           Padding: (Full: 10);
 
           Group {
@@ -76,7 +84,7 @@ Group {
               Label #HeroName {
                 Text: "";
                 Anchor: (Height: 28);
-                Style: (FontSize: 20, TextColor: #e9eef6, RenderBold: true);
+                Style: (FontSize: 20, TextColor: #a9d8ff, RenderBold: true);
               }
               Label #HeroTitle {
                 Text: "";
@@ -86,17 +94,20 @@ Group {
               Label #HeroLevel {
                 Text: "";
                 Anchor: (Height: 36);
-                Style: (FontSize: 12, TextColor: #9fb0c6, Wrap: true);
+                Style: (FontSize: 12, TextColor: #b4c2d6, Wrap: true);
               }
             }
           }
           Group #ExpBack {
-            Anchor: (Width: 266, Height: 6);
+            Anchor: (Width: 266, Height: 7);
             LayoutMode: Left;
-            Background: #2a2410;
-            Group #ExpFill { Anchor: (Width: 266, Height: 6); Background: #e8c46a; }
+            Background: (TexturePath: "jr_bar_back.png");
+            Group #ExpFill { Anchor: (Width: 266, Height: 7); Background: (TexturePath: "jr_bar_ap.png"); }
           }
-          Group { Anchor: (Height: 8); }
+          Group { Anchor: (Height: 6); }
+          Group { Anchor: (Height: 1); Background: #e8c46a(0.40); }
+          Group { Anchor: (Height: 1); Background: #000000(0.35); }
+          Group { Anchor: (Height: 6); }
           Label #HeroStats {
             Text: "";
             Anchor: (Height: 96);
@@ -105,12 +116,12 @@ Group {
           Label #HeroPassives {
             Text: "";
             Anchor: (Height: 60);
-            Style: (FontSize: 12, TextColor: #c58cff, Wrap: true);
+            Style: (FontSize: 12, TextColor: #c9a0ff, Wrap: true);
           }
           Label #Known {
             Text: "";
             FlexWeight: 1;
-            Style: (FontSize: 12, TextColor: #9fb0c6, Wrap: true);
+            Style: (FontSize: 12, TextColor: #b4c2d6, Wrap: true);
           }
           $C.@SecondaryTextButton #AddExp { @Text = "+100 опыта (тест)"; Anchor: (Width: 266, Height: 30); }
           Group { Anchor: (Height: 4); }
@@ -119,7 +130,7 @@ Group {
         Group { Anchor: (Width: 10); }
         Group #Grid {
           Anchor: (Width: 800, Height: 800);
-          Background: #0b111c(0.82);
+          Background: (TexturePath: "jr_panel.png", Border: 22);
 
           Group #Rings {
             Anchor: (Left: 0, Top: 0, Width: 800, Height: 800);
@@ -458,10 +469,10 @@ Group {
           Group #Sectors {
             Anchor: (Left: 0, Top: 0, Width: 800, Height: 800);
 
-            Label { Text: "ЗАЩИТНИК"; Anchor: (Left: 650, Top: 8, Width: 170, Height: 22); Style: (FontSize: 14, TextColor: #8fbaff, RenderBold: true); }
-            Label { Text: "ЦЕЛИТЕЛЬ"; Anchor: (Left: 650, Top: 770, Width: 170, Height: 22); Style: (FontSize: 14, TextColor: #8fe0a0, RenderBold: true); }
-            Label { Text: "БОЕЦ"; Anchor: (Left: 12, Top: 8, Width: 170, Height: 22); Style: (FontSize: 14, TextColor: #ff9a8a, RenderBold: true); }
-            Label { Text: "мосты — гибриды"; Anchor: (Left: 12, Top: 770, Width: 170, Height: 22); Style: (FontSize: 14, TextColor: #9fb0c6, RenderBold: true); }
+            Label { Text: "ЗАЩИТНИК"; Anchor: (Left: 650, Top: 10, Width: 170, Height: 22); Style: (FontSize: 14, TextColor: #8fbaff, RenderBold: true); }
+            Label { Text: "ЦЕЛИТЕЛЬ"; Anchor: (Left: 650, Top: 768, Width: 170, Height: 22); Style: (FontSize: 14, TextColor: #8fe0a0, RenderBold: true); }
+            Label { Text: "БОЕЦ"; Anchor: (Left: 16, Top: 10, Width: 170, Height: 22); Style: (FontSize: 14, TextColor: #ff9a8a, RenderBold: true); }
+            Label { Text: "мосты — гибриды"; Anchor: (Left: 16, Top: 768, Width: 170, Height: 22); Style: (FontSize: 14, TextColor: #9fb0c6, RenderBold: true); }
           }
           Group #EdgesOff {
             Anchor: (Left: 0, Top: 0, Width: 800, Height: 800);
@@ -1250,444 +1261,518 @@ Group {
           Group #G0 {
             Anchor: (Left: 364, Top: 364, Width: 72, Height: 72);
 
-            Group #G0Sel { Anchor: (Left: 0, Top: 0, Width: 72, Height: 72); Background: #e8c46a(0.30);
-              Group { Anchor: (Left: 2, Top: 2, Width: 68, Height: 68); Background: #fff0b0(0.55); }
+            Group #G0Sel { Anchor: (Left: 0, Top: 0, Width: 72, Height: 72); Background: #e8c46a(0.25);
+              Group { Anchor: (Left: 2, Top: 2, Width: 68, Height: 68); Background: #fff0b0(0.35); }
             }
-            Group #G0Lock { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: #262630(0.96); }
-            Group #G0Avail { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: #3d7bd9; }
-            Group #G0Open { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: #e8c46a; }
+            Group #G0Lock { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: (TexturePath: "jr_slot.png", Border: 8);
+              Group { Anchor: (Left: 4, Top: 4, Width: 56, Height: 56); Background: #262630(0.96); }
+            }
+            Group #G0Avail { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: (TexturePath: "jr_panel_party.png", Border: 16); }
+            Group #G0Open { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: (TexturePath: "jr_panel_gold.png", Border: 16); }
             $C.@SecondaryTextButton #G0Btn { @Text = ""; Anchor: (Left: 10, Top: 10, Width: 52, Height: 52); }
             Group #G0Icon { Anchor: (Left: 16, Top: 16, Width: 40, Height: 40); }
           }
           Group #G1 {
             Anchor: (Left: 364, Top: 254, Width: 72, Height: 72);
 
-            Group #G1Sel { Anchor: (Left: 0, Top: 0, Width: 72, Height: 72); Background: #e8c46a(0.30);
-              Group { Anchor: (Left: 2, Top: 2, Width: 68, Height: 68); Background: #fff0b0(0.55); }
+            Group #G1Sel { Anchor: (Left: 0, Top: 0, Width: 72, Height: 72); Background: #e8c46a(0.25);
+              Group { Anchor: (Left: 2, Top: 2, Width: 68, Height: 68); Background: #fff0b0(0.35); }
             }
-            Group #G1Lock { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: #16243c(0.96); }
-            Group #G1Avail { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: #3d7bd9; }
-            Group #G1Open { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: #e8c46a; }
+            Group #G1Lock { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: (TexturePath: "jr_slot.png", Border: 8);
+              Group { Anchor: (Left: 4, Top: 4, Width: 56, Height: 56); Background: #16243c(0.96); }
+            }
+            Group #G1Avail { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: (TexturePath: "jr_panel_party.png", Border: 16); }
+            Group #G1Open { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: (TexturePath: "jr_panel_gold.png", Border: 16); }
             $C.@SecondaryTextButton #G1Btn { @Text = ""; Anchor: (Left: 10, Top: 10, Width: 52, Height: 52); }
             Group #G1Icon { Anchor: (Left: 16, Top: 16, Width: 40, Height: 40); }
           }
           Group #G2 {
             Anchor: (Left: 459, Top: 309, Width: 72, Height: 72);
 
-            Group #G2Sel { Anchor: (Left: 0, Top: 0, Width: 72, Height: 72); Background: #e8c46a(0.30);
-              Group { Anchor: (Left: 2, Top: 2, Width: 68, Height: 68); Background: #fff0b0(0.55); }
+            Group #G2Sel { Anchor: (Left: 0, Top: 0, Width: 72, Height: 72); Background: #e8c46a(0.25);
+              Group { Anchor: (Left: 2, Top: 2, Width: 68, Height: 68); Background: #fff0b0(0.35); }
             }
-            Group #G2Lock { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: #16243c(0.96); }
-            Group #G2Avail { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: #3d7bd9; }
-            Group #G2Open { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: #e8c46a; }
+            Group #G2Lock { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: (TexturePath: "jr_slot.png", Border: 8);
+              Group { Anchor: (Left: 4, Top: 4, Width: 56, Height: 56); Background: #16243c(0.96); }
+            }
+            Group #G2Avail { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: (TexturePath: "jr_panel_party.png", Border: 16); }
+            Group #G2Open { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: (TexturePath: "jr_panel_gold.png", Border: 16); }
             $C.@SecondaryTextButton #G2Btn { @Text = ""; Anchor: (Left: 10, Top: 10, Width: 52, Height: 52); }
             Group #G2Icon { Anchor: (Left: 16, Top: 16, Width: 40, Height: 40); }
           }
           Group #G3 {
             Anchor: (Left: 459, Top: 419, Width: 72, Height: 72);
 
-            Group #G3Sel { Anchor: (Left: 0, Top: 0, Width: 72, Height: 72); Background: #e8c46a(0.30);
-              Group { Anchor: (Left: 2, Top: 2, Width: 68, Height: 68); Background: #fff0b0(0.55); }
+            Group #G3Sel { Anchor: (Left: 0, Top: 0, Width: 72, Height: 72); Background: #e8c46a(0.25);
+              Group { Anchor: (Left: 2, Top: 2, Width: 68, Height: 68); Background: #fff0b0(0.35); }
             }
-            Group #G3Lock { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: #14301c(0.96); }
-            Group #G3Avail { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: #3d7bd9; }
-            Group #G3Open { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: #e8c46a; }
+            Group #G3Lock { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: (TexturePath: "jr_slot.png", Border: 8);
+              Group { Anchor: (Left: 4, Top: 4, Width: 56, Height: 56); Background: #14301c(0.96); }
+            }
+            Group #G3Avail { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: (TexturePath: "jr_panel_party.png", Border: 16); }
+            Group #G3Open { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: (TexturePath: "jr_panel_gold.png", Border: 16); }
             $C.@SecondaryTextButton #G3Btn { @Text = ""; Anchor: (Left: 10, Top: 10, Width: 52, Height: 52); }
             Group #G3Icon { Anchor: (Left: 16, Top: 16, Width: 40, Height: 40); }
           }
           Group #G4 {
             Anchor: (Left: 364, Top: 474, Width: 72, Height: 72);
 
-            Group #G4Sel { Anchor: (Left: 0, Top: 0, Width: 72, Height: 72); Background: #e8c46a(0.30);
-              Group { Anchor: (Left: 2, Top: 2, Width: 68, Height: 68); Background: #fff0b0(0.55); }
+            Group #G4Sel { Anchor: (Left: 0, Top: 0, Width: 72, Height: 72); Background: #e8c46a(0.25);
+              Group { Anchor: (Left: 2, Top: 2, Width: 68, Height: 68); Background: #fff0b0(0.35); }
             }
-            Group #G4Lock { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: #14301c(0.96); }
-            Group #G4Avail { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: #3d7bd9; }
-            Group #G4Open { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: #e8c46a; }
+            Group #G4Lock { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: (TexturePath: "jr_slot.png", Border: 8);
+              Group { Anchor: (Left: 4, Top: 4, Width: 56, Height: 56); Background: #14301c(0.96); }
+            }
+            Group #G4Avail { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: (TexturePath: "jr_panel_party.png", Border: 16); }
+            Group #G4Open { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: (TexturePath: "jr_panel_gold.png", Border: 16); }
             $C.@SecondaryTextButton #G4Btn { @Text = ""; Anchor: (Left: 10, Top: 10, Width: 52, Height: 52); }
             Group #G4Icon { Anchor: (Left: 16, Top: 16, Width: 40, Height: 40); }
           }
           Group #G5 {
             Anchor: (Left: 268, Top: 419, Width: 72, Height: 72);
 
-            Group #G5Sel { Anchor: (Left: 0, Top: 0, Width: 72, Height: 72); Background: #e8c46a(0.30);
-              Group { Anchor: (Left: 2, Top: 2, Width: 68, Height: 68); Background: #fff0b0(0.55); }
+            Group #G5Sel { Anchor: (Left: 0, Top: 0, Width: 72, Height: 72); Background: #e8c46a(0.25);
+              Group { Anchor: (Left: 2, Top: 2, Width: 68, Height: 68); Background: #fff0b0(0.35); }
             }
-            Group #G5Lock { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: #341616(0.96); }
-            Group #G5Avail { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: #3d7bd9; }
-            Group #G5Open { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: #e8c46a; }
+            Group #G5Lock { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: (TexturePath: "jr_slot.png", Border: 8);
+              Group { Anchor: (Left: 4, Top: 4, Width: 56, Height: 56); Background: #341616(0.96); }
+            }
+            Group #G5Avail { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: (TexturePath: "jr_panel_party.png", Border: 16); }
+            Group #G5Open { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: (TexturePath: "jr_panel_gold.png", Border: 16); }
             $C.@SecondaryTextButton #G5Btn { @Text = ""; Anchor: (Left: 10, Top: 10, Width: 52, Height: 52); }
             Group #G5Icon { Anchor: (Left: 16, Top: 16, Width: 40, Height: 40); }
           }
           Group #G6 {
             Anchor: (Left: 268, Top: 309, Width: 72, Height: 72);
 
-            Group #G6Sel { Anchor: (Left: 0, Top: 0, Width: 72, Height: 72); Background: #e8c46a(0.30);
-              Group { Anchor: (Left: 2, Top: 2, Width: 68, Height: 68); Background: #fff0b0(0.55); }
+            Group #G6Sel { Anchor: (Left: 0, Top: 0, Width: 72, Height: 72); Background: #e8c46a(0.25);
+              Group { Anchor: (Left: 2, Top: 2, Width: 68, Height: 68); Background: #fff0b0(0.35); }
             }
-            Group #G6Lock { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: #341616(0.96); }
-            Group #G6Avail { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: #3d7bd9; }
-            Group #G6Open { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: #e8c46a; }
+            Group #G6Lock { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: (TexturePath: "jr_slot.png", Border: 8);
+              Group { Anchor: (Left: 4, Top: 4, Width: 56, Height: 56); Background: #341616(0.96); }
+            }
+            Group #G6Avail { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: (TexturePath: "jr_panel_party.png", Border: 16); }
+            Group #G6Open { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: (TexturePath: "jr_panel_gold.png", Border: 16); }
             $C.@SecondaryTextButton #G6Btn { @Text = ""; Anchor: (Left: 10, Top: 10, Width: 52, Height: 52); }
             Group #G6Icon { Anchor: (Left: 16, Top: 16, Width: 40, Height: 40); }
           }
           Group #G7 {
             Anchor: (Left: 364, Top: 164, Width: 72, Height: 72);
 
-            Group #G7Sel { Anchor: (Left: 0, Top: 0, Width: 72, Height: 72); Background: #e8c46a(0.30);
-              Group { Anchor: (Left: 2, Top: 2, Width: 68, Height: 68); Background: #fff0b0(0.55); }
+            Group #G7Sel { Anchor: (Left: 0, Top: 0, Width: 72, Height: 72); Background: #e8c46a(0.25);
+              Group { Anchor: (Left: 2, Top: 2, Width: 68, Height: 68); Background: #fff0b0(0.35); }
             }
-            Group #G7Lock { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: #16243c(0.96); }
-            Group #G7Avail { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: #3d7bd9; }
-            Group #G7Open { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: #e8c46a; }
+            Group #G7Lock { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: (TexturePath: "jr_slot.png", Border: 8);
+              Group { Anchor: (Left: 4, Top: 4, Width: 56, Height: 56); Background: #16243c(0.96); }
+            }
+            Group #G7Avail { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: (TexturePath: "jr_panel_party.png", Border: 16); }
+            Group #G7Open { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: (TexturePath: "jr_panel_gold.png", Border: 16); }
             $C.@SecondaryTextButton #G7Btn { @Text = ""; Anchor: (Left: 10, Top: 10, Width: 52, Height: 52); }
             Group #G7Icon { Anchor: (Left: 16, Top: 16, Width: 40, Height: 40); }
           }
           Group #G8 {
             Anchor: (Left: 464, Top: 190, Width: 72, Height: 72);
 
-            Group #G8Sel { Anchor: (Left: 0, Top: 0, Width: 72, Height: 72); Background: #e8c46a(0.30);
-              Group { Anchor: (Left: 2, Top: 2, Width: 68, Height: 68); Background: #fff0b0(0.55); }
+            Group #G8Sel { Anchor: (Left: 0, Top: 0, Width: 72, Height: 72); Background: #e8c46a(0.25);
+              Group { Anchor: (Left: 2, Top: 2, Width: 68, Height: 68); Background: #fff0b0(0.35); }
             }
-            Group #G8Lock { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: #16243c(0.96); }
-            Group #G8Avail { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: #3d7bd9; }
-            Group #G8Open { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: #e8c46a; }
+            Group #G8Lock { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: (TexturePath: "jr_slot.png", Border: 8);
+              Group { Anchor: (Left: 4, Top: 4, Width: 56, Height: 56); Background: #16243c(0.96); }
+            }
+            Group #G8Avail { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: (TexturePath: "jr_panel_party.png", Border: 16); }
+            Group #G8Open { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: (TexturePath: "jr_panel_gold.png", Border: 16); }
             $C.@SecondaryTextButton #G8Btn { @Text = ""; Anchor: (Left: 10, Top: 10, Width: 52, Height: 52); }
             Group #G8Icon { Anchor: (Left: 16, Top: 16, Width: 40, Height: 40); }
           }
           Group #G9 {
             Anchor: (Left: 537, Top: 264, Width: 72, Height: 72);
 
-            Group #G9Sel { Anchor: (Left: 0, Top: 0, Width: 72, Height: 72); Background: #e8c46a(0.30);
-              Group { Anchor: (Left: 2, Top: 2, Width: 68, Height: 68); Background: #fff0b0(0.55); }
+            Group #G9Sel { Anchor: (Left: 0, Top: 0, Width: 72, Height: 72); Background: #e8c46a(0.25);
+              Group { Anchor: (Left: 2, Top: 2, Width: 68, Height: 68); Background: #fff0b0(0.35); }
             }
-            Group #G9Lock { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: #16243c(0.96); }
-            Group #G9Avail { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: #3d7bd9; }
-            Group #G9Open { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: #e8c46a; }
+            Group #G9Lock { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: (TexturePath: "jr_slot.png", Border: 8);
+              Group { Anchor: (Left: 4, Top: 4, Width: 56, Height: 56); Background: #16243c(0.96); }
+            }
+            Group #G9Avail { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: (TexturePath: "jr_panel_party.png", Border: 16); }
+            Group #G9Open { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: (TexturePath: "jr_panel_gold.png", Border: 16); }
             $C.@SecondaryTextButton #G9Btn { @Text = ""; Anchor: (Left: 10, Top: 10, Width: 52, Height: 52); }
             Group #G9Icon { Anchor: (Left: 16, Top: 16, Width: 40, Height: 40); }
           }
           Group #G10 {
             Anchor: (Left: 564, Top: 364, Width: 72, Height: 72);
 
-            Group #G10Sel { Anchor: (Left: 0, Top: 0, Width: 72, Height: 72); Background: #e8c46a(0.30);
-              Group { Anchor: (Left: 2, Top: 2, Width: 68, Height: 68); Background: #fff0b0(0.55); }
+            Group #G10Sel { Anchor: (Left: 0, Top: 0, Width: 72, Height: 72); Background: #e8c46a(0.25);
+              Group { Anchor: (Left: 2, Top: 2, Width: 68, Height: 68); Background: #fff0b0(0.35); }
             }
-            Group #G10Lock { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: #262630(0.96); }
-            Group #G10Avail { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: #3d7bd9; }
-            Group #G10Open { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: #e8c46a; }
+            Group #G10Lock { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: (TexturePath: "jr_slot.png", Border: 8);
+              Group { Anchor: (Left: 4, Top: 4, Width: 56, Height: 56); Background: #262630(0.96); }
+            }
+            Group #G10Avail { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: (TexturePath: "jr_panel_party.png", Border: 16); }
+            Group #G10Open { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: (TexturePath: "jr_panel_gold.png", Border: 16); }
             $C.@SecondaryTextButton #G10Btn { @Text = ""; Anchor: (Left: 10, Top: 10, Width: 52, Height: 52); }
             Group #G10Icon { Anchor: (Left: 16, Top: 16, Width: 40, Height: 40); }
           }
           Group #G11 {
             Anchor: (Left: 537, Top: 464, Width: 72, Height: 72);
 
-            Group #G11Sel { Anchor: (Left: 0, Top: 0, Width: 72, Height: 72); Background: #e8c46a(0.30);
-              Group { Anchor: (Left: 2, Top: 2, Width: 68, Height: 68); Background: #fff0b0(0.55); }
+            Group #G11Sel { Anchor: (Left: 0, Top: 0, Width: 72, Height: 72); Background: #e8c46a(0.25);
+              Group { Anchor: (Left: 2, Top: 2, Width: 68, Height: 68); Background: #fff0b0(0.35); }
             }
-            Group #G11Lock { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: #14301c(0.96); }
-            Group #G11Avail { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: #3d7bd9; }
-            Group #G11Open { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: #e8c46a; }
+            Group #G11Lock { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: (TexturePath: "jr_slot.png", Border: 8);
+              Group { Anchor: (Left: 4, Top: 4, Width: 56, Height: 56); Background: #14301c(0.96); }
+            }
+            Group #G11Avail { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: (TexturePath: "jr_panel_party.png", Border: 16); }
+            Group #G11Open { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: (TexturePath: "jr_panel_gold.png", Border: 16); }
             $C.@SecondaryTextButton #G11Btn { @Text = ""; Anchor: (Left: 10, Top: 10, Width: 52, Height: 52); }
             Group #G11Icon { Anchor: (Left: 16, Top: 16, Width: 40, Height: 40); }
           }
           Group #G12 {
             Anchor: (Left: 464, Top: 537, Width: 72, Height: 72);
 
-            Group #G12Sel { Anchor: (Left: 0, Top: 0, Width: 72, Height: 72); Background: #e8c46a(0.30);
-              Group { Anchor: (Left: 2, Top: 2, Width: 68, Height: 68); Background: #fff0b0(0.55); }
+            Group #G12Sel { Anchor: (Left: 0, Top: 0, Width: 72, Height: 72); Background: #e8c46a(0.25);
+              Group { Anchor: (Left: 2, Top: 2, Width: 68, Height: 68); Background: #fff0b0(0.35); }
             }
-            Group #G12Lock { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: #14301c(0.96); }
-            Group #G12Avail { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: #3d7bd9; }
-            Group #G12Open { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: #e8c46a; }
+            Group #G12Lock { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: (TexturePath: "jr_slot.png", Border: 8);
+              Group { Anchor: (Left: 4, Top: 4, Width: 56, Height: 56); Background: #14301c(0.96); }
+            }
+            Group #G12Avail { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: (TexturePath: "jr_panel_party.png", Border: 16); }
+            Group #G12Open { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: (TexturePath: "jr_panel_gold.png", Border: 16); }
             $C.@SecondaryTextButton #G12Btn { @Text = ""; Anchor: (Left: 10, Top: 10, Width: 52, Height: 52); }
             Group #G12Icon { Anchor: (Left: 16, Top: 16, Width: 40, Height: 40); }
           }
           Group #G13 {
             Anchor: (Left: 364, Top: 564, Width: 72, Height: 72);
 
-            Group #G13Sel { Anchor: (Left: 0, Top: 0, Width: 72, Height: 72); Background: #e8c46a(0.30);
-              Group { Anchor: (Left: 2, Top: 2, Width: 68, Height: 68); Background: #fff0b0(0.55); }
+            Group #G13Sel { Anchor: (Left: 0, Top: 0, Width: 72, Height: 72); Background: #e8c46a(0.25);
+              Group { Anchor: (Left: 2, Top: 2, Width: 68, Height: 68); Background: #fff0b0(0.35); }
             }
-            Group #G13Lock { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: #14301c(0.96); }
-            Group #G13Avail { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: #3d7bd9; }
-            Group #G13Open { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: #e8c46a; }
+            Group #G13Lock { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: (TexturePath: "jr_slot.png", Border: 8);
+              Group { Anchor: (Left: 4, Top: 4, Width: 56, Height: 56); Background: #14301c(0.96); }
+            }
+            Group #G13Avail { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: (TexturePath: "jr_panel_party.png", Border: 16); }
+            Group #G13Open { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: (TexturePath: "jr_panel_gold.png", Border: 16); }
             $C.@SecondaryTextButton #G13Btn { @Text = ""; Anchor: (Left: 10, Top: 10, Width: 52, Height: 52); }
             Group #G13Icon { Anchor: (Left: 16, Top: 16, Width: 40, Height: 40); }
           }
           Group #G14 {
             Anchor: (Left: 264, Top: 537, Width: 72, Height: 72);
 
-            Group #G14Sel { Anchor: (Left: 0, Top: 0, Width: 72, Height: 72); Background: #e8c46a(0.30);
-              Group { Anchor: (Left: 2, Top: 2, Width: 68, Height: 68); Background: #fff0b0(0.55); }
+            Group #G14Sel { Anchor: (Left: 0, Top: 0, Width: 72, Height: 72); Background: #e8c46a(0.25);
+              Group { Anchor: (Left: 2, Top: 2, Width: 68, Height: 68); Background: #fff0b0(0.35); }
             }
-            Group #G14Lock { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: #262630(0.96); }
-            Group #G14Avail { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: #3d7bd9; }
-            Group #G14Open { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: #e8c46a; }
+            Group #G14Lock { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: (TexturePath: "jr_slot.png", Border: 8);
+              Group { Anchor: (Left: 4, Top: 4, Width: 56, Height: 56); Background: #262630(0.96); }
+            }
+            Group #G14Avail { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: (TexturePath: "jr_panel_party.png", Border: 16); }
+            Group #G14Open { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: (TexturePath: "jr_panel_gold.png", Border: 16); }
             $C.@SecondaryTextButton #G14Btn { @Text = ""; Anchor: (Left: 10, Top: 10, Width: 52, Height: 52); }
             Group #G14Icon { Anchor: (Left: 16, Top: 16, Width: 40, Height: 40); }
           }
           Group #G15 {
             Anchor: (Left: 190, Top: 464, Width: 72, Height: 72);
 
-            Group #G15Sel { Anchor: (Left: 0, Top: 0, Width: 72, Height: 72); Background: #e8c46a(0.30);
-              Group { Anchor: (Left: 2, Top: 2, Width: 68, Height: 68); Background: #fff0b0(0.55); }
+            Group #G15Sel { Anchor: (Left: 0, Top: 0, Width: 72, Height: 72); Background: #e8c46a(0.25);
+              Group { Anchor: (Left: 2, Top: 2, Width: 68, Height: 68); Background: #fff0b0(0.35); }
             }
-            Group #G15Lock { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: #341616(0.96); }
-            Group #G15Avail { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: #3d7bd9; }
-            Group #G15Open { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: #e8c46a; }
+            Group #G15Lock { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: (TexturePath: "jr_slot.png", Border: 8);
+              Group { Anchor: (Left: 4, Top: 4, Width: 56, Height: 56); Background: #341616(0.96); }
+            }
+            Group #G15Avail { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: (TexturePath: "jr_panel_party.png", Border: 16); }
+            Group #G15Open { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: (TexturePath: "jr_panel_gold.png", Border: 16); }
             $C.@SecondaryTextButton #G15Btn { @Text = ""; Anchor: (Left: 10, Top: 10, Width: 52, Height: 52); }
             Group #G15Icon { Anchor: (Left: 16, Top: 16, Width: 40, Height: 40); }
           }
           Group #G16 {
             Anchor: (Left: 164, Top: 364, Width: 72, Height: 72);
 
-            Group #G16Sel { Anchor: (Left: 0, Top: 0, Width: 72, Height: 72); Background: #e8c46a(0.30);
-              Group { Anchor: (Left: 2, Top: 2, Width: 68, Height: 68); Background: #fff0b0(0.55); }
+            Group #G16Sel { Anchor: (Left: 0, Top: 0, Width: 72, Height: 72); Background: #e8c46a(0.25);
+              Group { Anchor: (Left: 2, Top: 2, Width: 68, Height: 68); Background: #fff0b0(0.35); }
             }
-            Group #G16Lock { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: #341616(0.96); }
-            Group #G16Avail { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: #3d7bd9; }
-            Group #G16Open { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: #e8c46a; }
+            Group #G16Lock { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: (TexturePath: "jr_slot.png", Border: 8);
+              Group { Anchor: (Left: 4, Top: 4, Width: 56, Height: 56); Background: #341616(0.96); }
+            }
+            Group #G16Avail { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: (TexturePath: "jr_panel_party.png", Border: 16); }
+            Group #G16Open { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: (TexturePath: "jr_panel_gold.png", Border: 16); }
             $C.@SecondaryTextButton #G16Btn { @Text = ""; Anchor: (Left: 10, Top: 10, Width: 52, Height: 52); }
             Group #G16Icon { Anchor: (Left: 16, Top: 16, Width: 40, Height: 40); }
           }
           Group #G17 {
             Anchor: (Left: 190, Top: 264, Width: 72, Height: 72);
 
-            Group #G17Sel { Anchor: (Left: 0, Top: 0, Width: 72, Height: 72); Background: #e8c46a(0.30);
-              Group { Anchor: (Left: 2, Top: 2, Width: 68, Height: 68); Background: #fff0b0(0.55); }
+            Group #G17Sel { Anchor: (Left: 0, Top: 0, Width: 72, Height: 72); Background: #e8c46a(0.25);
+              Group { Anchor: (Left: 2, Top: 2, Width: 68, Height: 68); Background: #fff0b0(0.35); }
             }
-            Group #G17Lock { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: #341616(0.96); }
-            Group #G17Avail { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: #3d7bd9; }
-            Group #G17Open { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: #e8c46a; }
+            Group #G17Lock { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: (TexturePath: "jr_slot.png", Border: 8);
+              Group { Anchor: (Left: 4, Top: 4, Width: 56, Height: 56); Background: #341616(0.96); }
+            }
+            Group #G17Avail { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: (TexturePath: "jr_panel_party.png", Border: 16); }
+            Group #G17Open { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: (TexturePath: "jr_panel_gold.png", Border: 16); }
             $C.@SecondaryTextButton #G17Btn { @Text = ""; Anchor: (Left: 10, Top: 10, Width: 52, Height: 52); }
             Group #G17Icon { Anchor: (Left: 16, Top: 16, Width: 40, Height: 40); }
           }
           Group #G18 {
             Anchor: (Left: 263, Top: 190, Width: 72, Height: 72);
 
-            Group #G18Sel { Anchor: (Left: 0, Top: 0, Width: 72, Height: 72); Background: #e8c46a(0.30);
-              Group { Anchor: (Left: 2, Top: 2, Width: 68, Height: 68); Background: #fff0b0(0.55); }
+            Group #G18Sel { Anchor: (Left: 0, Top: 0, Width: 72, Height: 72); Background: #e8c46a(0.25);
+              Group { Anchor: (Left: 2, Top: 2, Width: 68, Height: 68); Background: #fff0b0(0.35); }
             }
-            Group #G18Lock { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: #262630(0.96); }
-            Group #G18Avail { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: #3d7bd9; }
-            Group #G18Open { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: #e8c46a; }
+            Group #G18Lock { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: (TexturePath: "jr_slot.png", Border: 8);
+              Group { Anchor: (Left: 4, Top: 4, Width: 56, Height: 56); Background: #262630(0.96); }
+            }
+            Group #G18Avail { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: (TexturePath: "jr_panel_party.png", Border: 16); }
+            Group #G18Open { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: (TexturePath: "jr_panel_gold.png", Border: 16); }
             $C.@SecondaryTextButton #G18Btn { @Text = ""; Anchor: (Left: 10, Top: 10, Width: 52, Height: 52); }
             Group #G18Icon { Anchor: (Left: 16, Top: 16, Width: 40, Height: 40); }
           }
           Group #G19 {
             Anchor: (Left: 504, Top: 121, Width: 72, Height: 72);
 
-            Group #G19Sel { Anchor: (Left: 0, Top: 0, Width: 72, Height: 72); Background: #e8c46a(0.30);
-              Group { Anchor: (Left: 2, Top: 2, Width: 68, Height: 68); Background: #fff0b0(0.55); }
+            Group #G19Sel { Anchor: (Left: 0, Top: 0, Width: 72, Height: 72); Background: #e8c46a(0.25);
+              Group { Anchor: (Left: 2, Top: 2, Width: 68, Height: 68); Background: #fff0b0(0.35); }
             }
-            Group #G19Lock { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: #16243c(0.96); }
-            Group #G19Avail { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: #3d7bd9; }
-            Group #G19Open { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: #e8c46a; }
+            Group #G19Lock { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: (TexturePath: "jr_slot.png", Border: 8);
+              Group { Anchor: (Left: 4, Top: 4, Width: 56, Height: 56); Background: #16243c(0.96); }
+            }
+            Group #G19Avail { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: (TexturePath: "jr_panel_party.png", Border: 16); }
+            Group #G19Open { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: (TexturePath: "jr_panel_gold.png", Border: 16); }
             $C.@SecondaryTextButton #G19Btn { @Text = ""; Anchor: (Left: 10, Top: 10, Width: 52, Height: 52); }
             Group #G19Icon { Anchor: (Left: 16, Top: 16, Width: 40, Height: 40); }
           }
           Group #G20 {
             Anchor: (Left: 644, Top: 364, Width: 72, Height: 72);
 
-            Group #G20Sel { Anchor: (Left: 0, Top: 0, Width: 72, Height: 72); Background: #e8c46a(0.30);
-              Group { Anchor: (Left: 2, Top: 2, Width: 68, Height: 68); Background: #fff0b0(0.55); }
+            Group #G20Sel { Anchor: (Left: 0, Top: 0, Width: 72, Height: 72); Background: #e8c46a(0.25);
+              Group { Anchor: (Left: 2, Top: 2, Width: 68, Height: 68); Background: #fff0b0(0.35); }
             }
-            Group #G20Lock { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: #262630(0.96); }
-            Group #G20Avail { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: #3d7bd9; }
-            Group #G20Open { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: #e8c46a; }
+            Group #G20Lock { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: (TexturePath: "jr_slot.png", Border: 8);
+              Group { Anchor: (Left: 4, Top: 4, Width: 56, Height: 56); Background: #262630(0.96); }
+            }
+            Group #G20Avail { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: (TexturePath: "jr_panel_party.png", Border: 16); }
+            Group #G20Open { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: (TexturePath: "jr_panel_gold.png", Border: 16); }
             $C.@SecondaryTextButton #G20Btn { @Text = ""; Anchor: (Left: 10, Top: 10, Width: 52, Height: 52); }
             Group #G20Icon { Anchor: (Left: 16, Top: 16, Width: 40, Height: 40); }
           }
           Group #G21 {
             Anchor: (Left: 504, Top: 606, Width: 72, Height: 72);
 
-            Group #G21Sel { Anchor: (Left: 0, Top: 0, Width: 72, Height: 72); Background: #e8c46a(0.30);
-              Group { Anchor: (Left: 2, Top: 2, Width: 68, Height: 68); Background: #fff0b0(0.55); }
+            Group #G21Sel { Anchor: (Left: 0, Top: 0, Width: 72, Height: 72); Background: #e8c46a(0.25);
+              Group { Anchor: (Left: 2, Top: 2, Width: 68, Height: 68); Background: #fff0b0(0.35); }
             }
-            Group #G21Lock { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: #14301c(0.96); }
-            Group #G21Avail { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: #3d7bd9; }
-            Group #G21Open { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: #e8c46a; }
+            Group #G21Lock { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: (TexturePath: "jr_slot.png", Border: 8);
+              Group { Anchor: (Left: 4, Top: 4, Width: 56, Height: 56); Background: #14301c(0.96); }
+            }
+            Group #G21Avail { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: (TexturePath: "jr_panel_party.png", Border: 16); }
+            Group #G21Open { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: (TexturePath: "jr_panel_gold.png", Border: 16); }
             $C.@SecondaryTextButton #G21Btn { @Text = ""; Anchor: (Left: 10, Top: 10, Width: 52, Height: 52); }
             Group #G21Icon { Anchor: (Left: 16, Top: 16, Width: 40, Height: 40); }
           }
           Group #G22 {
             Anchor: (Left: 224, Top: 606, Width: 72, Height: 72);
 
-            Group #G22Sel { Anchor: (Left: 0, Top: 0, Width: 72, Height: 72); Background: #e8c46a(0.30);
-              Group { Anchor: (Left: 2, Top: 2, Width: 68, Height: 68); Background: #fff0b0(0.55); }
+            Group #G22Sel { Anchor: (Left: 0, Top: 0, Width: 72, Height: 72); Background: #e8c46a(0.25);
+              Group { Anchor: (Left: 2, Top: 2, Width: 68, Height: 68); Background: #fff0b0(0.35); }
             }
-            Group #G22Lock { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: #262630(0.96); }
-            Group #G22Avail { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: #3d7bd9; }
-            Group #G22Open { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: #e8c46a; }
+            Group #G22Lock { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: (TexturePath: "jr_slot.png", Border: 8);
+              Group { Anchor: (Left: 4, Top: 4, Width: 56, Height: 56); Background: #262630(0.96); }
+            }
+            Group #G22Avail { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: (TexturePath: "jr_panel_party.png", Border: 16); }
+            Group #G22Open { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: (TexturePath: "jr_panel_gold.png", Border: 16); }
             $C.@SecondaryTextButton #G22Btn { @Text = ""; Anchor: (Left: 10, Top: 10, Width: 52, Height: 52); }
             Group #G22Icon { Anchor: (Left: 16, Top: 16, Width: 40, Height: 40); }
           }
           Group #G23 {
             Anchor: (Left: 84, Top: 364, Width: 72, Height: 72);
 
-            Group #G23Sel { Anchor: (Left: 0, Top: 0, Width: 72, Height: 72); Background: #e8c46a(0.30);
-              Group { Anchor: (Left: 2, Top: 2, Width: 68, Height: 68); Background: #fff0b0(0.55); }
+            Group #G23Sel { Anchor: (Left: 0, Top: 0, Width: 72, Height: 72); Background: #e8c46a(0.25);
+              Group { Anchor: (Left: 2, Top: 2, Width: 68, Height: 68); Background: #fff0b0(0.35); }
             }
-            Group #G23Lock { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: #341616(0.96); }
-            Group #G23Avail { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: #3d7bd9; }
-            Group #G23Open { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: #e8c46a; }
+            Group #G23Lock { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: (TexturePath: "jr_slot.png", Border: 8);
+              Group { Anchor: (Left: 4, Top: 4, Width: 56, Height: 56); Background: #341616(0.96); }
+            }
+            Group #G23Avail { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: (TexturePath: "jr_panel_party.png", Border: 16); }
+            Group #G23Open { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: (TexturePath: "jr_panel_gold.png", Border: 16); }
             $C.@SecondaryTextButton #G23Btn { @Text = ""; Anchor: (Left: 10, Top: 10, Width: 52, Height: 52); }
             Group #G23Icon { Anchor: (Left: 16, Top: 16, Width: 40, Height: 40); }
           }
           Group #G24 {
             Anchor: (Left: 223, Top: 121, Width: 72, Height: 72);
 
-            Group #G24Sel { Anchor: (Left: 0, Top: 0, Width: 72, Height: 72); Background: #e8c46a(0.30);
-              Group { Anchor: (Left: 2, Top: 2, Width: 68, Height: 68); Background: #fff0b0(0.55); }
+            Group #G24Sel { Anchor: (Left: 0, Top: 0, Width: 72, Height: 72); Background: #e8c46a(0.25);
+              Group { Anchor: (Left: 2, Top: 2, Width: 68, Height: 68); Background: #fff0b0(0.35); }
             }
-            Group #G24Lock { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: #262630(0.96); }
-            Group #G24Avail { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: #3d7bd9; }
-            Group #G24Open { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: #e8c46a; }
+            Group #G24Lock { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: (TexturePath: "jr_slot.png", Border: 8);
+              Group { Anchor: (Left: 4, Top: 4, Width: 56, Height: 56); Background: #262630(0.96); }
+            }
+            Group #G24Avail { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: (TexturePath: "jr_panel_party.png", Border: 16); }
+            Group #G24Open { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: (TexturePath: "jr_panel_gold.png", Border: 16); }
             $C.@SecondaryTextButton #G24Btn { @Text = ""; Anchor: (Left: 10, Top: 10, Width: 52, Height: 52); }
             Group #G24Icon { Anchor: (Left: 16, Top: 16, Width: 40, Height: 40); }
           }
           Group #G25 {
             Anchor: (Left: 364, Top: 2, Width: 72, Height: 72);
 
-            Group #G25Sel { Anchor: (Left: 0, Top: 0, Width: 72, Height: 72); Background: #e8c46a(0.30);
-              Group { Anchor: (Left: 2, Top: 2, Width: 68, Height: 68); Background: #fff0b0(0.55); }
+            Group #G25Sel { Anchor: (Left: 0, Top: 0, Width: 72, Height: 72); Background: #e8c46a(0.25);
+              Group { Anchor: (Left: 2, Top: 2, Width: 68, Height: 68); Background: #fff0b0(0.35); }
             }
-            Group #G25Lock { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: #16243c(0.96); }
-            Group #G25Avail { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: #3d7bd9; }
-            Group #G25Open { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: #e8c46a; }
+            Group #G25Lock { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: (TexturePath: "jr_slot.png", Border: 8);
+              Group { Anchor: (Left: 4, Top: 4, Width: 56, Height: 56); Background: #16243c(0.96); }
+            }
+            Group #G25Avail { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: (TexturePath: "jr_panel_party.png", Border: 16); }
+            Group #G25Open { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: (TexturePath: "jr_panel_gold.png", Border: 16); }
             $C.@SecondaryTextButton #G25Btn { @Text = ""; Anchor: (Left: 10, Top: 10, Width: 52, Height: 52); }
             Group #G25Icon { Anchor: (Left: 16, Top: 16, Width: 40, Height: 40); }
           }
           Group #G26 {
             Anchor: (Left: 545, Top: 50, Width: 72, Height: 72);
 
-            Group #G26Sel { Anchor: (Left: 0, Top: 0, Width: 72, Height: 72); Background: #e8c46a(0.30);
-              Group { Anchor: (Left: 2, Top: 2, Width: 68, Height: 68); Background: #fff0b0(0.55); }
+            Group #G26Sel { Anchor: (Left: 0, Top: 0, Width: 72, Height: 72); Background: #e8c46a(0.25);
+              Group { Anchor: (Left: 2, Top: 2, Width: 68, Height: 68); Background: #fff0b0(0.35); }
             }
-            Group #G26Lock { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: #16243c(0.96); }
-            Group #G26Avail { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: #3d7bd9; }
-            Group #G26Open { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: #e8c46a; }
+            Group #G26Lock { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: (TexturePath: "jr_slot.png", Border: 8);
+              Group { Anchor: (Left: 4, Top: 4, Width: 56, Height: 56); Background: #16243c(0.96); }
+            }
+            Group #G26Avail { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: (TexturePath: "jr_panel_party.png", Border: 16); }
+            Group #G26Open { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: (TexturePath: "jr_panel_gold.png", Border: 16); }
             $C.@SecondaryTextButton #G26Btn { @Text = ""; Anchor: (Left: 10, Top: 10, Width: 52, Height: 52); }
             Group #G26Icon { Anchor: (Left: 16, Top: 16, Width: 40, Height: 40); }
           }
           Group #G27 {
             Anchor: (Left: 677, Top: 183, Width: 72, Height: 72);
 
-            Group #G27Sel { Anchor: (Left: 0, Top: 0, Width: 72, Height: 72); Background: #e8c46a(0.30);
-              Group { Anchor: (Left: 2, Top: 2, Width: 68, Height: 68); Background: #fff0b0(0.55); }
+            Group #G27Sel { Anchor: (Left: 0, Top: 0, Width: 72, Height: 72); Background: #e8c46a(0.25);
+              Group { Anchor: (Left: 2, Top: 2, Width: 68, Height: 68); Background: #fff0b0(0.35); }
             }
-            Group #G27Lock { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: #16243c(0.96); }
-            Group #G27Avail { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: #3d7bd9; }
-            Group #G27Open { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: #e8c46a; }
+            Group #G27Lock { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: (TexturePath: "jr_slot.png", Border: 8);
+              Group { Anchor: (Left: 4, Top: 4, Width: 56, Height: 56); Background: #16243c(0.96); }
+            }
+            Group #G27Avail { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: (TexturePath: "jr_panel_party.png", Border: 16); }
+            Group #G27Open { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: (TexturePath: "jr_panel_gold.png", Border: 16); }
             $C.@SecondaryTextButton #G27Btn { @Text = ""; Anchor: (Left: 10, Top: 10, Width: 52, Height: 52); }
             Group #G27Icon { Anchor: (Left: 16, Top: 16, Width: 40, Height: 40); }
           }
           Group #G28 {
             Anchor: (Left: 726, Top: 364, Width: 72, Height: 72);
 
-            Group #G28Sel { Anchor: (Left: 0, Top: 0, Width: 72, Height: 72); Background: #e8c46a(0.30);
-              Group { Anchor: (Left: 2, Top: 2, Width: 68, Height: 68); Background: #fff0b0(0.55); }
+            Group #G28Sel { Anchor: (Left: 0, Top: 0, Width: 72, Height: 72); Background: #e8c46a(0.25);
+              Group { Anchor: (Left: 2, Top: 2, Width: 68, Height: 68); Background: #fff0b0(0.35); }
             }
-            Group #G28Lock { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: #262630(0.96); }
-            Group #G28Avail { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: #3d7bd9; }
-            Group #G28Open { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: #e8c46a; }
+            Group #G28Lock { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: (TexturePath: "jr_slot.png", Border: 8);
+              Group { Anchor: (Left: 4, Top: 4, Width: 56, Height: 56); Background: #262630(0.96); }
+            }
+            Group #G28Avail { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: (TexturePath: "jr_panel_party.png", Border: 16); }
+            Group #G28Open { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: (TexturePath: "jr_panel_gold.png", Border: 16); }
             $C.@SecondaryTextButton #G28Btn { @Text = ""; Anchor: (Left: 10, Top: 10, Width: 52, Height: 52); }
             Group #G28Icon { Anchor: (Left: 16, Top: 16, Width: 40, Height: 40); }
           }
           Group #G29 {
             Anchor: (Left: 677, Top: 545, Width: 72, Height: 72);
 
-            Group #G29Sel { Anchor: (Left: 0, Top: 0, Width: 72, Height: 72); Background: #e8c46a(0.30);
-              Group { Anchor: (Left: 2, Top: 2, Width: 68, Height: 68); Background: #fff0b0(0.55); }
+            Group #G29Sel { Anchor: (Left: 0, Top: 0, Width: 72, Height: 72); Background: #e8c46a(0.25);
+              Group { Anchor: (Left: 2, Top: 2, Width: 68, Height: 68); Background: #fff0b0(0.35); }
             }
-            Group #G29Lock { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: #14301c(0.96); }
-            Group #G29Avail { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: #3d7bd9; }
-            Group #G29Open { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: #e8c46a; }
+            Group #G29Lock { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: (TexturePath: "jr_slot.png", Border: 8);
+              Group { Anchor: (Left: 4, Top: 4, Width: 56, Height: 56); Background: #14301c(0.96); }
+            }
+            Group #G29Avail { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: (TexturePath: "jr_panel_party.png", Border: 16); }
+            Group #G29Open { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: (TexturePath: "jr_panel_gold.png", Border: 16); }
             $C.@SecondaryTextButton #G29Btn { @Text = ""; Anchor: (Left: 10, Top: 10, Width: 52, Height: 52); }
             Group #G29Icon { Anchor: (Left: 16, Top: 16, Width: 40, Height: 40); }
           }
           Group #G30 {
             Anchor: (Left: 545, Top: 677, Width: 72, Height: 72);
 
-            Group #G30Sel { Anchor: (Left: 0, Top: 0, Width: 72, Height: 72); Background: #e8c46a(0.30);
-              Group { Anchor: (Left: 2, Top: 2, Width: 68, Height: 68); Background: #fff0b0(0.55); }
+            Group #G30Sel { Anchor: (Left: 0, Top: 0, Width: 72, Height: 72); Background: #e8c46a(0.25);
+              Group { Anchor: (Left: 2, Top: 2, Width: 68, Height: 68); Background: #fff0b0(0.35); }
             }
-            Group #G30Lock { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: #14301c(0.96); }
-            Group #G30Avail { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: #3d7bd9; }
-            Group #G30Open { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: #e8c46a; }
+            Group #G30Lock { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: (TexturePath: "jr_slot.png", Border: 8);
+              Group { Anchor: (Left: 4, Top: 4, Width: 56, Height: 56); Background: #14301c(0.96); }
+            }
+            Group #G30Avail { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: (TexturePath: "jr_panel_party.png", Border: 16); }
+            Group #G30Open { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: (TexturePath: "jr_panel_gold.png", Border: 16); }
             $C.@SecondaryTextButton #G30Btn { @Text = ""; Anchor: (Left: 10, Top: 10, Width: 52, Height: 52); }
             Group #G30Icon { Anchor: (Left: 16, Top: 16, Width: 40, Height: 40); }
           }
           Group #G31 {
             Anchor: (Left: 364, Top: 726, Width: 72, Height: 72);
 
-            Group #G31Sel { Anchor: (Left: 0, Top: 0, Width: 72, Height: 72); Background: #e8c46a(0.30);
-              Group { Anchor: (Left: 2, Top: 2, Width: 68, Height: 68); Background: #fff0b0(0.55); }
+            Group #G31Sel { Anchor: (Left: 0, Top: 0, Width: 72, Height: 72); Background: #e8c46a(0.25);
+              Group { Anchor: (Left: 2, Top: 2, Width: 68, Height: 68); Background: #fff0b0(0.35); }
             }
-            Group #G31Lock { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: #14301c(0.96); }
-            Group #G31Avail { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: #3d7bd9; }
-            Group #G31Open { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: #e8c46a; }
+            Group #G31Lock { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: (TexturePath: "jr_slot.png", Border: 8);
+              Group { Anchor: (Left: 4, Top: 4, Width: 56, Height: 56); Background: #14301c(0.96); }
+            }
+            Group #G31Avail { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: (TexturePath: "jr_panel_party.png", Border: 16); }
+            Group #G31Open { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: (TexturePath: "jr_panel_gold.png", Border: 16); }
             $C.@SecondaryTextButton #G31Btn { @Text = ""; Anchor: (Left: 10, Top: 10, Width: 52, Height: 52); }
             Group #G31Icon { Anchor: (Left: 16, Top: 16, Width: 40, Height: 40); }
           }
           Group #G32 {
             Anchor: (Left: 183, Top: 677, Width: 72, Height: 72);
 
-            Group #G32Sel { Anchor: (Left: 0, Top: 0, Width: 72, Height: 72); Background: #e8c46a(0.30);
-              Group { Anchor: (Left: 2, Top: 2, Width: 68, Height: 68); Background: #fff0b0(0.55); }
+            Group #G32Sel { Anchor: (Left: 0, Top: 0, Width: 72, Height: 72); Background: #e8c46a(0.25);
+              Group { Anchor: (Left: 2, Top: 2, Width: 68, Height: 68); Background: #fff0b0(0.35); }
             }
-            Group #G32Lock { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: #262630(0.96); }
-            Group #G32Avail { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: #3d7bd9; }
-            Group #G32Open { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: #e8c46a; }
+            Group #G32Lock { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: (TexturePath: "jr_slot.png", Border: 8);
+              Group { Anchor: (Left: 4, Top: 4, Width: 56, Height: 56); Background: #262630(0.96); }
+            }
+            Group #G32Avail { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: (TexturePath: "jr_panel_party.png", Border: 16); }
+            Group #G32Open { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: (TexturePath: "jr_panel_gold.png", Border: 16); }
             $C.@SecondaryTextButton #G32Btn { @Text = ""; Anchor: (Left: 10, Top: 10, Width: 52, Height: 52); }
             Group #G32Icon { Anchor: (Left: 16, Top: 16, Width: 40, Height: 40); }
           }
           Group #G33 {
             Anchor: (Left: 50, Top: 545, Width: 72, Height: 72);
 
-            Group #G33Sel { Anchor: (Left: 0, Top: 0, Width: 72, Height: 72); Background: #e8c46a(0.30);
-              Group { Anchor: (Left: 2, Top: 2, Width: 68, Height: 68); Background: #fff0b0(0.55); }
+            Group #G33Sel { Anchor: (Left: 0, Top: 0, Width: 72, Height: 72); Background: #e8c46a(0.25);
+              Group { Anchor: (Left: 2, Top: 2, Width: 68, Height: 68); Background: #fff0b0(0.35); }
             }
-            Group #G33Lock { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: #341616(0.96); }
-            Group #G33Avail { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: #3d7bd9; }
-            Group #G33Open { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: #e8c46a; }
+            Group #G33Lock { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: (TexturePath: "jr_slot.png", Border: 8);
+              Group { Anchor: (Left: 4, Top: 4, Width: 56, Height: 56); Background: #341616(0.96); }
+            }
+            Group #G33Avail { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: (TexturePath: "jr_panel_party.png", Border: 16); }
+            Group #G33Open { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: (TexturePath: "jr_panel_gold.png", Border: 16); }
             $C.@SecondaryTextButton #G33Btn { @Text = ""; Anchor: (Left: 10, Top: 10, Width: 52, Height: 52); }
             Group #G33Icon { Anchor: (Left: 16, Top: 16, Width: 40, Height: 40); }
           }
           Group #G34 {
             Anchor: (Left: 2, Top: 364, Width: 72, Height: 72);
 
-            Group #G34Sel { Anchor: (Left: 0, Top: 0, Width: 72, Height: 72); Background: #e8c46a(0.30);
-              Group { Anchor: (Left: 2, Top: 2, Width: 68, Height: 68); Background: #fff0b0(0.55); }
+            Group #G34Sel { Anchor: (Left: 0, Top: 0, Width: 72, Height: 72); Background: #e8c46a(0.25);
+              Group { Anchor: (Left: 2, Top: 2, Width: 68, Height: 68); Background: #fff0b0(0.35); }
             }
-            Group #G34Lock { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: #341616(0.96); }
-            Group #G34Avail { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: #3d7bd9; }
-            Group #G34Open { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: #e8c46a; }
+            Group #G34Lock { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: (TexturePath: "jr_slot.png", Border: 8);
+              Group { Anchor: (Left: 4, Top: 4, Width: 56, Height: 56); Background: #341616(0.96); }
+            }
+            Group #G34Avail { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: (TexturePath: "jr_panel_party.png", Border: 16); }
+            Group #G34Open { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: (TexturePath: "jr_panel_gold.png", Border: 16); }
             $C.@SecondaryTextButton #G34Btn { @Text = ""; Anchor: (Left: 10, Top: 10, Width: 52, Height: 52); }
             Group #G34Icon { Anchor: (Left: 16, Top: 16, Width: 40, Height: 40); }
           }
           Group #G35 {
             Anchor: (Left: 50, Top: 182, Width: 72, Height: 72);
 
-            Group #G35Sel { Anchor: (Left: 0, Top: 0, Width: 72, Height: 72); Background: #e8c46a(0.30);
-              Group { Anchor: (Left: 2, Top: 2, Width: 68, Height: 68); Background: #fff0b0(0.55); }
+            Group #G35Sel { Anchor: (Left: 0, Top: 0, Width: 72, Height: 72); Background: #e8c46a(0.25);
+              Group { Anchor: (Left: 2, Top: 2, Width: 68, Height: 68); Background: #fff0b0(0.35); }
             }
-            Group #G35Lock { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: #341616(0.96); }
-            Group #G35Avail { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: #3d7bd9; }
-            Group #G35Open { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: #e8c46a; }
+            Group #G35Lock { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: (TexturePath: "jr_slot.png", Border: 8);
+              Group { Anchor: (Left: 4, Top: 4, Width: 56, Height: 56); Background: #341616(0.96); }
+            }
+            Group #G35Avail { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: (TexturePath: "jr_panel_party.png", Border: 16); }
+            Group #G35Open { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: (TexturePath: "jr_panel_gold.png", Border: 16); }
             $C.@SecondaryTextButton #G35Btn { @Text = ""; Anchor: (Left: 10, Top: 10, Width: 52, Height: 52); }
             Group #G35Icon { Anchor: (Left: 16, Top: 16, Width: 40, Height: 40); }
           }
           Group #G36 {
             Anchor: (Left: 182, Top: 50, Width: 72, Height: 72);
 
-            Group #G36Sel { Anchor: (Left: 0, Top: 0, Width: 72, Height: 72); Background: #e8c46a(0.30);
-              Group { Anchor: (Left: 2, Top: 2, Width: 68, Height: 68); Background: #fff0b0(0.55); }
+            Group #G36Sel { Anchor: (Left: 0, Top: 0, Width: 72, Height: 72); Background: #e8c46a(0.25);
+              Group { Anchor: (Left: 2, Top: 2, Width: 68, Height: 68); Background: #fff0b0(0.35); }
             }
-            Group #G36Lock { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: #262630(0.96); }
-            Group #G36Avail { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: #3d7bd9; }
-            Group #G36Open { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: #e8c46a; }
+            Group #G36Lock { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: (TexturePath: "jr_slot.png", Border: 8);
+              Group { Anchor: (Left: 4, Top: 4, Width: 56, Height: 56); Background: #262630(0.96); }
+            }
+            Group #G36Avail { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: (TexturePath: "jr_panel_party.png", Border: 16); }
+            Group #G36Open { Anchor: (Left: 4, Top: 4, Width: 64, Height: 64); Background: (TexturePath: "jr_panel_gold.png", Border: 16); }
             $C.@SecondaryTextButton #G36Btn { @Text = ""; Anchor: (Left: 10, Top: 10, Width: 52, Height: 52); }
             Group #G36Icon { Anchor: (Left: 16, Top: 16, Width: 40, Height: 40); }
           }
@@ -1696,7 +1781,7 @@ Group {
         Group #DetailCol {
           FlexWeight: 1;
           LayoutMode: Top;
-          Background: #141d2e(0.88);
+          Background: (TexturePath: "jr_panel.png", Border: 22);
           Padding: (Full: 10);
 
           Group {
@@ -1717,10 +1802,13 @@ Group {
               Label #SelKind {
                 Text: "";
                 Anchor: (Height: 18);
-                Style: (FontSize: 12, TextColor: #9fb0c6);
+                Style: (FontSize: 12, TextColor: #b4c2d6);
               }
             }
           }
+          Group { Anchor: (Height: 4); }
+          Group { Anchor: (Height: 1); Background: #e8c46a(0.40); }
+          Group { Anchor: (Height: 1); Background: #000000(0.35); }
           Group { Anchor: (Height: 6); }
           Label #SelText {
             Text: "";
@@ -1737,7 +1825,7 @@ Group {
               Text: "соседние узлы";
               Anchor: (Height: 28);
               FlexWeight: 1;
-              Style: (FontSize: 12, TextColor: #9fb0c6);
+              Style: (FontSize: 12, TextColor: #b4c2d6);
             }
             $C.@SecondaryTextButton #NextNode { @Text = ">"; Anchor: (Width: 60, Height: 28); }
           }

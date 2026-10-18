@@ -145,7 +145,7 @@ public final class BackpackPage extends InteractiveCustomUIPage<BattleMenuPage.C
             Backpack.Entry e = shown.get(at);
             cmd.set(s + "Sel.Visible", e.item().id().equals(selectedId));
             cmd.set(s + "Count.Text", e.count() > 1 ? "x" + e.count() : "");
-            icon(cmd, s + "Icon", BattleMenuPage.iconKey(Describe.itemIcon(content, e.item())), "g");
+            icon(cmd, s + "Icon", BattleMenuPage.iconKey(Describe.itemIcon(content, e.item())), "g", tier(e.item().id()));
         }
 
         Backpack.Entry sel = shown.stream().filter(e -> e.item().id().equals(selectedId)).findFirst().orElse(null);
@@ -154,22 +154,23 @@ public final class BackpackPage extends InteractiveCustomUIPage<BattleMenuPage.C
             cmd.set("#SelName.Text", "");
             cmd.set("#SelKind.Text", "");
             cmd.set("#SelText.Text", "Выбери предмет слева.");
-            icon(cmd, "#SelIcon", "bag", "g");
+            icon(cmd, "#SelIcon", "bag", "g", 0);
         } else {
             cmd.set("#SelName.Text", sel.item().name());
             cmd.set("#SelKind.Text", sel.item().kind().label + (sel.item().usable() ? " · можно в бою" : ""));
             cmd.set("#SelText.Text", Describe.item(content, sel.item(), sel.count()));
-            icon(cmd, "#SelIcon", BattleMenuPage.iconKey(Describe.itemIcon(content, sel.item())), "g");
+            icon(cmd, "#SelIcon", BattleMenuPage.iconKey(Describe.itemIcon(content, sel.item())), "g", tier(sel.item().id()));
         }
         cmd.set("#Message.Text", message);
     }
 
-    private void icon(UICommandBuilder cmd, String slot, String key, String size) {
+    private void icon(UICommandBuilder cmd, String slot, String key, String size, int tier) {
         if (!plugin.settings().uiIcons) return;
-        String want = key == null || key.isEmpty() ? "" : key + "_" + size;
-        if (want.equals(shownIcons.get(slot))) return;
-        shownIcons.put(slot, want);
-        cmd.clear(slot);
-        if (!want.isEmpty()) cmd.append(slot, BattleMenuPage.ICONS + want + ".ui");
+        BattleMenuPage.putIcon(cmd, shownIcons, slot, key, size, tier);
+    }
+
+    /** Рамка уровня: у снаряжения — по качеству. */
+    private int tier(String itemId) {
+        return content.hasGear(itemId) ? Describe.gearTier(content.gear(itemId)) : 0;
     }
 }
