@@ -73,6 +73,11 @@ public final class BattleSession implements BattleListener {
         }
     }
     private int turnNo;
+    /** Враг, на которого смотрит камера в полный рост (осмотр по «?»), или null. */
+    private String enemyView;
+    /** Идёт показ действия (забег, удар, возврат); afterPresent — что сделать, когда все вернутся на места. */
+    private boolean presenting;
+    private final List<Runnable> afterPresent = new java.util.ArrayList<>();
     /** Журнал для книги в HUD: строки целиком (книга переносит сама), без обрезки по 60. */
     private final List<LogEntry> book = new java.util.ArrayList<>();
     /** Реплика, которая сейчас печатается в окне над бойцом (id → видимая часть). */
@@ -398,7 +403,8 @@ public final class BattleSession implements BattleListener {
     void onBack() {
         if (closed) return;
         clearInfo();
-        boolean wasViewing = menu.viewed() != null;
+        boolean wasViewing = menu.viewed() != null || enemyView != null;
+        enemyView = null;
         menu.back();
         if (wasViewing && battle.phase() == Battle.Phase.AWAIT_COMMAND) {
             camera.focus(homes.get(battle.current().id), true);
@@ -483,12 +489,26 @@ public final class BattleSession implements BattleListener {
         }
         // Клик по карточке своего героя в свой ход: осмотр его способностей, камера в полный рост на него.
         Combatant c = battle.byId(combatantId);
+        // «?» у врага в свой ход: камера в полный рост на него, справа его эффекты, слабости и способности.
+        // Повторный клик (или клик по своему герою) — обратно; меню при этом работает как обычно.
+        if (c != null && c.side == Side.ENEMY && battle.phase() == Battle.Phase.AWAIT_COMMAND) {
+            boolean viewing = !combatantId.equals(enemyView);
+            if (menu.viewed() != null) menu.view(null);
+            enemyView = viewing ? combatantId : null;
+            inspectId = viewing ? combatantId : null;
+            hoverIndex = -1;
+            if (viewing) camera.profile(homes.get(c.id), yawOf(c), c.boss ? 1.9 : 1.0);
+            else camera.focus(homes.get(battle.current().id), true);
+            refresh();
+            return;
+        }
         if (c != null && c.side == Side.PARTY && battle.phase() == Battle.Phase.AWAIT_COMMAND) {
+            enemyView = null;
             Combatant was = menu.viewed();
             boolean viewing = menu.view(c == was ? null : combatantId);
             hoverIndex = -1;
             inspectId = viewing ? combatantId : null;
-            if (viewing) camera.profile(homes.get(c.id), yawOf(c));
+            if (viewing) camera.profile(homes.get(c.id), yawOf(c), 1.0);
             else camera.focus(homes.get(battle.current().id), true);
             refresh();
             return;
@@ -704,7 +724,7 @@ public final class BattleSession implements BattleListener {
             return new Info(c == null ? "Бой" : "Ход: " + c.name, "Что происходит — в журнале боя слева. Эффекты, иммунитеты "
                     + "и слабости бойца — в окне «Осмотр» справа: наведи мышь на «?» у его карточки.", "info");
         }
-        return new Info(c.name, "[Клик по карточке союзника — его способности и вид в полный рост]\n" + Describe.combatant(k, c),
+        return new Info(c.name, "[«?» у союзника — его способности, у врага — осмотр; камера в полный рост]\n" + Describe.combatant(k, c),
                 "portrait:" + Describe.portrait(c));
     }
 
@@ -713,6 +733,7 @@ public final class BattleSession implements BattleListener {
     @Override
     public void onTurnStart(Combatant actor, List<Combatant> forecast) {
         turnNo++;
+        enemyView = null;
         Vector3d pos = homes.get(actor.id);
         camera.focus(pos, actor.side == Side.PARTY);
         banner = "Ход: " + actor.name;
@@ -748,6 +769,8 @@ public final class BattleSession implements BattleListener {
     @Override
     public void onActionExecuted(ActionResult r) {
         current = r;
+        presenting = true;
+        enemyView = null;
         boolean healing = !r.hits().isEmpty() && r.hits().stream().allMatch(h -> h.damage() == 0 && (h.heal() > 0 || h.mpRestore() > 0));
         addLog(BattleText.describe(r), healing ? LOG_HEAL : r.actor().side == Side.PARTY ? LOG_PARTY : LOG_ENEMY);
         boolean afterWindup = answered != null && answered.actor == r.actor();
@@ -874,6 +897,8 @@ public final class BattleSession implements BattleListener {
             later(settle, () -> {
                 // Кукла уже дошла сама (NpcMover); телепорт поверх даёт рывок на клиенте — только для игрока.
                 if (back != null && actorRef == playerEntity) Fx.teleport(store, actorRef, home, yawOf(actor));
+                presenting = false;
+                runAfterPresent();
                 if (battle.phase() == Battle.Phase.PRESENTING) battle.acknowledge();
                 refresh();
             });
@@ -1284,14 +1309,17 @@ public final class BattleSession implements BattleListener {
 
     @Override
     public void onBattleEnd(Battle.Outcome outcome) {
-        if (outcome == Battle.Outcome.VICTORY) outro();
+        // Финал — когда последний удар показан и все вернулись на места (иначе герой убегал посреди эмоции).
+        if (outcome == Battle.Outcome.VICTORY) whenPresented(() -> {
+            outro();
+            celebrate();
+        });
         else camera.overview();
         if (outcome == Battle.Outcome.VICTORY) {
             if (!encounter.id().startsWith(SquadSpawner.ID_PREFIX)) {
                 plugin.progress().markCleared(encounter, System.currentTimeMillis());
                 plugin.scheduler().execute(plugin::saveWorld);
             }
-            celebrate();
             barkAny(Side.PARTY, "win");
             Map<String, Integer> loot = plugin.data().rollLoot(encounter, rnd);
             loot.forEach((item, cnt) -> battle.inventory().merge(item, cnt, Integer::sum));
@@ -1314,6 +1342,24 @@ public final class BattleSession implements BattleListener {
         // Опыт, добыча и потраченные зелья — сразу в сохранение.
         plugin.savePlayer(player.getUuid());
         refresh();
+    }
+
+    /** Выполнить, когда показ текущего действия закончится (или сразу, если ничего не показывается). */
+    private void whenPresented(Runnable r) {
+        if (!presenting) {
+            r.run();
+            return;
+        }
+        afterPresent.add(r);
+        // Страховка: если возврат по какой-то причине не отметился, всё равно выполнить.
+        later(6000, this::runAfterPresent);
+    }
+
+    private void runAfterPresent() {
+        if (afterPresent.isEmpty() || closed) return;
+        List<Runnable> todo = new java.util.ArrayList<>(afterPresent);
+        afterPresent.clear();
+        for (Runnable r : todo) r.run();
     }
 
     /** Финал победы: облёт камеры на средней высоте вокруг партии, потом камера держит последний кадр. */
@@ -1656,7 +1702,9 @@ public final class BattleSession implements BattleListener {
     }
 
     private void hoverCombatant(Combatant c) {
-        if (battle.phase() == Battle.Phase.AWAIT_REACTION) return;
+        // Наведение нужно только пока выбираешь команду. Во время забега камера едет, кнопки над врагами
+        // смещаются под курсором, и каждое «наведение» обновляло окно и кольцо — герой бежал рывками.
+        if (battle.phase() != Battle.Phase.AWAIT_COMMAND) return;
         if (c != null) {
             ring(c.id);
             peekId = c.id;

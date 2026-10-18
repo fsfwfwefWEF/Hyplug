@@ -90,19 +90,20 @@ public final class BattleCamera {
     }
 
     /**
-     * Портрет в полный рост (осмотр героя в бою): камера спереди-сбоку от бойца на уровне груди,
+     * Портрет в полный рост (осмотр героя или врага в бою): камера спереди-сбоку от бойца на уровне груди,
      * близко, чтобы его было хорошо видно от ног до головы. faceYaw — куда боец смотрит.
      */
-    public void profile(Vector3d pos, float faceYaw) {
+    public void profile(Vector3d pos, float faceYaw, double scale) {
         if (pos == null) return;
         // Направление взгляда бойца (yaw как у сущностей: вперёд = (-sin, -cos)).
         double fx = -Math.sin(faceYaw), fz = -Math.cos(faceYaw);
         // Камера на 35° сбоку от линии взгляда, со стороны правила 180° (как остальные кадры).
         double side = Math.toRadians(35) * (s.flip ? -1 : 1);
         double cx = fx * Math.cos(side) - fz * Math.sin(side), cz = fx * Math.sin(side) + fz * Math.cos(side);
-        double dist = s.profileDistance;
-        Vector3d look = new Vector3d(pos.x, pos.y + 0.95, pos.z);
-        Vector3d cam = new Vector3d(pos.x + cx * dist, pos.y + 1.15, pos.z + cz * dist);
+        // scale — во сколько раз боец выше человека (босс крупнее): камера дальше и выше.
+        double dist = s.profileDistance * scale;
+        Vector3d look = new Vector3d(pos.x, pos.y + 0.95 * scale, pos.z);
+        Vector3d cam = new Vector3d(pos.x + cx * dist, pos.y + 1.15 * scale, pos.z + cz * dist);
         place("profile:" + pos, cam, look, s.lerp);
     }
 

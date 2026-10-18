@@ -183,8 +183,10 @@ public final class BattleMenuPage extends InteractiveCustomUIPage<BattleMenuPage
 
     /** Кнопки над врагами: где враг на экране (по камере), размер — от роста на экране. Экран считается 1920×1080. */
     private void fillHits(UICommandBuilder cmd) {
+        // Кнопки над врагами нужны только при выборе команды: во время показа действия они бы ездили под курсором.
+        boolean choosing = session.battle().phase() == dev.jrpg.battle.Battle.Phase.AWAIT_COMMAND;
         for (int i = 0; i < ENEMIES; i++) {
-            double[] box = enemyIds[i] == null ? null : session.screenBox(enemyIds[i]);
+            double[] box = !choosing || enemyIds[i] == null ? null : session.screenBox(enemyIds[i]);
             cmd.set("#HitLayer" + i + ".Visible", box != null);
             if (box == null) continue;
             int h = (int) Math.round(Math.max(70, Math.min(420, (box[2] - box[1]) * 1080 * 1.15)));
