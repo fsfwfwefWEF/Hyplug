@@ -86,6 +86,21 @@ public final class JrpgPlugin extends JavaPlugin {
         mover.start();
         menuKey.start();
         getEventRegistry().register(PlayerDisconnectEvent.class, e -> onDisconnect(e.getPlayerRef()));
+        // Мышь в мире во время боя (камера боя включает курсор и отправку движения мыши): наведение и клик по врагу.
+        getEventRegistry().register(com.hypixel.hytale.server.core.event.events.player.PlayerMouseMotionEvent.class, e -> {
+            BattleSession s = sessionOf(e.getPlayerRef());
+            if (s != null) s.onWorld(() -> s.onWorldHover(e.getTargetEntityRef()));
+        });
+        getEventRegistry().register(com.hypixel.hytale.server.core.event.events.player.PlayerMouseButtonEvent.class, e -> {
+            BattleSession s = sessionOf(e.getPlayerRef());
+            if (s == null || e.getMouseButton() == null) return;
+            // В бою клики не бьют оружием по миру, а выбирают цель.
+            e.setCancelled(true);
+            if (e.getMouseButton().mouseButtonType == com.hypixel.hytale.protocol.MouseButtonType.Left
+                    && e.getMouseButton().state == com.hypixel.hytale.protocol.MouseButtonState.Released) {
+                s.onWorld(() -> s.onWorldClick(e.getTargetEntityRef()));
+            }
+        });
         getLogger().at(Level.INFO).log("JRPG Battles: загружено встреч " + data.encounters().size());
     }
 
@@ -307,6 +322,13 @@ public final class JrpgPlugin extends JavaPlugin {
     /** Открыть меню прокачки (вызывать в потоке мира). heroId — какая вкладка открыта (null — первая). */
     public void openProgression(PlayerRef playerRef, Ref<EntityStore> ref, Store<EntityStore> store, String heroId) {
         Pages.open(this, playerRef, ref, store, new ProgressionPage(playerRef, this, partyOf(playerRef.getUuid()), heroId));
+    }
+
+    /** Бой, в котором участвует эта сущность игрока (null — не в бою). */
+    private BattleSession sessionOf(Ref<EntityStore> playerEntity) {
+        if (playerEntity == null) return null;
+        for (BattleSession s : sessions.values()) if (!s.isClosed() && s.isPlayer(playerEntity)) return s;
+        return null;
     }
 
     public static JrpgPlugin get() { return instance; }

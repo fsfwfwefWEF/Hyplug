@@ -25,8 +25,8 @@ HP = "#5fd27a"
 MP_BACK = "#1c2440"
 MP = "#5aa2ff"
 
-LOG_W = 360
-LOG_LINES = 14
+LOG_W = 340
+LOG_LINES = 13
 INS_W = 340
 INS_LINES = 16
 
@@ -173,6 +173,37 @@ def option_row(i):
     ])
 
 
+SPEECH = 3
+SP_W, SP_H = 300, 76
+
+
+def speech_layer(i):
+    """Окно реплики над головой (как в FF): слой на весь экран, положение задают FlexWeight распорок
+    #Sp<i>Top/#Sp<i>Bottom и #Sp<i>Left/#Sp<i>Right (доли экрана), так что размер экрана знать не нужно."""
+    box = group(f"Sp{i}", [f"Anchor: (Width: {SP_W}, Height: {SP_H});", "LayoutMode: Top;"], [
+        group("", [f"Anchor: (Height: {SP_H - 14});", "Background: #e8c46a(0.95);", "Padding: (Full: 2);"], [
+            group("", ["LayoutMode: Top;", "Background: #0b111c(0.94);", "Padding: (Full: 5);"], [
+                label(f"Sp{i}Name", "", 13, GOLD, True, height=17),
+                label(f"Sp{i}Text", "", 14, TEXT, flex=True, wrap=True),
+            ]),
+        ]),
+        group("", ["Anchor: (Height: 14);", "LayoutMode: Left;"], [
+            spacer(flex=True),
+            label(f"Sp{i}Tail", "v", 13, GOLD, True, width=14, height=14),
+            spacer(flex=True),
+        ]),
+    ])
+    return group(f"SpLayer{i}", ["Anchor: (Full: 0);", "LayoutMode: Top;"], [
+        f"Group #Sp{i}Top {{ FlexWeight: 500; }}",
+        group("", [f"Anchor: (Height: {SP_H});", "LayoutMode: Left;"], [
+            f"Group #Sp{i}Left {{ FlexWeight: 500; }}",
+            box,
+            f"Group #Sp{i}Right {{ FlexWeight: 500; }}",
+        ]),
+        f"Group #Sp{i}Bottom {{ FlexWeight: 500; }}",
+    ])
+
+
 def battle():
     enemy_row = group("EnemyRow", ["Anchor: (Height: 70);", "LayoutMode: Left;"],
                       [spacer(flex=True)] + sum(([enemy_card(i), spacer(w=4)] for i in range(ENEMIES)), [])
@@ -206,8 +237,6 @@ def battle():
     ] + [label(f"Ins{i}", "", 11, TEXT, height=15) for i in range(INS_LINES)])
     middle = group("Middle", ["FlexWeight: 1;", "LayoutMode: Left;"], [
         group("", ["Anchor: (Width: 176);", "LayoutMode: Top;"], [queue, spacer(flex=True)]),
-        spacer(w=8),
-        group("", [f"Anchor: (Width: {LOG_W});", "LayoutMode: Top;"], [log, spacer(flex=True)]),
         spacer(flex=True),
         group("", [f"Anchor: (Width: {INS_W});", "LayoutMode: Top;"], [inspect, spacer(flex=True)]),
     ])
@@ -230,10 +259,13 @@ def battle():
         ]),
         label("InfoText", "", 12, TEXT, flex=True, wrap=True),
     ])
+    # Журнал боя — в левом нижнем углу (свободное место слева от партии).
     bottom = group("BottomBar", ["Anchor: (Height: 232);", "LayoutMode: Left;"], [
-        spacer(flex=True), party, spacer(w=8), menu, spacer(w=8), info, spacer(flex=True),
+        log, spacer(flex=True), party, spacer(w=8), menu, spacer(w=8), info, spacer(flex=True),
     ])
-    root = group("", ["LayoutMode: Top;", "Padding: (Full: 10);"], [enemy_row, spacer(h=6), banner, middle, bottom])
+    main = group("", ["Anchor: (Full: 0);", "LayoutMode: Top;", "Padding: (Full: 10);"],
+                 [enemy_row, spacer(h=6), banner, middle, bottom])
+    root = group("", [], [main] + [speech_layer(i) for i in range(SPEECH)])
     text = ('$C = "../Common.ui";\n\n'
             "// Боевое меню JRPG. Файл собран скриптом tools/gen_battle_ui.py — правь скрипт, а не этот файл.\n"
             "// Сверху враги и баннер хода, слева очередь и журнал боя, справа осмотр бойца,\n"

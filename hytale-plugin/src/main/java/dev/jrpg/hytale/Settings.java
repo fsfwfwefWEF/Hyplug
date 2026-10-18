@@ -35,6 +35,8 @@ public final class Settings {
         public String sound = "";
         public float volume = 0.45f;
         public int soundEvery = 2;
+        /** Окна реплик в меню боя над головами (как в FF); false — только подпись над NPC. */
+        public boolean bubbles = true;
     }
 
     /** Парирование и уклонение: окна в мс относительно момента удара врага. */
@@ -128,6 +130,10 @@ public final class Settings {
         public double focusDistance = 11, focusPitch = -28, focusSide = 45;
         public double actionDistance = 10, actionPitch = -30, actionSide = 75;
         public double targetDistance = 15;
+        /** Угол обзора камеры боя по вертикали (градусы). По нему окна реплик ставятся над головами. */
+        public float fov = 70f;
+        /** Мышь в мире: наведение на врага подсвечивает его, клик выбирает целью. */
+        public boolean mouseTargets = true;
     }
 
     public static Settings parse(String json) {
@@ -157,6 +163,7 @@ public final class Settings {
             s.speech.sound = Json.str(v, "sound", s.speech.sound);
             s.speech.volume = (float) Json.num(v, "volume", s.speech.volume);
             s.speech.soundEvery = (int) Math.max(0, Json.num(v, "soundEvery", s.speech.soundEvery));
+            s.speech.bubbles = Json.bool(v, "bubbles", s.speech.bubbles);
         }
         Object cam = m.get("camera");
         if (cam != null) {
@@ -167,6 +174,8 @@ public final class Settings {
             k.flip = Json.bool(c, "flip", k.flip);
             k.minHeight = Json.num(c, "minHeight", k.minHeight);
             k.targetDistance = Json.num(c, "targetDistance", k.targetDistance);
+            k.fov = (float) Json.num(c, "fov", k.fov);
+            k.mouseTargets = Json.bool(c, "mouseTargets", k.mouseTargets);
             Object o = c.get("overview");
             if (o != null) {
                 Map<String, Object> v = Json.obj(o);

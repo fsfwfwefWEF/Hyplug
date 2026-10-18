@@ -13,14 +13,14 @@ import java.util.TreeSet;
 /**
  * Звук «печати» реплик: короткий щелчок интерфейса на каждую букву окна над головой.
  * Звук берётся из settings.json → speech.sound, иначе подбирается сам среди звуков игры по словам
- * (Typewriter, Type, Text, Blip, Tick, Click…; только UI). Выбор и список кандидатов пишутся в лог.
+ * (Typewriter, Dialog, Text, Blip, Tick, Click, Button…, без зацикленных и шумов стройки). Выбор и список кандидатов пишутся в лог.
  */
 final class TypeSound {
-    private static final List<String> WORDS = List.of("typewriter", "type", "text", "dialog", "blip", "tick", "click",
-            "hover", "select", "tap", "button");
+    private static final List<String> WORDS = List.of("typewriter", "dialog", "text", "blip", "tick", "click", "button",
+            "tap", "pop", "select", "hover", "page", "book", "attn_extremelyquiet", "attn_veryquiet");
     private static final List<String> BAD = List.of("music", "ambient", "amb_", "loop", "explosion", "death", "_vo_",
-            "voice", "craft", "open", "close", "error", "deny", "fail");
-
+            "voice", "craft", "error", "deny", "fail", "build", "emit", "fluid", "flamethrower", "hurt", "run",
+            "pursuit", "alerted", "bubbling");
     private static volatile String picked;
     private static volatile boolean resolved;
 
@@ -41,25 +41,23 @@ final class TypeSound {
         if (resolved) return picked;
         resolved = true;
         try {
-            List<String> ui = new ArrayList<>();
+            List<String> all = new ArrayList<>();
             for (String id : SoundEvent.getAssetMap().getAssetMap().keySet()) {
                 String low = id.toLowerCase(Locale.ROOT);
-                if (low.contains("ui") && BAD.stream().noneMatch(low::contains)) ui.add(id);
+                if (BAD.stream().noneMatch(low::contains)) all.add(id);
             }
             String best = null;
+            List<String> seen = new ArrayList<>();
             for (String w : WORDS) {
-                for (String id : new TreeSet<>(ui)) {
-                    if (id.toLowerCase(Locale.ROOT).contains(w)) {
-                        best = id;
-                        break;
-                    }
+                for (String id : new TreeSet<>(all)) {
+                    if (!id.toLowerCase(Locale.ROOT).contains(w)) continue;
+                    if (seen.size() < 80) seen.add(id);
+                    if (best == null) best = id;
                 }
-                if (best != null) break;
             }
             picked = best;
             JrpgPlugin.get().log("Звук печати реплик: " + (best == null ? "не найден" : best)
-                    + " (свой: settings.json → speech.sound). Звуки интерфейса: "
-                    + new TreeSet<>(ui).stream().limit(60).toList());
+                    + " (свой: settings.json → speech.sound). Похожие звуки: " + seen);
         } catch (Throwable t) {
             Fx.warnOnce("Список звуков не прочитать", t);
         }

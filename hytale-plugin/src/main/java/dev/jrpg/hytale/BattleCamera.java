@@ -31,6 +31,8 @@ public final class BattleCamera {
     private final Vector3d partyCenter, enemyCenter;
     private final double ax, az, rx, rz;
     private String lastShot = "";
+    /** Куда поставили камеру и куда она смотрит (последний кадр) — для окон реплик над головами. */
+    private volatile Vector3d lastCam, lastLook;
 
     public BattleCamera(PlayerRef player, Settings.Camera settings, Vector3d partyCenter, Vector3d enemyCenter) {
         this.player = player;
@@ -132,6 +134,14 @@ public final class BattleCamera {
             c.position = new Position(camX, camY, camZ);
             c.rotationType = RotationType.Custom;
             c.rotation = new Direction(yaw, realPitch, 0f);
+            if (s.fov > 1) c.baseFov = s.fov;
+            if (s.mouseTargets) {
+                // Курсор в мире: клиент шлёт движение мыши и сущность под курсором (наведение и клик по врагу).
+                c.sendMouseMotion = true;
+                c.mouseInputTargetType = com.hypixel.hytale.protocol.MouseInputTargetType.Entity;
+            }
+            lastCam = new Vector3d(camX, camY, camZ);
+            lastLook = new Vector3d(look);
             player.getPacketHandler().writeNoCache(new SetServerCamera(ClientCameraView.Custom, true, c));
         } catch (Throwable t) {
             Fx.warnOnce("Камера боя не сработала (" + id + ")", t);
@@ -139,6 +149,31 @@ public final class BattleCamera {
     }
 
     public String lastShot() { return lastShot; }
+
+    /**
+     * Где точка мира на экране: {x, y} от 0 до 1 (0,0 — левый верх), null — позади камеры.
+     * Считается по последнему кадру камеры и углу обзора fov (16:9); пока камера плавно едет, чуть отстаёт.
+     */
+    public double[] project(Vector3d p) {
+        Vector3d cam = lastCam, look = lastLook;
+        if (cam == null || look == null || p == null) return null;
+        double fx = look.x - cam.x, fy = look.y - cam.y, fz = look.z - cam.z;
+        double fl = Math.sqrt(fx * fx + fy * fy + fz * fz);
+        if (fl < 1e-6) return null;
+        fx /= fl; fy /= fl; fz /= fl;
+        // right = forward × up(0,1,0); up' = right × forward
+        double rx = -fz, ry = 0, rz = fx;
+        double rl = Math.hypot(rx, rz);
+        if (rl < 1e-6) return null;
+        rx /= rl; rz /= rl;
+        double ux = ry * fz - rz * fy, uy = rz * fx - rx * fz, uz = rx * fy - ry * fx;
+        double dx = p.x - cam.x, dy = p.y - cam.y, dz = p.z - cam.z;
+        double z = dx * fx + dy * fy + dz * fz;
+        if (z < 0.5) return null;
+        double x = dx * rx + dy * ry + dz * rz, y = dx * ux + dy * uy + dz * uz;
+        double tanV = Math.tan(Math.toRadians((s.fov > 1 ? s.fov : 70) / 2.0)), tanH = tanV * 16.0 / 9.0;
+        return new double[]{0.5 + x / (z * tanH) / 2, 0.5 - y / (z * tanV) / 2};
+    }
 
     public void reset() {
         try {

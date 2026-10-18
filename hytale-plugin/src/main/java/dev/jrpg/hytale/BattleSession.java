@@ -339,11 +339,15 @@ public final class BattleSession implements BattleListener {
         clearInfo();
         BattleAction action = menu.click(index);
         if (action != null) {
+            preTarget = null;
             try {
                 battle.submit(action);
             } catch (IllegalArgumentException e) {
                 menu.rejected(e.getMessage());
             }
+        } else if (usePreTarget()) {
+            refresh();
+            return;
         }
         highlightTargets();
         refresh();
@@ -1311,17 +1315,23 @@ public final class BattleSession implements BattleListener {
         int seq = speechSeq.merge(c.id, 1, Integer::sum);
         String head = c.name + ": «";
         String body = text.strip();
-        if (ref == playerEntity && !heroPlateRead) {
+        boolean plates = !cfg.bubbles;
+        if (plates && ref == playerEntity && !heroPlateRead) {
             heroPlateRead = true;
             heroPlate = Fx.nameplateText(store, playerEntity);
         }
+        if (cfg.bubbles) bubbleSlot(c.id);
+        // Окно в меню обновляем кусками (каждое обновление окна ждёт ответа клиента, а пока ждёт — нажатия
+        // теряются), звук печати — на каждую букву.
+        int step = (int) Math.max(1, Math.round(150.0 / Math.max(1, cfg.letterMs)));
         for (int i = 1; i <= body.length(); i++) {
             int k = i;
             later(cfg.letterMs * i, () -> {
                 if (speechSeq.getOrDefault(c.id, 0) != seq || !ref.isValid()) return;
-                String shown = head + body.substring(0, k) + (k == body.length() ? "»" : "");
+                String shown = body.substring(0, k);
                 speaking.put(c.id, shown);
-                Fx.nameplate(store, ref, shown);
+                if (plates) Fx.nameplate(store, ref, head + shown + (k == body.length() ? "»" : ""));
+                else if (k % step == 0 || k == body.length()) refreshSpeech();
                 char ch = body.charAt(k - 1);
                 if (cfg.soundEvery > 0 && !Character.isWhitespace(ch) && (k - 1) % cfg.soundEvery == 0) {
                     TypeSound.play(player, cfg.sound, cfg.volume);
@@ -1331,10 +1341,141 @@ public final class BattleSession implements BattleListener {
         later(cfg.letterMs * body.length() + cfg.holdMs + 40L * body.length(), () -> {
             if (speechSeq.getOrDefault(c.id, 0) != seq) return;
             speaking.remove(c.id);
-            if (!ref.isValid()) return;
+            bubbleSlots.values().remove(c.id);
+            refreshSpeech();
+            if (!plates || !ref.isValid()) return;
             if (ref == playerEntity) Fx.restoreNameplate(store, playerEntity, heroPlate);
             else Fx.nameplate(store, ref, BattleText.nameplate(c, c == battle.current()));
         });
+    }
+
+    /** Слоты окон реплик в меню (#SpLayer0..2): кто в каком говорит. */
+    private final Map<Integer, String> bubbleSlots = new java.util.concurrent.ConcurrentHashMap<>();
+    static final int BUBBLES = 3;
+
+    private void bubbleSlot(String id) {
+        if (bubbleSlots.containsValue(id)) return;
+        for (int i = 0; i < BUBBLES; i++) {
+            if (bubbleSlots.putIfAbsent(i, id) == null) return;
+        }
+        bubbleSlots.put(0, id);
+    }
+
+    /** Окно реплики для меню: имя, напечатанный текст, где на экране голова (0..1), сторона. */
+    record Bubble(String name, String text, double x, double y, boolean party) {}
+
+    Bubble bubble(int slot) {
+        String id = bubbleSlots.get(slot);
+        String text = id == null ? null : speaking.get(id);
+        if (text == null || battle == null) return null;
+        Combatant c = battle.combatants().stream().filter(x -> x.id.equals(id)).findFirst().orElse(null);
+        if (c == null) return null;
+        Ref<EntityStore> ref = puppets.get(id);
+        Vector3d at = ref != null && ref.isValid() ? Fx.position(store, ref) : null;
+        if (at == null) at = homes.get(id);
+        double[] p = at == null || camera == null ? null : camera.project(new Vector3d(at.x, at.y + 2.3, at.z));
+        if (p == null) p = new double[]{0.5, 0.22};
+        return new Bubble(c.name, text, p[0], p[1], c.side == Side.PARTY);
+    }
+
+    /** Обновить только окна реплик (не во время замаха врага: там важен каждый клик). */
+    private void refreshSpeech() {
+        if (closed || page == null || battle.phase() == Battle.Phase.AWAIT_REACTION) return;
+        page.refreshSpeech();
+    }
+
+    // ---------- мышь в мире ----------
+
+    private String worldHover;
+
+    /** Выполнить в потоке мира боя. */
+    void onWorld(Runnable r) {
+        world.execute(() -> {
+            try {
+                r.run();
+            } catch (Throwable t) {
+                plugin.warn("Мышь в бою", t);
+            }
+        });
+    }
+
+    /** Это сущность игрока этого боя. */
+    boolean isPlayer(Ref<EntityStore> ref) {
+        return ref != null && ref.equals(playerEntity);
+    }
+
+    private String combatantAt(Ref<EntityStore> ref) {
+        if (ref == null) return null;
+        for (Map.Entry<String, Ref<EntityStore>> e : puppets.entrySet()) {
+            if (ref.equals(e.getValue())) return e.getKey();
+        }
+        return null;
+    }
+
+    private Combatant alive(String id) {
+        if (id == null) return null;
+        for (Combatant c : battle.combatants()) if (c.id.equals(id) && c.isAlive()) return c;
+        return null;
+    }
+
+    /** Курсор над сущностью в мире: под живым бойцом — кольцо и его описание в окне «Осмотр». */
+    void onWorldHover(Ref<EntityStore> target) {
+        if (closed || battle == null) return;
+        String id = combatantAt(target);
+        Combatant c = alive(id);
+        String key = c == null ? null : c.id;
+        if (java.util.Objects.equals(key, worldHover)) return;
+        worldHover = key;
+        if (!loggedMouse) {
+            loggedMouse = true;
+            plugin.log("Мышь в мире работает: наведение на " + (c == null ? "пустое место" : c.name));
+        }
+        if (battle.phase() == Battle.Phase.AWAIT_REACTION) return;
+        if (c != null) {
+            Vector3d pos = homes.get(c.id);
+            if (pos != null) Fx.particle(plugin.settings().targetRing, pos, playerEntity, store);
+            peekId = c.id;
+        } else {
+            peekId = null;
+        }
+        refresh();
+    }
+
+    private boolean loggedMouse;
+    /** Враг, выбранный кликом в мире до выбора действия: «Атака» и навыки по одной цели бьют его сразу. */
+    private String preTarget;
+
+    /** Клик в мире по бойцу: на экране целей — выбрать его; в главном меню — запомнить цель и показать. */
+    void onWorldClick(Ref<EntityStore> target) {
+        if (closed || battle == null) return;
+        Combatant c = alive(combatantAt(target));
+        plugin.log("Мышь в мире: клик по " + (c == null ? "пустому месту" : c.name));
+        if (c == null || battle.phase() != Battle.Phase.AWAIT_COMMAND) return;
+        if (menu.screen() == BattleMenu.Screen.TARGET && menu.targets().contains(c)) {
+            onInspect(c.id);
+            return;
+        }
+        preTarget = c.side == Side.ENEMY ? c.id : null;
+        inspectId = c.id;
+        Vector3d pos = homes.get(c.id);
+        if (pos != null) Fx.particle(plugin.settings().targetRing, pos, playerEntity, store);
+        refresh();
+    }
+
+    /** Меню перешло к выбору цели, а цель уже выбрана кликом в мире — сразу по ней. */
+    private boolean usePreTarget() {
+        if (preTarget == null || menu.screen() != BattleMenu.Screen.TARGET) return false;
+        Combatant c = alive(preTarget);
+        if (c == null || !menu.targets().contains(c)) return false;
+        BattleAction action = menu.clickTarget(c.id);
+        if (action == null) return false;
+        preTarget = null;
+        try {
+            battle.submit(action);
+        } catch (IllegalArgumentException e) {
+            menu.rejected(e.getMessage());
+        }
+        return true;
     }
 
     // ---------- утилиты ----------
@@ -1364,7 +1505,7 @@ public final class BattleSession implements BattleListener {
     }
 
     /** Ширина строки журнала в символах (окно слева, шрифт 11). */
-    private static final int LOG_WIDTH = 54;
+    private static final int LOG_WIDTH = 48;
 
     /** Разбить строку по словам на куски не длиннее width; продолжения — с отступом. */
     static List<String> wrap(String text, int width) {

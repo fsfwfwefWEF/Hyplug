@@ -111,6 +111,40 @@ public final class BattleMenuPage extends InteractiveCustomUIPage<BattleMenuPage
         Pages.update(this, playerRef, cmd);
     }
 
+    /** Обновить только окна реплик (печать по буквам). */
+    public void refreshSpeech() {
+        if (!Pages.isOpen(this, playerRef)) return;
+        UICommandBuilder cmd = new UICommandBuilder();
+        fillSpeech(cmd);
+        Pages.update(this, playerRef, cmd);
+    }
+
+    /**
+     * Окна реплик над головами: слой на весь экран, окно ставят доли распорок (FlexWeight) по тому, где голова
+     * на экране (BattleCamera.project). Поправка на размер окна посчитана для экрана 1920×1080.
+     */
+    private void fillSpeech(UICommandBuilder cmd) {
+        for (int i = 0; i < BattleSession.BUBBLES; i++) {
+            BattleSession.Bubble b = session.bubble(i);
+            String sp = "#Sp" + i;
+            cmd.set("#SpLayer" + i + ".Visible", b != null);
+            if (b == null) continue;
+            cmd.set(sp + "Name.Text", b.name());
+            cmd.set(sp + "Name.Style.TextColor", b.party() ? "#e8c46a" : "#ff9c8a");
+            cmd.set(sp + "Text.Text", b.text());
+            double fx = clamp((b.x() * 1920 - 150) / 1620.0), fy = clamp((b.y() * 1080 - 76) / 1004.0);
+            int left = (int) Math.round(fx * 1000), top = (int) Math.round(fy * 1000);
+            cmd.set(sp + "Left.FlexWeight", left);
+            cmd.set(sp + "Right.FlexWeight", 1000 - left);
+            cmd.set(sp + "Top.FlexWeight", top);
+            cmd.set(sp + "Bottom.FlexWeight", 1000 - top);
+        }
+    }
+
+    private static double clamp(double v) {
+        return Math.max(0.01, Math.min(0.99, v));
+    }
+
     public void closePage() {
         Pages.close(this, playerRef);
     }
@@ -133,6 +167,7 @@ public final class BattleMenuPage extends InteractiveCustomUIPage<BattleMenuPage
         fillLog(cmd);
         fillInspect(cmd);
         fillGlow(cmd, session.menu());
+        fillSpeech(cmd);
         String banner = session.banner(), sub = session.bannerSub();
         cmd.set("#BannerBox.Visible", !banner.isEmpty() || !sub.isEmpty());
         cmd.set("#Banner.Text", banner);
@@ -223,7 +258,7 @@ public final class BattleMenuPage extends InteractiveCustomUIPage<BattleMenuPage
         for (int i = 0; i < PARTY; i++) cmd.set("#P" + i + "Glow.Visible", card != null && card.equals(partyIds[i]));
     }
 
-    private static final int LOG_LINES = 14, INS_LINES = 16;
+    private static final int LOG_LINES = 13, INS_LINES = 16;
 
     /** Журнал боя слева: последние строки, каждая своим цветом (урон партии, урон врагов, лечение…). */
     private void fillLog(UICommandBuilder cmd) {
