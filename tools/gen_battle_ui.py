@@ -25,22 +25,23 @@ HP = "#5fd27a"
 MP_BACK = "#1c2440"
 MP = "#5aa2ff"
 
-LOG_W = 340
-LOG_LINES = 13
-INS_W = 340
+LOG_W = 440
+LOG_LINES = 14
+INS_W = 360
 INS_LINES = 16
 
-BAR_W_PARTY = 210
+BAR_W_PARTY = 220
 BAR_W_ENEMY = 150
 
 
-def label(id_, text="", size=14, color=TEXT, bold=False, height=None, width=None, flex=False, wrap=False):
+def label(id_, text="", size=14, color=TEXT, bold=False, height=None, width=None, flex=False, wrap=False, center=False):
     anchor = []
     if width: anchor.append(f"Width: {width}")
     if height: anchor.append(f"Height: {height}")
     style = [f"FontSize: {size}", f"TextColor: {color}"]
     if bold: style.append("RenderBold: true")
     if wrap: style.append("Wrap: true")
+    if center: style.append("HorizontalAlignment: Center")
     lines = [f"Label{(' #' + id_) if id_ else ''} {{", f'  Text: "{text}";']
     if anchor: lines.append(f"  Anchor: ({', '.join(anchor)});")
     if flex: lines.append("  FlexWeight: 1;")
@@ -99,97 +100,142 @@ def button(id_, text, w, h, cancel=False, left=None, top=None):
 
 
 # ---------- бой ----------
+# Стиль «синий камень и золото»: окна на текстуре jr_panel*.png (9-slice, рисует tools/gen_frames.py),
+# полоски на jr_bar_*.png. Текст крупнее и светлее, чем в 0.8: основной 14, мелкий не меньше 12.
+
+INK_TITLE = "#e8c46a"
+PARTY_NAME = "#a9d8ff"
+ENEMY_NAME = "#ffb3a6"
+SUB = "#b4c2d6"
+
+
+def skin(name, border=22):
+    return f'Background: (TexturePath: "{name}.png", Border: {border});'
+
+
+def tex(name):
+    return f'Background: (TexturePath: "{name}.png");'
+
+
+def tbar(prefix, width, fill, h=8):
+    """Полоска на текстурах: тёмная подложка jr_bar_back и цветная заливка (ширину заливки ставит плагин)."""
+    return f"""Group #{prefix}Back {{
+  Anchor: (Width: {width}, Height: {h});
+  LayoutMode: Left;
+  {tex("jr_bar_back")}
+  Group #{prefix}Fill {{ Anchor: (Width: {width}, Height: {h}); {tex(fill)} }}
+}}"""
+
+
+def layered(id_, w, h, layers, content_props, children, inset=0):
+    """Контейнер с наложенными слоями: #<id>Glow (подсветка при наведении), фоны из layers
+    (список (id, текстура)), сверху содержимое. Видимость слоёв переключает плагин."""
+    kids = [f"Group #{id_}Glow {{\n  Anchor: (Left: 0, Top: 0, Width: {w}, Height: {h});\n"
+            f"  {skin('jr_panel_gold')}\n}}"]
+    for lid, texture in layers:
+        kids.append(f"Group #{lid} {{ Anchor: (Left: {2 if lid.endswith('Bg') else 0}, Top: {2 if lid.endswith('Bg') else 0}, "
+                    f"Width: {w - (4 if lid.endswith('Bg') else 0)}, Height: {h - (4 if lid.endswith('Bg') else 0)}); {skin(texture)} }}")
+    kids.append(group("", [f"Anchor: (Left: {inset}, Top: {inset}, Width: {w - 2 * inset}, Height: {h - 2 * inset});"]
+                      + content_props, children))
+    return group(id_, [f"Anchor: (Width: {w}, Height: {h});"], kids)
+
+
+def panel_title(text, id_=None, color=INK_TITLE):
+    return label(id_ or "", text, 13, color, True, height=20)
+
 
 def queue_slot(i):
+    """Запасная очередь в окне (если HUD выключен в settings.json → ui.hud)."""
     big = i == 0
     return group(f"Q{i}", [
-        f"Anchor: (Height: {46 if big else 32});",
+        f"Anchor: (Height: {46 if big else 34});",
         "LayoutMode: Left;",
-        f"Background: {'#2c3c5e(0.95)' if big else '#121a28(0.0)'};",
-        "Padding: (Full: 3);",
+        skin("jr_panel_gold" if big else "jr_panel", 22),
+        "Padding: (Left: 8, Right: 6, Top: 4, Bottom: 4);",
     ], [
-        slot(f"Q{i}Icon", 40 if big else 22),
-        spacer(w=6),
+        slot(f"Q{i}Icon", 38 if big else 24),
+        spacer(w=8),
         group("", ["FlexWeight: 1;", "LayoutMode: Top;"], [
-            label(f"Q{i}Name", size=14 if big else 12, bold=big, height=20 if big else 15),
-            label(f"Q{i}Sub", size=11, color=GOLD if big else DIM, height=16 if big else 12),
+            label(f"Q{i}Name", size=15 if big else 13, bold=True, height=20 if big else 16),
+            label(f"Q{i}Sub", size=12, color=GOLD if big else SUB, height=16 if big else 12),
         ]),
     ])
 
 
+ENEMY_W, ENEMY_H = 214, 84
+
+
 def enemy_card(i):
-    return aura(f"E{i}", 200, 70, [
-        "LayoutMode: Top;",
-        f"Background: {PANEL};",
-        "Padding: (Full: 5);",
+    return layered(f"E{i}", ENEMY_W, ENEMY_H, [(f"E{i}Bg", "jr_panel_enemy")], [
+        "LayoutMode: Top;", "Padding: (Left: 11, Right: 9, Top: 9, Bottom: 7);",
     ], [
-        group("", ["Anchor: (Height: 26);", "LayoutMode: Left;"], [
-            slot(f"E{i}Icon", 22),
-            spacer(w=5),
-            label(f"E{i}Name", size=13, bold=True, color="#ffb3a6", height=24, flex=True),
-            button(f"E{i}Info", "?", 26, 22),
+        group("", ["Anchor: (Height: 28);", "LayoutMode: Left;"], [
+            slot(f"E{i}Icon", 26),
+            spacer(w=6),
+            label(f"E{i}Name", size=15, bold=True, color=ENEMY_NAME, height=26, flex=True),
+            button(f"E{i}Info", "?", 26, 24),
         ]),
-        group("", ["Anchor: (Height: 12);", "LayoutMode: Left;"], [
-            bar(f"E{i}Hp", BAR_W_ENEMY, HP_BACK, "#e0605a", h=5),
-            spacer(w=4),
-            label(f"E{i}Hp", size=10, color=DIM, height=12, flex=True),
+        group("", ["Anchor: (Height: 14);", "LayoutMode: Left;"], [
+            tbar(f"E{i}Hp", BAR_W_ENEMY, "jr_bar_ehp", h=7),
+            spacer(w=6),
+            label(f"E{i}Hp", size=12, color=SUB, height=14, flex=True),
         ]),
+        spacer(h=2),
         group(f"E{i}Status", ["Anchor: (Height: 22);", "LayoutMode: Left;"], []),
     ])
 
 
+PARTY_W, PARTY_H = 448, 72
+
+
 def party_row(i):
-    return aura(f"P{i}", 438, 64, [
-        "LayoutMode: Left;",
-        f"Background: {PANEL2};",
-        "Padding: (Full: 4);",
+    return layered(f"P{i}", PARTY_W, PARTY_H, [(f"P{i}Bg", "jr_panel_party"), (f"P{i}Turn", "jr_panel_gold")], [
+        "LayoutMode: Left;", "Padding: (Left: 10, Right: 9, Top: 8, Bottom: 6);",
     ], [
-        group(f"P{i}Turn", ["Anchor: (Width: 4);", f"Background: {GOLD};"], []),
-        spacer(w=5),
-        slot(f"P{i}Icon", 40),
-        spacer(w=6),
+        slot(f"P{i}Icon", 44),
+        spacer(w=8),
         group("", ["FlexWeight: 1;", "LayoutMode: Top;"], [
             group("", ["Anchor: (Height: 20);", "LayoutMode: Left;"], [
-                label(f"P{i}Name", size=14, bold=True, color="#a9d8ff", width=110, height=20),
-                label(f"P{i}Nums", size=11, color=DIM, height=20, flex=True),
+                label(f"P{i}Name", size=16, bold=True, color=PARTY_NAME, width=120, height=20),
+                label(f"P{i}Nums", size=12, color=SUB, height=20, flex=True),
             ]),
-            bar(f"P{i}Hp", BAR_W_PARTY, HP_BACK, HP, h=6),
             spacer(h=2),
-            bar(f"P{i}Mp", BAR_W_PARTY, MP_BACK, MP, h=4),
+            tbar(f"P{i}Hp", BAR_W_PARTY, "jr_bar_hp", h=8),
+            spacer(h=2),
+            tbar(f"P{i}Mp", BAR_W_PARTY, "jr_bar_mp", h=5),
             spacer(h=2),
             group(f"P{i}Status", ["Anchor: (Height: 22);", "LayoutMode: Left;"], []),
         ]),
-        button(f"P{i}Info", "?", 26, 22),
+        button(f"P{i}Info", "?", 26, 24),
     ])
 
 
 def option_row(i):
-    return aura(f"Row{i}", 318, 32, ["LayoutMode: Left;"], [
-        slot(f"Opt{i}Icon", 22),
+    return aura(f"Row{i}", 324, 36, ["LayoutMode: Left;"], [
+        slot(f"Opt{i}Icon", 26),
         spacer(w=6),
-        button(f"Opt{i}", "", 200, 28),
+        button(f"Opt{i}", "", 206, 30),
         spacer(w=6),
-        label(f"Opt{i}Hint", size=11, color=GOLD, height=28, flex=True),
+        label(f"Opt{i}Hint", size=12, color=GOLD, height=30, flex=True),
     ])
 
 
 SPEECH = 3
-SP_W, SP_H = 300, 76
+SP_W, SP_H = 300, 80
 
 
 def speech_layer(i):
     """Окно реплики над головой (как в FF): слой на весь экран, положение задают FlexWeight распорок
     #Sp<i>Top/#Sp<i>Bottom и #Sp<i>Left/#Sp<i>Right (доли экрана), так что размер экрана знать не нужно."""
     box = group(f"Sp{i}", [f"Anchor: (Width: {SP_W}, Height: {SP_H});", "LayoutMode: Top;"], [
-        group("", [f"Anchor: (Height: {SP_H - 14});", "Background: #e8c46a(0.95);", "Padding: (Full: 2);"], [
-            group("", ["LayoutMode: Top;", "Background: #0b111c(0.94);", "Padding: (Full: 5);"], [
-                label(f"Sp{i}Name", "", 13, GOLD, True, height=17),
-                label(f"Sp{i}Text", "", 14, TEXT, flex=True, wrap=True),
-            ]),
+        group("", [f"Anchor: (Height: {SP_H - 14});", "LayoutMode: Top;", skin("jr_bubble", 16),
+                   "Padding: (Left: 12, Right: 10, Top: 7, Bottom: 6);"], [
+            label(f"Sp{i}Name", "", 14, GOLD, True, height=18),
+            label(f"Sp{i}Text", "", 15, TEXT, flex=True, wrap=True),
         ]),
         group("", ["Anchor: (Height: 14);", "LayoutMode: Left;"], [
             spacer(flex=True),
-            label(f"Sp{i}Tail", "v", 13, GOLD, True, width=14, height=14),
+            label(f"Sp{i}Tail", "v", 14, GOLD, True, width=14, height=14),
             spacer(flex=True),
         ]),
     ])
@@ -204,75 +250,149 @@ def speech_layer(i):
     ])
 
 
+BOOK_W, BOOK_H = 440, 290
+
+
 def battle():
-    enemy_row = group("EnemyRow", ["Anchor: (Height: 70);", "LayoutMode: Left;"],
-                      [spacer(flex=True)] + sum(([enemy_card(i), spacer(w=4)] for i in range(ENEMIES)), [])
+    enemy_row = group("EnemyRow", [f"Anchor: (Height: {ENEMY_H});", "LayoutMode: Left;"],
+                      [spacer(flex=True)] + sum(([enemy_card(i), spacer(w=6)] for i in range(ENEMIES)), [])
                       + [spacer(flex=True)])
-    banner = group("BannerRow", ["Anchor: (Height: 60);", "LayoutMode: Left;"], [
+    # Баннер хода, очередь и журнал в окне — запасной вид; обычно они в HUD (BattleHud.ui) и анимированы.
+    banner = group("BannerRow", ["Anchor: (Height: 62);", "LayoutMode: Left;"], [
         spacer(flex=True),
-        group("BannerBox", ["Anchor: (Width: 620, Height: 56);", "LayoutMode: Top;", "Background: #070b12(0.72);",
-                            "Padding: (Full: 6);"], [
-            label("Banner", "", 20, GOLD, True, height=24),
-            label("BannerSub", "", 13, TEXT, height=18),
+        group("BannerBox", ["Anchor: (Width: 600, Height: 60);", "LayoutMode: Top;", tex("jr_banner"),
+                            "Padding: (Top: 9);"], [
+            label("Banner", "", 22, GOLD, True, height=26, center=True),
+            label("BannerSub", "", 13, TEXT, height=18, center=True),
         ]),
         spacer(flex=True),
     ])
-    queue = group("QueuePanel", ["Anchor: (Width: 176);", "LayoutMode: Top;", f"Background: {PANEL};",
-                                 "Padding: (Full: 6);"],
-                  [label("", "ОЧЕРЕДЬ", 12, GOLD, True, height=18)]
-                  + sum(([queue_slot(i), spacer(h=2)] for i in range(QUEUE)), []))
-    # Журнал боя слева (кто кому что сделал, цвета по типу события) и окно «Осмотр» справа
-    # (выбранный боец: статусы с описанием и ходами, иммунитеты, слабости). Цвет строк ставит плагин
-    # через #LogN.Style.TextColor / #InsN.Style.TextColor.
-    log = group("LogPanel", [f"Anchor: (Width: {LOG_W});", "LayoutMode: Top;", f"Background: {PANEL};",
-                             "Padding: (Full: 6);"],
-                [label("", "ЖУРНАЛ БОЯ", 12, GOLD, True, height=18)]
-                + [label(f"Log{i}", "", 11, TEXT, height=15) for i in range(LOG_LINES)])
-    inspect = group("InsPanel", [f"Anchor: (Width: {INS_W});", "LayoutMode: Top;", f"Background: {PANEL};",
-                                 "Padding: (Full: 6);"], [
-        label("", "ОСМОТР И ЭФФЕКТЫ", 12, GOLD, True, height=18),
-        label("InsTitle", "", 14, "#ffb3a6", True, height=20),
-        label("InsSub", "", 11, DIM, height=15),
-        spacer(h=3),
-    ] + [label(f"Ins{i}", "", 11, TEXT, height=15) for i in range(INS_LINES)])
+    queue = group("QueuePanel", ["Anchor: (Width: 236);", "LayoutMode: Top;", skin("jr_panel"),
+                                 "Padding: (Full: 12);"],
+                  [panel_title("ОЧЕРЕДЬ ХОДОВ", "QueueTitle"), spacer(h=4)]
+                  + sum(([queue_slot(i), spacer(h=3)] for i in range(QUEUE)), []))
+    log = group("LogPanel", [f"Anchor: (Width: {LOG_W});", "LayoutMode: Top;", skin("jr_panel"),
+                             "Padding: (Full: 12);"],
+                [panel_title("ЖУРНАЛ БОЯ", "LogTitle")]
+                + [label(f"Log{i}", "", 12, TEXT, height=16) for i in range(LOG_LINES)])
+    inspect = group("InsPanel", [f"Anchor: (Width: {INS_W});", "LayoutMode: Top;", skin("jr_panel"),
+                                 "Padding: (Full: 13);"], [
+        panel_title("ОСМОТР И ЭФФЕКТЫ", "InsHeader"),
+        label("InsTitle", "", 16, ENEMY_NAME, True, height=22),
+        label("InsSub", "", 12, SUB, height=17),
+        spacer(h=4),
+    ] + [label(f"Ins{i}", "", 13, TEXT, height=17) for i in range(INS_LINES)])
     middle = group("Middle", ["FlexWeight: 1;", "LayoutMode: Left;"], [
-        group("", ["Anchor: (Width: 176);", "LayoutMode: Top;"], [queue, spacer(flex=True)]),
+        group("QueueCol", ["Anchor: (Width: 236);", "LayoutMode: Top;"], [queue, spacer(flex=True)]),
         spacer(flex=True),
-        group("", [f"Anchor: (Width: {INS_W});", "LayoutMode: Top;"], [inspect, spacer(flex=True)]),
+        group("", [f"Anchor: (Width: {INS_W});", "LayoutMode: Top;"], [spacer(h=6), inspect, spacer(flex=True)]),
     ])
-    party = group("PartyPanel", ["Anchor: (Width: 450);", "LayoutMode: Top;", f"Background: {PANEL};",
-                                 "Padding: (Full: 6);"],
-                  sum(([party_row(i), spacer(h=3)] for i in range(PARTY)), []))
-    menu = group("MenuPanel", ["Anchor: (Width: 330);", "LayoutMode: Top;", f"Background: {PANEL};",
-                               "Padding: (Full: 6);"], [
-        group("", ["Anchor: (Height: 26);", "LayoutMode: Left;"], [
-            label("MenuTitle", "", 14, TEXT, True, height=24, flex=True),
-            button("Back", "Назад", 84, 24, cancel=True),
+    party = group("PartyPanel", [f"Anchor: (Width: {PARTY_W + 2});", "LayoutMode: Top;"],
+                  sum(([party_row(i), spacer(h=4)] for i in range(PARTY)), []))
+    menu = group("MenuPanel", ["Anchor: (Width: 350);", "LayoutMode: Top;", skin("jr_panel"),
+                               "Padding: (Left: 13, Right: 13, Top: 11, Bottom: 10);"], [
+        group("", ["Anchor: (Height: 28);", "LayoutMode: Left;"], [
+            label("MenuTitle", "", 15, GOLD, True, height=26, flex=True),
+            button("Back", "Назад", 84, 26, cancel=True),
         ]),
-    ] + [option_row(i) for i in range(OPTIONS)] + [label("Error", "", 11, "#ff7070", height=16)])
-    info = group("InfoPanel", ["Anchor: (Width: 540);", "LayoutMode: Top;", f"Background: {PANEL2};",
-                               "Padding: (Full: 8);"], [
-        group("", ["Anchor: (Height: 26);", "LayoutMode: Left;"], [
-            slot("InfoIcon", 22),
-            spacer(w=6),
-            label("InfoTitle", "", 15, GOLD, True, height=24, flex=True),
+        spacer(h=2),
+    ] + [option_row(i) for i in range(OPTIONS)] + [label("Error", "", 12, "#ff8070", height=16)])
+    info = group("InfoPanel", ["Anchor: (Width: 470);", "LayoutMode: Top;", skin("jr_panel"),
+                               "Padding: (Left: 14, Right: 14, Top: 12, Bottom: 10);"], [
+        group("", ["Anchor: (Height: 32);", "LayoutMode: Left;"], [
+            slot("InfoIcon", 30),
+            spacer(w=8),
+            label("InfoTitle", "", 17, GOLD, True, height=30, flex=True),
         ]),
-        label("InfoText", "", 12, TEXT, flex=True, wrap=True),
+        spacer(h=4),
+        label("InfoText", "", 14, TEXT, flex=True, wrap=True),
     ])
-    # Журнал боя — в левом нижнем углу (свободное место слева от партии).
-    bottom = group("BottomBar", ["Anchor: (Height: 232);", "LayoutMode: Left;"], [
-        log, spacer(flex=True), party, spacer(w=8), menu, spacer(w=8), info, spacer(flex=True),
+    # Левый нижний угол: книга-журнал из HUD (#BookSpace держит под неё место) или запасной #LogPanel.
+    bottom = group("BottomBar", [f"Anchor: (Height: {BOOK_H - 10});", "LayoutMode: Left;"], [
+        group("BookSpace", [f"Anchor: (Width: {BOOK_W});"], []), log,
+        spacer(flex=True), party, spacer(w=8), menu, spacer(w=8), info, spacer(flex=True),
     ])
     main = group("", ["Anchor: (Full: 0);", "LayoutMode: Top;", "Padding: (Full: 10);"],
                  [enemy_row, spacer(h=6), banner, middle, bottom])
     root = group("", [], [main] + [speech_layer(i) for i in range(SPEECH)])
     text = ('$C = "../Common.ui";\n\n'
             "// Боевое меню JRPG. Файл собран скриптом tools/gen_battle_ui.py — правь скрипт, а не этот файл.\n"
-            "// Сверху враги и баннер хода, слева очередь и журнал боя, справа осмотр бойца,\n"
-            "// внизу одной полосой: партия, команды, описание.\n"
-            "// Иконки вставляются в пустые слоты (#...Icon) из Icons/*.ui.\n\n"
+            "// Сверху враги, справа осмотр бойца, внизу партия, команды и описание. Баннер хода, очередь и\n"
+            "// журнал-книга обычно в HUD (BattleHud.ui); здесь их запасной вид для settings.json → ui.hud = false.\n"
+            "// Рамки — текстуры jr_*.png (tools/gen_frames.py), иконки вставляются в слоты #...Icon из Icons/*.ui.\n\n"
             + root + "\n")
     write("BattleMenu.ui", text)
+
+
+# ---------- HUD боя: баннер хода, очередь, книга журнала ----------
+# Всё стоит по абсолютным координатам: плагин двигает элементы (Anchor) шагами — так сделаны анимации.
+# HUD не ждёт подтверждений клиента, поэтому частые обновления не мешают кнопкам окна боя.
+
+HUD_Q_W = 236
+Q_ITEM_W = 214
+Q_CUR_H, Q_H, Q_GAP = 50, 36, 4
+Q_TOP = 38
+
+
+def q_top(i):
+    return Q_TOP if i == 0 else Q_TOP + Q_CUR_H + 6 + (i - 1) * (Q_H + Q_GAP)
+
+
+def hud_queue_item(i):
+    h = Q_CUR_H if i == 0 else Q_H
+    icon = 38 if i == 0 else 26
+    layers = [f"Group #HQ{i}{k} {{ Anchor: (Left: 0, Top: 0, Width: {Q_ITEM_W}, Height: {h}); {tex(t)} }}"
+              for k, t in (("Cur", "jr_q_cur"), ("Pty", "jr_q_party"), ("Ene", "jr_q_enemy"))]
+    content = group("", [f"Anchor: (Left: 12, Top: 0, Width: {Q_ITEM_W - 18}, Height: {h});", "LayoutMode: Left;"], [
+        group("", ["LayoutMode: Top;", f"Anchor: (Width: {icon});"], [spacer(flex=True), slot(f"HQ{i}Icon", icon), spacer(flex=True)]),
+        spacer(w=8),
+        group("", ["FlexWeight: 1;", "LayoutMode: Top;"], [
+            spacer(flex=True),
+            label(f"HQ{i}Name", "", 15 if i == 0 else 13, TEXT, True, height=19 if i == 0 else 16),
+            label(f"HQ{i}Sub", "", 12, GOLD if i == 0 else SUB, height=15 if i == 0 else 13),
+            spacer(flex=True),
+        ]),
+    ])
+    return group(f"HQ{i}", [f"Anchor: (Left: 11, Top: {q_top(i)}, Width: {Q_ITEM_W}, Height: {h});"], layers + [content])
+
+
+def hud():
+    banner = group("HBannerRow", ["Anchor: (Left: 0, Right: 0, Top: 96, Height: 62);", "LayoutMode: Left;"], [
+        spacer(flex=True),
+        group("HBannerBox", ["Anchor: (Width: 600, Height: 60);", "LayoutMode: Top;", tex("jr_banner"),
+                             "Padding: (Top: 8);"], [
+            label("HBanner", "", 22, GOLD, True, height=27, center=True),
+            label("HBannerSub", "", 13, TEXT, height=18, center=True),
+        ]),
+        spacer(flex=True),
+    ])
+    q_h = q_top(QUEUE - 1) + Q_H + 12
+    queue = group("HQueue", [f"Anchor: (Left: 12, Top: 170, Width: {HUD_Q_W}, Height: {q_h});", skin("jr_panel")], [
+        f'Label #HQueueTitle {{ Text: "ОЧЕРЕДЬ ХОДОВ"; Anchor: (Left: 16, Top: 12, Width: 200, Height: 20); '
+        f"Style: (FontSize: 13, TextColor: {GOLD}, RenderBold: true); }}",
+    ] + [hud_queue_item(i) for i in range(QUEUE)])
+    # Книга: левая страница — прошлая, правая — текущая. #HFlip — переворачиваемый лист (анимация).
+    page_l, page_r, page_top, page_w, page_h = 28, 238, 22, 176, 232
+    book = group("HBook", [f"Anchor: (Left: 12, Bottom: 12, Width: {BOOK_W}, Height: {BOOK_H});", tex("jr_book")], [
+        f'Label #HBookLHead {{ Text: ""; Anchor: (Left: {page_l}, Top: {page_top - 4}, Width: {page_w}, Height: 16); '
+        f"Style: (FontSize: 12, TextColor: #7a6040, RenderBold: true, HorizontalAlignment: Center); }}",
+        f'Label #HBookRHead {{ Text: ""; Anchor: (Left: {page_r}, Top: {page_top - 4}, Width: {page_w}, Height: 16); '
+        f"Style: (FontSize: 12, TextColor: #7a6040, RenderBold: true, HorizontalAlignment: Center); }}",
+        f'Label #HBookL {{ Text: ""; Anchor: (Left: {page_l}, Top: {page_top + 16}, Width: {page_w}, Height: {page_h - 22}); '
+        f"Style: (FontSize: 13, TextColor: #3a2a1a, Wrap: true); }}",
+        f'Label #HBookR {{ Text: ""; Anchor: (Left: {page_r}, Top: {page_top + 16}, Width: {page_w}, Height: {page_h - 22}); '
+        f"Style: (FontSize: 13, TextColor: #3a2a1a, Wrap: true); }}",
+        f'Label #HBookLNum {{ Text: ""; Anchor: (Left: {page_l}, Top: {BOOK_H - 30}, Width: {page_w}, Height: 14); '
+        f"Style: (FontSize: 11, TextColor: #8a7050, HorizontalAlignment: Center); }}",
+        f'Label #HBookRNum {{ Text: ""; Anchor: (Left: {page_r}, Top: {BOOK_H - 30}, Width: {page_w}, Height: 14); '
+        f"Style: (FontSize: 11, TextColor: #8a7050, HorizontalAlignment: Center); }}",
+        f"Group #HFlip {{ Anchor: (Left: 222, Top: 12, Width: 206, Height: 266); {tex('jr_page')} }}",
+    ])
+    root = group("", ["Anchor: (Full: 0);"], [banner, queue, book])
+    write("BattleHud.ui", '$C = "../Common.ui";\n\n'
+          "// HUD боя: баннер хода #HBannerRow, очередь #HQueue (#HQ0..7, фоны #HQ<n>Cur/Pty/Ene), книга журнала #HBook\n"
+          "// (страницы #HBookL/#HBookR, лист #HFlip). Положение элементов плагин меняет шагами — это анимации.\n"
+          "// Собрано tools/gen_battle_ui.py — правь скрипт.\n\n" + root + "\n")
 
 
 # ---------- круговая сетка навыков ----------
@@ -668,6 +788,7 @@ def write(name, text):
 
 if __name__ == "__main__":
     battle()
+    hud()
     progression()
     prebattle()
     backpack()

@@ -7,8 +7,10 @@ import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.protocol.packets.interface_.CustomPageLifetime;
 import com.hypixel.hytale.protocol.packets.interface_.CustomUIEventBindingType;
+import com.hypixel.hytale.server.core.Message;
 import com.hypixel.hytale.server.core.entity.entities.player.pages.InteractiveCustomUIPage;
 import com.hypixel.hytale.server.core.ui.Anchor;
+import com.hypixel.hytale.server.core.ui.PatchStyle;
 import com.hypixel.hytale.server.core.ui.Value;
 import com.hypixel.hytale.server.core.ui.builder.EventData;
 import com.hypixel.hytale.server.core.ui.builder.UICommandBuilder;
@@ -41,7 +43,7 @@ public final class BattleMenuPage extends InteractiveCustomUIPage<BattleMenuPage
     public static final String LAYOUT = "JrpgBattle/BattleMenu.ui";
     public static final String ICONS = "JrpgBattle/Icons/";
     public static final int BUTTONS = 6, QUEUE = 8, ENEMIES = 5, PARTY = 3;
-    private static final int BAR_CARD = 210, BAR_ENEMY = 150;
+    private static final int BAR_CARD = 220, BAR_ENEMY = 150;
     private static final String PARTY_COLOR = "#a9d8ff", ENEMY_COLOR = "#ffb3a6";
 
     private final BattleSession session;
@@ -78,7 +80,41 @@ public final class BattleMenuPage extends InteractiveCustomUIPage<BattleMenuPage
             bind(evt, CustomUIEventBindingType.MouseExited, "#P" + i + "Info", "unpeek", i);
         }
         bind(evt, CustomUIEventBindingType.Activating, "#Back", "back", -1);
+        style(cmd);
         fill(cmd);
+    }
+
+    /** Шрифт заголовков и кнопки на своих текстурах (settings.json → ui.titleFont, ui.skinButtons). */
+    private void style(UICommandBuilder cmd) {
+        Settings s = session.settings();
+        if (s.uiTitleFont != null && !s.uiTitleFont.isEmpty()) {
+            List<String> titles = new ArrayList<>(List.of("#Banner", "#MenuTitle", "#InfoTitle", "#InsTitle", "#InsHeader",
+                    "#QueueTitle", "#LogTitle"));
+            for (int i = 0; i < ENEMIES; i++) titles.add("#E" + i + "Name");
+            for (int i = 0; i < PARTY; i++) titles.add("#P" + i + "Name");
+            for (String id : titles) cmd.set(id + ".Style.FontName", s.uiTitleFont);
+        }
+        if (s.uiSkinButtons) {
+            List<String> buttons = new ArrayList<>();
+            for (int i = 0; i < BUTTONS; i++) buttons.add("#Opt" + i);
+            for (int i = 0; i < ENEMIES; i++) buttons.add("#E" + i + "Info");
+            for (int i = 0; i < PARTY; i++) buttons.add("#P" + i + "Info");
+            buttons.add("#Back");
+            for (String id : buttons) skinButton(cmd, id);
+        }
+    }
+
+    private static void skinButton(UICommandBuilder cmd, String id) {
+        cmd.setObject(id + ".Style.Default.Background", patch("jr_btn.png"));
+        cmd.setObject(id + ".Style.Hovered.Background", patch("jr_btn_hover.png"));
+        cmd.setObject(id + ".Style.Pressed.Background", patch("jr_btn_press.png"));
+        cmd.setObject(id + ".Style.Disabled.Background", patch("jr_btn_off.png"));
+        cmd.set(id + ".Style.Default.LabelStyle.TextColor", "#f3e7c9");
+        cmd.set(id + ".Style.Hovered.LabelStyle.TextColor", "#fff4d0");
+    }
+
+    private static PatchStyle patch(String texture) {
+        return new PatchStyle(Value.of(texture), Value.of(12));
     }
 
     private static void bind(UIEventBuilder evt, CustomUIEventBindingType type, String selector, String action, int index) {
@@ -159,12 +195,18 @@ public final class BattleMenuPage extends InteractiveCustomUIPage<BattleMenuPage
 
     private void fill(UICommandBuilder cmd) {
         Battle b = session.battle();
-        fillQueue(cmd, b);
+        // Баннер, очередь и журнал обычно в HUD (BattleHud), здесь — их запасной вид.
+        boolean hud = session.hudShown();
+        cmd.set("#BannerRow.Visible", !hud);
+        cmd.set("#QueueCol.Visible", !hud);
+        cmd.set("#LogPanel.Visible", !hud);
+        cmd.set("#BookSpace.Visible", hud);
+        if (!hud) fillQueue(cmd, b);
         fillEnemies(cmd, b);
         fillParty(cmd, b);
         fillMenu(cmd, session.menu());
         fillInfo(cmd);
-        fillLog(cmd);
+        if (!hud) fillLog(cmd);
         fillInspect(cmd);
         fillGlow(cmd, session.menu());
         fillSpeech(cmd);
@@ -201,7 +243,7 @@ public final class BattleMenuPage extends InteractiveCustomUIPage<BattleMenuPage
             Combatant c = list.get(i);
             cmd.set(e + "Name.Text", (c == b.current() ? "> " : "") + c.name);
             cmd.set(e + "Hp.Text", c.hp + "/" + c.stats.maxHp() + (c.boss ? " БОСС" : ""));
-            bar(cmd, e + "Hp", c.hp, c.stats.maxHp(), BAR_ENEMY, 5);
+            bar(cmd, e + "Hp", c.hp, c.stats.maxHp(), BAR_ENEMY, 7);
             icon(cmd, e + "Icon", portraitKey(c), "s");
             statusIcons(cmd, e + "Status", c);
         }
@@ -220,8 +262,8 @@ public final class BattleMenuPage extends InteractiveCustomUIPage<BattleMenuPage
             cmd.set(p + "Name.Text", c.name + (c.isAlive() ? "" : "  (без сознания)"));
             cmd.set(p + "Nums.Text", "HP " + c.hp + "/" + c.stats.maxHp() + "  MP " + c.mp + "/" + c.stats.maxMp()
                     + "  AP " + c.ap);
-            bar(cmd, p + "Hp", c.hp, c.stats.maxHp(), BAR_CARD, 6);
-            bar(cmd, p + "Mp", c.mp, c.stats.maxMp(), BAR_CARD, 4);
+            bar(cmd, p + "Hp", c.hp, c.stats.maxHp(), BAR_CARD, 8);
+            bar(cmd, p + "Mp", c.mp, c.stats.maxMp(), BAR_CARD, 5);
             icon(cmd, p + "Icon", portraitKey(c), "m");
             statusIcons(cmd, p + "Status", c);
         }
@@ -258,7 +300,7 @@ public final class BattleMenuPage extends InteractiveCustomUIPage<BattleMenuPage
         for (int i = 0; i < PARTY; i++) cmd.set("#P" + i + "Glow.Visible", card != null && card.equals(partyIds[i]));
     }
 
-    private static final int LOG_LINES = 13, INS_LINES = 16;
+    private static final int LOG_LINES = 14, INS_LINES = 16;
 
     /** Журнал боя слева: последние строки, каждая своим цветом (урон партии, урон врагов, лечение…). */
     private void fillLog(UICommandBuilder cmd) {
@@ -267,8 +309,8 @@ public final class BattleMenuPage extends InteractiveCustomUIPage<BattleMenuPage
         for (int i = 0; i < LOG_LINES; i++) {
             int at = from + i;
             BattleSession.LogEntry e = at < j.size() ? j.get(at) : null;
-            cmd.set("#Log" + i + ".Text", e == null ? "" : e.text());
-            if (e != null) cmd.set("#Log" + i + ".Style.TextColor", e.color());
+            cmd.set("#Log" + i + ".TextSpans", e == null ? Message.raw("")
+                    : RichText.line(e.text(), RichText.DARK, e.color(), names(true), names(false)));
         }
     }
 
@@ -283,16 +325,21 @@ public final class BattleMenuPage extends InteractiveCustomUIPage<BattleMenuPage
         for (int i = 0; i < INS_LINES; i++) {
             BattleSession.InsLine l = i < lines.size() ? lines.get(i) : null;
             String text = l == null ? "" : (i == INS_LINES - 1 && lines.size() > INS_LINES ? "   ..." : l.text());
-            cmd.set("#Ins" + i + ".Text", text);
-            if (l != null) cmd.set("#Ins" + i + ".Style.TextColor", l.color());
+            cmd.set("#Ins" + i + ".TextSpans", l == null ? Message.raw("")
+                    : RichText.line(text, RichText.DARK, l.color(), names(true), names(false)));
         }
     }
 
     private void fillInfo(UICommandBuilder cmd) {
         BattleSession.Info info = session.info();
         cmd.set("#InfoTitle.Text", info.title());
-        cmd.set("#InfoText.Text", info.text());
+        cmd.set("#InfoText.TextSpans", RichText.describe(info.text(), RichText.DARK, names(true), names(false), true));
         icon(cmd, "#InfoIcon", iconKey(info.icon()), "s");
+    }
+
+    /** Имена бойцов стороны (для раскраски текста). */
+    private List<String> names(boolean party) {
+        return session.battle().combatants().stream().filter(c -> (c.side == Side.PARTY) == party).map(c -> c.name).toList();
     }
 
     // ---------- иконки и полоски ----------
