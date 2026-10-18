@@ -285,7 +285,7 @@ public final class Describe {
         return v == Math.rint(v) ? String.valueOf((long) v) : String.valueOf(v);
     }
 
-    static String turns(int n) {
+    public static String turns(int n) {
         int m10 = n % 10, m100 = n % 100;
         String w = (m10 == 1 && m100 != 11) ? "ход" : (m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14)) ? "хода" : "ходов";
         return n + " " + w;

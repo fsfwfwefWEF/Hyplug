@@ -26,6 +26,16 @@ public final class Settings {
     public final Map<String, String> fx = new HashMap<>();
     public final Reactions reactions = new Reactions();
     public final Followers follow = new Followers();
+    public final Speech speech = new Speech();
+
+    /** Реплики в бою: окно над головой (подпись), буквы печатаются по одной со звуком. */
+    public static final class Speech {
+        public long letterMs = 35, holdMs = 1800;
+        /** Звук на букву (id звука игры); пусто — подобрать самому. Звучит каждая soundEvery-я буква. */
+        public String sound = "";
+        public float volume = 0.45f;
+        public int soundEvery = 2;
+    }
 
     /** Парирование и уклонение: окна в мс относительно момента удара врага. */
     public static final class Reactions {
@@ -139,6 +149,15 @@ public final class Settings {
         });
         s.barkChance = Json.num(m, "barkChance", s.barkChance);
         s.keyHint = Json.bool(m, "keyHint", s.keyHint);
+        Object sp = m.get("speech");
+        if (sp != null) {
+            Map<String, Object> v = Json.obj(sp);
+            s.speech.letterMs = (long) Math.max(5, Json.num(v, "letterMs", s.speech.letterMs));
+            s.speech.holdMs = (long) Math.max(300, Json.num(v, "holdMs", s.speech.holdMs));
+            s.speech.sound = Json.str(v, "sound", s.speech.sound);
+            s.speech.volume = (float) Json.num(v, "volume", s.speech.volume);
+            s.speech.soundEvery = (int) Math.max(0, Json.num(v, "soundEvery", s.speech.soundEvery));
+        }
         Object cam = m.get("camera");
         if (cam != null) {
             Map<String, Object> c = Json.obj(cam);

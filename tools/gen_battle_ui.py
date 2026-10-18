@@ -25,6 +25,11 @@ HP = "#5fd27a"
 MP_BACK = "#1c2440"
 MP = "#5aa2ff"
 
+LOG_W = 360
+LOG_LINES = 14
+INS_W = 340
+INS_LINES = 16
+
 BAR_W_PARTY = 210
 BAR_W_ENEMY = 150
 
@@ -185,9 +190,26 @@ def battle():
                                  "Padding: (Full: 6);"],
                   [label("", "ОЧЕРЕДЬ", 12, GOLD, True, height=18)]
                   + sum(([queue_slot(i), spacer(h=2)] for i in range(QUEUE)), []))
+    # Журнал боя слева (кто кому что сделал, цвета по типу события) и окно «Осмотр» справа
+    # (выбранный боец: статусы с описанием и ходами, иммунитеты, слабости). Цвет строк ставит плагин
+    # через #LogN.Style.TextColor / #InsN.Style.TextColor.
+    log = group("LogPanel", [f"Anchor: (Width: {LOG_W});", "LayoutMode: Top;", f"Background: {PANEL};",
+                             "Padding: (Full: 6);"],
+                [label("", "ЖУРНАЛ БОЯ", 12, GOLD, True, height=18)]
+                + [label(f"Log{i}", "", 11, TEXT, height=15) for i in range(LOG_LINES)])
+    inspect = group("InsPanel", [f"Anchor: (Width: {INS_W});", "LayoutMode: Top;", f"Background: {PANEL};",
+                                 "Padding: (Full: 6);"], [
+        label("", "ОСМОТР И ЭФФЕКТЫ", 12, GOLD, True, height=18),
+        label("InsTitle", "", 14, "#ffb3a6", True, height=20),
+        label("InsSub", "", 11, DIM, height=15),
+        spacer(h=3),
+    ] + [label(f"Ins{i}", "", 11, TEXT, height=15) for i in range(INS_LINES)])
     middle = group("Middle", ["FlexWeight: 1;", "LayoutMode: Left;"], [
         group("", ["Anchor: (Width: 176);", "LayoutMode: Top;"], [queue, spacer(flex=True)]),
+        spacer(w=8),
+        group("", [f"Anchor: (Width: {LOG_W});", "LayoutMode: Top;"], [log, spacer(flex=True)]),
         spacer(flex=True),
+        group("", [f"Anchor: (Width: {INS_W});", "LayoutMode: Top;"], [inspect, spacer(flex=True)]),
     ])
     party = group("PartyPanel", ["Anchor: (Width: 450);", "LayoutMode: Top;", f"Background: {PANEL};",
                                  "Padding: (Full: 6);"],
@@ -214,7 +236,8 @@ def battle():
     root = group("", ["LayoutMode: Top;", "Padding: (Full: 10);"], [enemy_row, spacer(h=6), banner, middle, bottom])
     text = ('$C = "../Common.ui";\n\n'
             "// Боевое меню JRPG. Файл собран скриптом tools/gen_battle_ui.py — правь скрипт, а не этот файл.\n"
-            "// Сверху враги и баннер хода, слева очередь, внизу одной полосой: партия, команды, описание.\n"
+            "// Сверху враги и баннер хода, слева очередь и журнал боя, справа осмотр бойца,\n"
+            "// внизу одной полосой: партия, команды, описание.\n"
             "// Иконки вставляются в пустые слоты (#...Icon) из Icons/*.ui.\n\n"
             + root + "\n")
     write("BattleMenu.ui", text)

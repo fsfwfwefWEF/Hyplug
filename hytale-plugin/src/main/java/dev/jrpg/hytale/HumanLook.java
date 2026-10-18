@@ -68,7 +68,7 @@ final class HumanLook {
                 best = s;
                 bestScore = score;
             }
-            if (score >= 4) break;
+            if (score >= 4 && s.bodyCharacteristic != null && s.bodyCharacteristic.startsWith("Default")) break;
         }
         return best;
     }
@@ -77,6 +77,9 @@ final class HumanLook {
         boolean beard = s.facialHair != null && !s.facialHair.isBlank();
         PlayerSkinPart.HaircutType hair = hairType(cm, s.haircut);
         int score = 0;
+        // Только человеческое тело («Default.…»): среди тел есть и гоблинское (в 0.7.3 Брам стал гоблином).
+        if (s.bodyCharacteristic == null || !s.bodyCharacteristic.startsWith("Default")) score -= 50;
+        if (s.face != null && s.face.toLowerCase(java.util.Locale.ROOT).contains("makeup") && !female) score -= 2;
         if (female) {
             score += beard ? -10 : 2;
             if (hair == PlayerSkinPart.HaircutType.Long) score += 2;

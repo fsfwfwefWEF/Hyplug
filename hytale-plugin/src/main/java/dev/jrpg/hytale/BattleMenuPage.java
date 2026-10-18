@@ -130,6 +130,8 @@ public final class BattleMenuPage extends InteractiveCustomUIPage<BattleMenuPage
         fillParty(cmd, b);
         fillMenu(cmd, session.menu());
         fillInfo(cmd);
+        fillLog(cmd);
+        fillInspect(cmd);
         fillGlow(cmd, session.menu());
         String banner = session.banner(), sub = session.bannerSub();
         cmd.set("#BannerBox.Visible", !banner.isEmpty() || !sub.isEmpty());
@@ -219,6 +221,36 @@ public final class BattleMenuPage extends InteractiveCustomUIPage<BattleMenuPage
         for (int i = 0; i < BUTTONS; i++) cmd.set("#Row" + i + "Glow.Visible", i == hover);
         for (int i = 0; i < ENEMIES; i++) cmd.set("#E" + i + "Glow.Visible", card != null && card.equals(enemyIds[i]));
         for (int i = 0; i < PARTY; i++) cmd.set("#P" + i + "Glow.Visible", card != null && card.equals(partyIds[i]));
+    }
+
+    private static final int LOG_LINES = 14, INS_LINES = 16;
+
+    /** Журнал боя слева: последние строки, каждая своим цветом (урон партии, урон врагов, лечение…). */
+    private void fillLog(UICommandBuilder cmd) {
+        List<BattleSession.LogEntry> j = session.journal();
+        int from = Math.max(0, j.size() - LOG_LINES);
+        for (int i = 0; i < LOG_LINES; i++) {
+            int at = from + i;
+            BattleSession.LogEntry e = at < j.size() ? j.get(at) : null;
+            cmd.set("#Log" + i + ".Text", e == null ? "" : e.text());
+            if (e != null) cmd.set("#Log" + i + ".Style.TextColor", e.color());
+        }
+    }
+
+    /** Окно «Осмотр и эффекты»: выбранный боец, его эффекты с ходами и описанием, иммунитеты, слабости. */
+    private void fillInspect(UICommandBuilder cmd) {
+        dev.jrpg.battle.Combatant c = session.inspectTarget();
+        cmd.set("#InsTitle.Text", c == null ? "Наведи на «?» у бойца" : c.name);
+        cmd.set("#InsTitle.Style.TextColor", c != null && c.side == dev.jrpg.battle.Side.PARTY ? "#a9d8ff" : "#ffb3a6");
+        cmd.set("#InsSub.Text", c == null ? "" : dev.jrpg.battle.Describe.roleTitle(c) + "   HP " + c.hp + "/" + c.stats.maxHp()
+                + (c.stats.maxMp() > 0 ? "   MP " + c.mp + "/" + c.stats.maxMp() : ""));
+        List<BattleSession.InsLine> lines = session.inspectLines(c);
+        for (int i = 0; i < INS_LINES; i++) {
+            BattleSession.InsLine l = i < lines.size() ? lines.get(i) : null;
+            String text = l == null ? "" : (i == INS_LINES - 1 && lines.size() > INS_LINES ? "   ..." : l.text());
+            cmd.set("#Ins" + i + ".Text", text);
+            if (l != null) cmd.set("#Ins" + i + ".Style.TextColor", l.color());
+        }
     }
 
     private void fillInfo(UICommandBuilder cmd) {

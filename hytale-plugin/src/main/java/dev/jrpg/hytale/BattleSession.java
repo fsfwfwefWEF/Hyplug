@@ -64,6 +64,15 @@ public final class BattleSession implements BattleListener {
     private ActionResult current;
     private final Map<String, Vector3d> homes = new HashMap<>();
     private final Deque<String> log = new ArrayDeque<>();
+    /** Журнал боя для окна слева: строки уже разбиты по ширине окна, у каждой свой цвет. */
+    private final Deque<LogEntry> journal = new ArrayDeque<>();
+    record LogEntry(String text, String color) {}
+    /** Реплика, которая сейчас печатается в окне над бойцом (id → видимая часть). */
+    private final Map<String, String> speaking = new java.util.concurrent.ConcurrentHashMap<>();
+    private final Map<String, Integer> speechSeq = new java.util.concurrent.ConcurrentHashMap<>();
+    /** Подпись игрока до боя (на время реплики героя её заменяет окно реплики). */
+    private String heroPlate;
+    private boolean heroPlateRead;
     private Battle battle;
     private BattleMenu menu;
     private BattleMenuPage page;
@@ -197,6 +206,7 @@ public final class BattleSession implements BattleListener {
             if (c.id.equals("hero")) {
                 puppets.put(c.id, playerEntity);
                 Fx.teleportPlayer(store, playerEntity, pos, yaw);
+                Fx.ensureCombatText(store, playerEntity, c.name);
             } else {
                 spawnPuppet(c, plugin.settings().companionRoles.get(c.id), pos, yaw);
             }
@@ -281,7 +291,7 @@ public final class BattleSession implements BattleListener {
     private void updateNameplates() {
         for (Combatant c : battle.combatants()) {
             Ref<EntityStore> ref = puppets.get(c.id);
-            if (ref != null && ref != playerEntity) {
+            if (ref != null && ref != playerEntity && !speaking.containsKey(c.id)) {
                 Fx.nameplate(store, ref, BattleText.nameplate(c, c == battle.current()));
             }
         }
@@ -477,6 +487,66 @@ public final class BattleSession implements BattleListener {
     String banner() { return banner; }
     String bannerSub() { return bannerSub; }
     List<String> logLines() { return List.copyOf(log); }
+    List<LogEntry> journal() { return List.copyOf(journal); }
+
+    record InsLine(String text, String color) {}
+
+    /**
+     * Кого показывать в окне «Осмотр и эффекты»: наведённый «?» → кликнутый «?» → цель под мышью на
+     * экране выбора цели → тот, чей ход.
+     */
+    Combatant inspectTarget() {
+        if (peekId != null && battle.byId(peekId) != null) return battle.byId(peekId);
+        if (inspectId != null && battle.byId(inspectId) != null) return battle.byId(inspectId);
+        if (hoverIndex >= 0 && hoverScreen == menu.screen() && menu.screen() == BattleMenu.Screen.TARGET
+                && hoverIndex < menu.targets().size()) return menu.targets().get(hoverIndex);
+        return battle.current();
+    }
+
+    /** Строки окна «Осмотр и эффекты»: статусы (польза — зелёным, вред — красным), иммунитеты, слабости. */
+    List<InsLine> inspectLines(Combatant c) {
+        List<InsLine> out = new java.util.ArrayList<>();
+        if (c == null) return out;
+        Content k = battle.content();
+        if (c.statuses.isEmpty()) {
+            out.add(new InsLine("Эффектов нет", LOG_DIM));
+        } else {
+            out.add(new InsLine("Эффекты:", LOG_GOLD));
+            for (StatusInstance st : c.statuses) {
+                String color = goodStatus(st) ? LOG_HEAL : st.def.kind() == dev.jrpg.battle.StatusDef.Kind.MARKER ? LOG_STATUS : LOG_ENEMY;
+                String head = " " + st.def.name() + (st.stacks > 1 ? " x" + st.stacks : "") + " — ещё " + dev.jrpg.battle.Describe.turns(st.turnsLeft);
+                out.add(new InsLine(head, color));
+                for (String part : wrap(dev.jrpg.battle.Describe.statusShort(st.def), 46)) out.add(new InsLine("    " + part.strip(), LOG_DIM));
+            }
+        }
+        if (!c.immunities.isEmpty()) {
+            String imm = String.join(", ", c.immunities.stream().map(id -> k.status(id).name()).toList());
+            for (String part : wrap("Иммунитет: " + imm, 48)) out.add(new InsLine(part, "#7fd3ff"));
+        }
+        boolean header = false;
+        for (Combo combo : k.combos()) {
+            if (c.immunities.contains(combo.requires())) continue;
+            if (!header) {
+                out.add(new InsLine("Слабости (комбо стихий):", LOG_GOLD));
+                header = true;
+            }
+            boolean ready = c.status(combo.requires()) != null;
+            String line = (ready ? " > " : "   ") + dev.jrpg.battle.Element.name(combo.element()) + " по «"
+                    + k.status(combo.requires()).name() + "» → " + combo.name() + (ready ? " (готово!)" : "");
+            for (String part : wrap(line, 48)) out.add(new InsLine(part, ready ? LOG_LOOT : LOG_SYS));
+        }
+        return out;
+    }
+
+    private static boolean goodStatus(StatusInstance st) {
+        double p = st.def.power();
+        return switch (st.def.kind()) {
+            case HOT_PERCENT, TAUNT -> true;
+            case SPEED_MULT, NEXT_ACTION_MULT -> p >= 1;
+            case DAMAGE_TAKEN_MULT -> p < 1;
+            default -> false;
+        };
+    }
 
     Info info() {
         Content k = battle.content();
@@ -506,8 +576,8 @@ public final class BattleSession implements BattleListener {
         }
         // Пока ходит враг или идёт анимация — последние строки журнала, в свой ход — карточка героя.
         if (c == null || c.side != Side.PARTY || battle.phase() != Battle.Phase.AWAIT_COMMAND) {
-            return new Info("Журнал боя", log.isEmpty() ? "Наведи мышь на команду или нажми «?» на карточке, "
-                    + "чтобы прочитать описание." : String.join("\n", log), "info");
+            return new Info(c == null ? "Бой" : "Ход: " + c.name, "Что происходит — в журнале боя слева. Эффекты, иммунитеты "
+                    + "и слабости бойца — в окне «Осмотр» справа: наведи мышь на «?» у его карточки.", "info");
         }
         return new Info(c.name, Describe.combatant(k, c), "portrait:" + Describe.portrait(c));
     }
@@ -531,26 +601,27 @@ public final class BattleSession implements BattleListener {
 
     @Override
     public void onStatusTick(Combatant t, StatusInstance s, int delta) {
-        addLog(t.name + ": " + s.def.name() + " " + (delta > 0 ? "+" : "") + delta + " HP");
+        addLog(t.name + ": " + s.def.name() + " " + (delta > 0 ? "+" : "") + delta + " HP", delta > 0 ? LOG_HEAL : LOG_STATUS);
         pop(t, 0, (delta > 0 ? "+" : "") + delta + " " + s.def.name(), delta > 0 ? HEAL : STATUS);
     }
 
     @Override
     public void onStatusExpired(Combatant t, StatusInstance s) {
-        addLog(t.name + ": " + s.def.name() + " прошло");
+        addLog(t.name + ": " + s.def.name() + " прошло", LOG_DIM);
         if (s.def.id().equals(STUN) && t.isAlive()) wake(t);
     }
 
     @Override
     public void onTurnSkipped(Combatant actor, String reason) {
-        addLog(actor.name + " пропускает ход (" + reason + ")");
+        addLog(actor.name + " пропускает ход (" + reason + ")", LOG_STATUS);
         pop(actor, 0, "Пропуск хода", STATUS);
     }
 
     @Override
     public void onActionExecuted(ActionResult r) {
         current = r;
-        addLog(BattleText.describe(r));
+        boolean healing = !r.hits().isEmpty() && r.hits().stream().allMatch(h -> h.damage() == 0 && (h.heal() > 0 || h.mpRestore() > 0));
+        addLog(BattleText.describe(r), healing ? LOG_HEAL : r.actor().side == Side.PARTY ? LOG_PARTY : LOG_ENEMY);
         boolean afterWindup = answered != null && answered.actor == r.actor();
         presentDelay = r.actor().side == Side.ENEMY && !afterWindup ? plugin.settings().ms(plugin.settings().enemyThinkMs) : 0;
         if (presentDelay > 0) {
@@ -958,7 +1029,7 @@ public final class BattleSession implements BattleListener {
 
     @Override
     public void onCombatantDown(Combatant c) {
-        addLog(c.name + " повержен!");
+        addLog(c.name + " повержен!", LOG_KILL);
         if (c.side == Side.ENEMY) dropsOf.put(c.id, rollDrops(c));
         downed.remove(c.id);
         ActionResult r = current;
@@ -1011,13 +1082,13 @@ public final class BattleSession implements BattleListener {
             if (sb.length() > 8) sb.append(", ");
             sb.append(plugin.content().item(item).name()).append(n > 1 ? " x" + n : "");
         });
-        addLog(sb.toString());
+        addLog(sb.toString(), LOG_LOOT);
         return got;
     }
 
     @Override
     public void onSummoned(Combatant c) {
-        addLog("Появляется " + c.name + "!");
+        addLog("Появляется " + c.name + "!", LOG_ENEMY);
         Vector3d pos = arena(summonSlot % 2 == 0 ? -5 : 5, 4 + summonSlot / 2 * 2);
         summonSlot++;
         homes.put(c.id, pos);
@@ -1026,15 +1097,16 @@ public final class BattleSession implements BattleListener {
 
     @Override
     public void onDialogue(Combatant speaker, String text) {
+        // Как в Final Fantasy: окно над головой говорящего и строка в журнале боя, без обычного чата.
         String line = speaker == null ? text : speaker.name + ": «" + text + "»";
-        addLog(line);
-        say(line);
+        addLog(line, LOG_SPEECH);
         if (speaker != null) speech(speaker, text);
+        else say(line);
     }
 
     @Override
     public void onPhaseChange(Combatant boss, String phaseName) {
-        addLog("!!! " + boss.name + " — " + phaseName);
+        addLog("!!! " + boss.name + " — " + phaseName, LOG_KILL);
         banner = boss.name + ": " + phaseName;
     }
 
@@ -1055,10 +1127,10 @@ public final class BattleSession implements BattleListener {
             StringBuilder sb = new StringBuilder("Награда: " + encounter.exp() + " опыта");
             all.forEach((item, cnt) -> sb.append(", ").append(plugin.content().item(item).name()).append(" x").append(cnt));
             if (!all.isEmpty()) sb.append(" (всё в рюкзаке: /jrpg bag)");
-            addLog(sb.toString());
+            addLog(sb.toString(), LOG_LOOT);
             say(sb.toString());
             for (String msg : plugin.partyOf(player.getUuid()).addExp(encounter.exp())) {
-                addLog(msg);
+                addLog(msg, LOG_GOLD);
                 say(msg + " Открой прокачку: /jrpg party");
             }
             banner = "ПОБЕДА!";
@@ -1157,6 +1229,7 @@ public final class BattleSession implements BattleListener {
         plugin.markBattleEnded(player.getUuid());
         // Игрок мог «лежать» (повержен или оглушён) — вернуть обычную позу.
         Fx.stopAnimation(store, playerEntity, com.hypixel.hytale.protocol.AnimationSlot.Status);
+        if (heroPlateRead) Fx.restoreNameplate(store, playerEntity, heroPlate);
         despawnPuppets();
         plugin.followers().resume(player.getUuid());
         if (camera != null) camera.reset();
@@ -1182,7 +1255,9 @@ public final class BattleSession implements BattleListener {
 
     // ---------- реплики ----------
 
-    private static final String SPEECH = "#fff1a8";
+    private static final String LOG_PARTY = "#ffd98a", LOG_ENEMY = "#ff9c8a", LOG_HEAL = "#7be38c",
+            LOG_STATUS = "#c9a0ff", LOG_KILL = "#ff5d5d", LOG_LOOT = "#ffd23f", LOG_SPEECH = "#fff1a8",
+            LOG_GOLD = "#e8c46a", LOG_DIM = "#9fb0c6", LOG_SYS = "#d6dde8";
 
     /** Реплика бойца на событие (settings.json → barks): над головой, в журнале и в чате. */
     private void bark(Combatant c, String event, boolean always) {
@@ -1191,8 +1266,7 @@ public final class BattleSession implements BattleListener {
         if (lines.isEmpty()) return;
         if (!always && rnd.nextDouble() >= plugin.settings().barkChance) return;
         String text = lines.get(rnd.nextInt(lines.size()));
-        addLog(c.name + ": «" + text + "»");
-        say(c.name + ": «" + text + "»");
+        addLog(c.name + ": «" + text + "»", LOG_SPEECH);
         speech(c, text);
     }
 
@@ -1210,11 +1284,42 @@ public final class BattleSession implements BattleListener {
         return byEvent.getOrDefault(event, List.of());
     }
 
-    /** Фраза всплывает над говорящим (как цифры урона, но в кавычках и жёлтым). */
+    /**
+     * Окно реплики над головой, как в Final Fantasy: подпись над бойцом на время реплики становится
+     * «Имя: «текст»», буквы появляются по одной (speech.letterMs) со щелчком (speech.sound), потом
+     * подпись возвращается. Новая реплика того же бойца обрывает старую.
+     */
     private void speech(Combatant c, String text) {
-        if (!plugin.settings().combatText) return;
         Ref<EntityStore> ref = puppets.get(c.id);
-        if (ref != null) Fx.combatText(store, playerEntity, ref, "«" + text + "»", SPEECH);
+        if (ref == null || text == null || text.isBlank()) return;
+        Settings.Speech cfg = plugin.settings().speech;
+        int seq = speechSeq.merge(c.id, 1, Integer::sum);
+        String head = c.name + ": «";
+        String body = text.strip();
+        if (ref == playerEntity && !heroPlateRead) {
+            heroPlateRead = true;
+            heroPlate = Fx.nameplateText(store, playerEntity);
+        }
+        for (int i = 1; i <= body.length(); i++) {
+            int k = i;
+            later(cfg.letterMs * i, () -> {
+                if (speechSeq.getOrDefault(c.id, 0) != seq || !ref.isValid()) return;
+                String shown = head + body.substring(0, k) + (k == body.length() ? "»" : "");
+                speaking.put(c.id, shown);
+                Fx.nameplate(store, ref, shown);
+                char ch = body.charAt(k - 1);
+                if (cfg.soundEvery > 0 && !Character.isWhitespace(ch) && (k - 1) % cfg.soundEvery == 0) {
+                    TypeSound.play(player, cfg.sound, cfg.volume);
+                }
+            });
+        }
+        later(cfg.letterMs * body.length() + cfg.holdMs + 40L * body.length(), () -> {
+            if (speechSeq.getOrDefault(c.id, 0) != seq) return;
+            speaking.remove(c.id);
+            if (!ref.isValid()) return;
+            if (ref == playerEntity) Fx.restoreNameplate(store, playerEntity, heroPlate);
+            else Fx.nameplate(store, ref, BattleText.nameplate(c, c == battle.current()));
+        });
     }
 
     // ---------- утилиты ----------
@@ -1231,10 +1336,35 @@ public final class BattleSession implements BattleListener {
     }
 
     private void addLog(String line) {
+        addLog(line, LOG_SYS);
+    }
+
+    private void addLog(String line, String color) {
         for (String l : line.split("\n")) {
             log.addLast(l);
             while (log.size() > 7) log.removeFirst();
+            for (String part : wrap(l, LOG_WIDTH)) journal.addLast(new LogEntry(part, color));
+            while (journal.size() > 60) journal.removeFirst();
         }
+    }
+
+    /** Ширина строки журнала в символах (окно слева, шрифт 11). */
+    private static final int LOG_WIDTH = 54;
+
+    /** Разбить строку по словам на куски не длиннее width; продолжения — с отступом. */
+    static List<String> wrap(String text, int width) {
+        List<String> out = new java.util.ArrayList<>();
+        StringBuilder cur = new StringBuilder();
+        for (String w : text.split(" ")) {
+            if (cur.length() > 0 && cur.length() + 1 + w.length() > width) {
+                out.add(cur.toString());
+                cur = new StringBuilder("   ");
+            }
+            if (cur.length() > 0 && !cur.toString().isBlank()) cur.append(' ');
+            cur.append(w);
+        }
+        if (!cur.toString().isBlank()) out.add(cur.toString());
+        return out;
     }
 
     private void say(String text) {

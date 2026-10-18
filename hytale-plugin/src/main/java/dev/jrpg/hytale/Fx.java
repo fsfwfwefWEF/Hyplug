@@ -74,6 +74,68 @@ public final class Fx {
         }
     }
 
+    /** Текущая подпись над сущностью или null, если подписи нет. */
+    public static String nameplateText(Store<EntityStore> store, Ref<EntityStore> ref) {
+        try {
+            Nameplate n = ref == null || !ref.isValid() ? null : store.getComponent(ref, Nameplate.getComponentType());
+            return n == null ? null : n.getText();
+        } catch (Throwable t) {
+            return null;
+        }
+    }
+
+    /** Вернуть подпись, какая была (null — подписи не было: убрать). */
+    public static void restoreNameplate(Store<EntityStore> store, Ref<EntityStore> ref, String text) {
+        try {
+            if (ref == null || !ref.isValid()) return;
+            if (text != null) nameplate(store, ref, text);
+            else if (store.getComponent(ref, Nameplate.getComponentType()) != null) store.removeComponent(ref, Nameplate.getComponentType());
+        } catch (Throwable t) {
+            warnOnce("Не удалось вернуть подпись", t);
+        }
+    }
+
+    private static final Set<String> combatTextLogged = new HashSet<>();
+
+    /**
+     * Цифры урона (CombatTextUpdate) клиент рисует только у сущностей, в списке UI-компонентов которых
+     * есть «всплывающий текст» (CombatText). У части ролей его нет — тогда цифр не видно (так было в 0.7.3).
+     * Добавляем все такие компоненты к тому, что у сущности уже есть (полоски HP роли не трогаем).
+     */
+    public static void ensureCombatText(Store<EntityStore> store, Ref<EntityStore> ref, String who) {
+        try {
+            if (ref == null || !ref.isValid()) return;
+            var map = com.hypixel.hytale.server.core.modules.entityui.asset.EntityUIComponent.getAssetMap();
+            var type = com.hypixel.hytale.server.core.modules.entityui.UIComponentList.getComponentType();
+            var cur = store.getComponent(ref, type);
+            java.util.LinkedHashSet<String> names = new java.util.LinkedHashSet<>();
+            boolean had = false;
+            if (cur != null && cur.getComponentIds() != null) {
+                for (int id : cur.getComponentIds()) {
+                    var a = map.getAsset(id);
+                    if (a == null) continue;
+                    names.add(a.getId());
+                    had |= a instanceof com.hypixel.hytale.server.core.modules.entityui.asset.CombatTextUIComponent;
+                }
+            }
+            if (had) return;
+            int added = 0;
+            for (var a : map.getAssetMap().values()) {
+                if (a instanceof com.hypixel.hytale.server.core.modules.entityui.asset.CombatTextUIComponent && names.add(a.getId())) added++;
+            }
+            if (added == 0) return;
+            var list = new com.hypixel.hytale.server.core.modules.entityui.UIComponentList(names.toArray(String[]::new));
+            list.update();
+            store.putComponent(ref, type, list);
+            if (combatTextLogged.add(who)) {
+                JrpgPlugin.get().log("Цифры урона: у «" + who + "» не было всплывающего текста, добавлено " + added
+                        + " (" + names + ")");
+            }
+        } catch (Throwable t) {
+            warnOnce("Не удалось включить цифры урона", t);
+        }
+    }
+
     public static void teleport(Store<EntityStore> store, Ref<EntityStore> ref, Vector3d pos, float yaw) {
         try {
             if (ref == null || !ref.isValid()) return;
@@ -182,6 +244,7 @@ public final class Fx {
                 store.putComponent(ref, Frozen.getComponentType(), Frozen.get());
             }
             setMovement(store, ref, "idle");
+            ensureCombatText(store, ref, who);
             // Роль могла поставить свою подпись — наша важнее.
             if (nameplate != null) nameplate(store, ref, nameplate);
             // Поворот ещё раз телепортом: при спавне NPC иногда разворачивается сам.

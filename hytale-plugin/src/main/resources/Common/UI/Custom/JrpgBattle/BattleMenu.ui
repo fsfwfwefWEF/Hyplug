@@ -1,7 +1,8 @@
 $C = "../Common.ui";
 
 // Боевое меню JRPG. Файл собран скриптом tools/gen_battle_ui.py — правь скрипт, а не этот файл.
-// Сверху враги и баннер хода, слева очередь, внизу одной полосой: партия, команды, описание.
+// Сверху враги и баннер хода, слева очередь и журнал боя, справа осмотр бойца,
+// внизу одной полосой: партия, команды, описание.
 // Иконки вставляются в пустые слоты (#...Icon) из Icons/*.ui.
 
 Group {
@@ -527,7 +528,205 @@ Group {
       }
       Group { FlexWeight: 1; }
     }
+    Group { Anchor: (Width: 8); }
+    Group {
+      Anchor: (Width: 360);
+      LayoutMode: Top;
+
+      Group #LogPanel {
+        Anchor: (Width: 360);
+        LayoutMode: Top;
+        Background: #0b111c(0.82);
+        Padding: (Full: 6);
+
+        Label {
+          Text: "ЖУРНАЛ БОЯ";
+          Anchor: (Height: 18);
+          Style: (FontSize: 12, TextColor: #e8c46a, RenderBold: true);
+        }
+        Label #Log0 {
+          Text: "";
+          Anchor: (Height: 15);
+          Style: (FontSize: 11, TextColor: #e9eef6);
+        }
+        Label #Log1 {
+          Text: "";
+          Anchor: (Height: 15);
+          Style: (FontSize: 11, TextColor: #e9eef6);
+        }
+        Label #Log2 {
+          Text: "";
+          Anchor: (Height: 15);
+          Style: (FontSize: 11, TextColor: #e9eef6);
+        }
+        Label #Log3 {
+          Text: "";
+          Anchor: (Height: 15);
+          Style: (FontSize: 11, TextColor: #e9eef6);
+        }
+        Label #Log4 {
+          Text: "";
+          Anchor: (Height: 15);
+          Style: (FontSize: 11, TextColor: #e9eef6);
+        }
+        Label #Log5 {
+          Text: "";
+          Anchor: (Height: 15);
+          Style: (FontSize: 11, TextColor: #e9eef6);
+        }
+        Label #Log6 {
+          Text: "";
+          Anchor: (Height: 15);
+          Style: (FontSize: 11, TextColor: #e9eef6);
+        }
+        Label #Log7 {
+          Text: "";
+          Anchor: (Height: 15);
+          Style: (FontSize: 11, TextColor: #e9eef6);
+        }
+        Label #Log8 {
+          Text: "";
+          Anchor: (Height: 15);
+          Style: (FontSize: 11, TextColor: #e9eef6);
+        }
+        Label #Log9 {
+          Text: "";
+          Anchor: (Height: 15);
+          Style: (FontSize: 11, TextColor: #e9eef6);
+        }
+        Label #Log10 {
+          Text: "";
+          Anchor: (Height: 15);
+          Style: (FontSize: 11, TextColor: #e9eef6);
+        }
+        Label #Log11 {
+          Text: "";
+          Anchor: (Height: 15);
+          Style: (FontSize: 11, TextColor: #e9eef6);
+        }
+        Label #Log12 {
+          Text: "";
+          Anchor: (Height: 15);
+          Style: (FontSize: 11, TextColor: #e9eef6);
+        }
+        Label #Log13 {
+          Text: "";
+          Anchor: (Height: 15);
+          Style: (FontSize: 11, TextColor: #e9eef6);
+        }
+      }
+      Group { FlexWeight: 1; }
+    }
     Group { FlexWeight: 1; }
+    Group {
+      Anchor: (Width: 340);
+      LayoutMode: Top;
+
+      Group #InsPanel {
+        Anchor: (Width: 340);
+        LayoutMode: Top;
+        Background: #0b111c(0.82);
+        Padding: (Full: 6);
+
+        Label {
+          Text: "ОСМОТР И ЭФФЕКТЫ";
+          Anchor: (Height: 18);
+          Style: (FontSize: 12, TextColor: #e8c46a, RenderBold: true);
+        }
+        Label #InsTitle {
+          Text: "";
+          Anchor: (Height: 20);
+          Style: (FontSize: 14, TextColor: #ffb3a6, RenderBold: true);
+        }
+        Label #InsSub {
+          Text: "";
+          Anchor: (Height: 15);
+          Style: (FontSize: 11, TextColor: #9fb0c6);
+        }
+        Group { Anchor: (Height: 3); }
+        Label #Ins0 {
+          Text: "";
+          Anchor: (Height: 15);
+          Style: (FontSize: 11, TextColor: #e9eef6);
+        }
+        Label #Ins1 {
+          Text: "";
+          Anchor: (Height: 15);
+          Style: (FontSize: 11, TextColor: #e9eef6);
+        }
+        Label #Ins2 {
+          Text: "";
+          Anchor: (Height: 15);
+          Style: (FontSize: 11, TextColor: #e9eef6);
+        }
+        Label #Ins3 {
+          Text: "";
+          Anchor: (Height: 15);
+          Style: (FontSize: 11, TextColor: #e9eef6);
+        }
+        Label #Ins4 {
+          Text: "";
+          Anchor: (Height: 15);
+          Style: (FontSize: 11, TextColor: #e9eef6);
+        }
+        Label #Ins5 {
+          Text: "";
+          Anchor: (Height: 15);
+          Style: (FontSize: 11, TextColor: #e9eef6);
+        }
+        Label #Ins6 {
+          Text: "";
+          Anchor: (Height: 15);
+          Style: (FontSize: 11, TextColor: #e9eef6);
+        }
+        Label #Ins7 {
+          Text: "";
+          Anchor: (Height: 15);
+          Style: (FontSize: 11, TextColor: #e9eef6);
+        }
+        Label #Ins8 {
+          Text: "";
+          Anchor: (Height: 15);
+          Style: (FontSize: 11, TextColor: #e9eef6);
+        }
+        Label #Ins9 {
+          Text: "";
+          Anchor: (Height: 15);
+          Style: (FontSize: 11, TextColor: #e9eef6);
+        }
+        Label #Ins10 {
+          Text: "";
+          Anchor: (Height: 15);
+          Style: (FontSize: 11, TextColor: #e9eef6);
+        }
+        Label #Ins11 {
+          Text: "";
+          Anchor: (Height: 15);
+          Style: (FontSize: 11, TextColor: #e9eef6);
+        }
+        Label #Ins12 {
+          Text: "";
+          Anchor: (Height: 15);
+          Style: (FontSize: 11, TextColor: #e9eef6);
+        }
+        Label #Ins13 {
+          Text: "";
+          Anchor: (Height: 15);
+          Style: (FontSize: 11, TextColor: #e9eef6);
+        }
+        Label #Ins14 {
+          Text: "";
+          Anchor: (Height: 15);
+          Style: (FontSize: 11, TextColor: #e9eef6);
+        }
+        Label #Ins15 {
+          Text: "";
+          Anchor: (Height: 15);
+          Style: (FontSize: 11, TextColor: #e9eef6);
+        }
+      }
+      Group { FlexWeight: 1; }
+    }
   }
   Group #BottomBar {
     Anchor: (Height: 232);
