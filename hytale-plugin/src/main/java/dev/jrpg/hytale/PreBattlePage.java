@@ -76,7 +76,8 @@ public final class PreBattlePage extends InteractiveCustomUIPage<BattleMenuPage.
             if (!shown) continue;
             EnemyTemplate t = plugin.data().enemy(spots.get(i).template());
             cmd.set("#En" + i + "Name.Text", t.name());
-            cmd.set("#En" + i + "Hp.Text", (t.boss() ? "БОСС  " : "") + "HP " + t.stats().maxHp());
+            int hp = plugin.data().spawnEnemy(t, "preview", plugin.partyLevel(playerRef.getUuid())).stats.maxHp();
+            cmd.set("#En" + i + "Hp.Text", (t.boss() ? "БОСС  " : "") + "HP " + hp);
             if (plugin.settings().uiIcons) {
                 String key = BattleMenuPage.iconKey("portrait:" + t.id());
                 cmd.clear("#En" + i + "Icon");

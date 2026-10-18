@@ -454,9 +454,10 @@ def hud():
 
 # ---------- круговая сетка навыков ----------
 
-GRID = 640
+GRID = 800
+SIZE = 37      # узлов сетки (Progression.Grid.SIZE)
 CENTER = GRID // 2
-RADII = {0: 0, 1: 110, 2: 202, 3: 280}
+RADII = {0: 0, 1: 110, 2: 200, 3: 280, 4: 362}
 NODE = 72      # контейнер узла
 # Цвета секторов ролей (как в Progression.Grid.sector): защитник, целитель, боец; мосты — серые.
 SECTOR_LOCK = {"T": "#16243c(0.96)", "H": "#14301c(0.96)", "D": "#341616(0.96)", "X": "#262630(0.96)"}
@@ -465,7 +466,7 @@ TABS = 3
 
 
 def ring(i):
-    return 0 if i == 0 else 1 if i <= 6 else 2 if i <= 18 else 3
+    return 0 if i == 0 else 1 if i <= 6 else 2 if i <= 18 else 3 if i <= 24 else 4
 
 
 def angle(i):
@@ -473,6 +474,7 @@ def angle(i):
     if r == 1: return -90 + 60 * (i - 1)
     if r == 2: return -90 + 30 * (i - 7)
     if r == 3: return -60 + 60 * (i - 19)
+    if r == 4: return -90 + 30 * (i - 25)
     return 0
 
 
@@ -483,9 +485,11 @@ def neighbors(i):
     if r == 2:
         j = i - 7
         out = [7 + (j + 11) % 12, 7 + (j + 1) % 12]
-        out.append(1 + j // 2 if j % 2 == 0 else 19 + j // 2)
+        out += [1 + j // 2, 25 + j] if j % 2 == 0 else [19 + j // 2]
         return out
-    return [7 + 2 * (i - 19) + 1]
+    if r == 3: return [7 + 2 * (i - 19) + 1, 25 + 2 * (i - 19) + 1]
+    k = i - 25
+    return [25 + (k + 11) % 12, 25 + (k + 1) % 12, 19 + k // 2 if k % 2 == 1 else 7 + k]
 
 
 def sector(i):
@@ -509,7 +513,7 @@ def pos(i):
 
 def edges():
     out = []
-    for a in range(25):
+    for a in range(SIZE):
         for b in neighbors(a):
             if a < b: out.append((a, b))
     return out
@@ -579,7 +583,7 @@ def progression():
     edge_list = edges()
     off = full("EdgesOff", sum((edge_dots(a, b, "#4a5a78(0.8)") for a, b in edge_list), []))
     on = [full(f"Edge{k}", edge_dots(a, b, GOLD)) for k, (a, b) in enumerate(edge_list)]
-    rings = full("Rings", sum((ring_dots(r) for r in (1, 2, 3)), []))
+    rings = full("Rings", sum((ring_dots(r) for r in (1, 2, 3, 4)), []))
     labels = full("Sectors", [
         sector_label("ЗАЩИТНИК", "#8fbaff", GRID - 150, 8),
         sector_label("ЦЕЛИТЕЛЬ", "#8fe0a0", GRID - 150, GRID - 30),
@@ -587,7 +591,7 @@ def progression():
         sector_label("мосты — гибриды", "#9fb0c6", 12, GRID - 30),
     ])
     grid = group("Grid", [f"Anchor: (Width: {GRID}, Height: {GRID});", f"Background: {PANEL};"],
-                 [rings, labels, off] + on + [node(i) for i in range(25)])
+                 [rings, labels, off] + on + [node(i) for i in range(SIZE)])
     detail = group("DetailCol", ["FlexWeight: 1;", "LayoutMode: Top;", f"Background: {PANEL2};", "Padding: (Full: 10);"], [
         group("", ["Anchor: (Height: 44);", "LayoutMode: Left;"], [
             slot("SelIcon", 40),
@@ -611,7 +615,7 @@ def progression():
         spacer(h=4),
         button("Close", "Закрыть", 250, 32, cancel=True),
     ])
-    window = group("Window", ["Anchor: (Width: 1250);", "LayoutMode: Top;", "Background: #070b12(0.95);", "Padding: (Full: 12);"], [
+    window = group("Window", ["Anchor: (Width: 1400);", "LayoutMode: Top;", "Background: #070b12(0.95);", "Padding: (Full: 12);"], [
         group("", ["Anchor: (Height: 32);", "LayoutMode: Left;"], [
             label("", "СЕТКА НАВЫКОВ", 22, GOLD, True, height=30, flex=True),
             label("", "открывай узлы рядом с уже открытыми", 12, DIM, width=330, height=30),

@@ -82,6 +82,8 @@ public final class Settings {
     public boolean introFlyby = true;
     /** В бою героя изображает кукла со скином игрока (ходит плавно), а тело игрока уменьшается до невидимого. */
     public boolean heroDouble = true;
+    /** Сложность: множители врагов и их рост с уровнем партии (settings.json → difficulty). */
+    public dev.jrpg.battle.GameData.Difficulty difficulty = dev.jrpg.battle.GameData.Difficulty.NORMAL;
     /** NPC случайных отрядов бродят у своего места (false — стоят). */
     public boolean squadWander = true;
     /** Подсказка «[O] Меню героя» в правом верхнем углу экрана (пока меню висит на клавише режима). */
@@ -262,6 +264,15 @@ public final class Settings {
         s.preBattlePrompt = Json.bool(m, "preBattlePrompt", s.preBattlePrompt);
         s.introFlyby = Json.bool(m, "introFlyby", s.introFlyby);
         s.heroDouble = Json.bool(m, "heroDouble", s.heroDouble);
+        Object df = m.get("difficulty");
+        if (df != null) {
+            Map<String, Object> d = Json.obj(df);
+            dev.jrpg.battle.GameData.Difficulty n = s.difficulty;
+            s.difficulty = new dev.jrpg.battle.GameData.Difficulty(Json.num(d, "hp", n.hp()), Json.num(d, "atk", n.atk()),
+                    Json.num(d, "def", n.def()), Json.num(d, "hpPerLevel", n.hpPerLevel()),
+                    Json.num(d, "atkPerLevel", n.atkPerLevel()), Json.num(d, "defPerLevel", n.defPerLevel()),
+                    Json.num(d, "bossHp", n.bossHp()), Json.num(d, "bossAtk", n.bossAtk()));
+        }
         s.squadWander = Json.bool(m, "squadWander", s.squadWander);
         Object an = m.get("animations");
         if (an != null) {

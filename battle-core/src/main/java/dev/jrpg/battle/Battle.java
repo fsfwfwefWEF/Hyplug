@@ -57,6 +57,15 @@ public final class Battle {
 
     // ---------- публичное API для адаптера ----------
 
+    /** Пометки в списке комбо удара: сработали пассивки (адаптер и журнал показывают их как «Шипы!»). */
+    public static final String THORNS_NOTE = "thorns";
+    public static final String SECOND_CHANCE_NOTE = "second_chance";
+
+    static {
+        BattleText.COMBO_NAMES.put(THORNS_NOTE, "Шипы");
+        BattleText.COMBO_NAMES.put(SECOND_CHANCE_NOTE, "Второй шанс");
+    }
+
     public void start(Opening opening) {
         if (phase != Phase.NOT_STARTED) throw new IllegalStateException("Бой уже начат");
         for (Combatant c : combatants) {
@@ -158,6 +167,7 @@ public final class Battle {
             current = actor;
             actor.ap = Math.min(Combatant.MAX_AP, actor.ap + 1);
             if (actor.passives.contains(Passives.MANA_FLOW)) actor.mp = Math.min(actor.stats.maxMp(), actor.mp + 3);
+            if (actor.passives.contains(Passives.TACTICIAN)) actor.ap = Math.min(Combatant.MAX_AP, actor.ap + 1);
             listener.onTurnStart(actor, TurnQueue.forecast(combatants, FORECAST_SIZE));
 
             tickStatuses(actor, StatusDef.Trigger.TURN_START);
@@ -324,6 +334,7 @@ public final class Battle {
         // Обычная атака бьёт стихией оружия (огненный посох — огнём), навыки — своей.
         if (Content.ATTACK.equals(ab.id()) && actor.weaponElement != null) element = actor.weaponElement;
         int lifesteal = 0;
+        int thorns = 0;
         for (Combatant t : resolveTargets(actor, ab.target(), targetId)) {
             int damage = 0;
             boolean crit = false;
@@ -355,22 +366,30 @@ public final class Battle {
                 double power = ab.magical() ? actor.stats.mag() + (fromItem ? 0 : actor.weaponMag)
                         : actor.stats.atk() + (fromItem ? 0 : actor.weaponPhys);
                 double raw = power * ab.damagePower() * actionMult * (0.9 + random.nextDouble() * 0.2)
-                        - t.stats.def() * (ab.magical() ? 0.25 : 0.5);
-                double critChance = 0.05 + (actor.passives.contains(Passives.KEEN_EYE) ? 0.10 : 0);
+                        * mitigation(t, ab.magical());
+                boolean assassin = actor.passives.contains(Passives.ASSASSIN);
+                double critChance = 0.05 + (actor.passives.contains(Passives.KEEN_EYE) ? 0.10 : 0) + (assassin ? 0.05 : 0);
                 crit = random.nextDouble() < critChance;
-                if (crit) raw *= 1.5;
+                if (crit) raw *= assassin ? 2.0 : 1.5;
                 raw *= t.multiplier(StatusDef.Kind.DAMAGE_TAKEN_MULT) * comboMult;
                 if (actor.passives.contains(Passives.PYROMANIAC) && t.status("burn") != null) raw *= 1.25;
                 if (actor.passives.contains(Passives.EXECUTIONER) && t.hp < t.stats.maxHp() * 0.3) raw *= 1.4;
                 if (actor.passives.contains(Passives.BATTLE_MAGE) && ab.magical()) raw *= 1.2;
+                if (actor.passives.contains(Passives.ARCANE_SURGE) && ab.magical()) raw *= 1.15;
                 if (actor.passives.contains(Passives.BERSERKER) && actor.hp < actor.stats.maxHp() * 0.5) raw *= 1.35;
                 if (t.passives.contains(Passives.GUARDIAN)) raw *= 0.85;
                 damage = Math.min(t.hp, Math.max(1, (int) Math.round(raw + comboBonus)));
                 if (reacted(actor, t)) {
                     damage = reaction == Reaction.PARRY ? 0 : Math.max(1, (int) Math.round(damage * DODGE_MULT));
                 }
+                if (damage >= t.hp && damage > 0 && t.passives.contains(Passives.SECOND_CHANCE) && !t.secondChanceUsed) {
+                    t.secondChanceUsed = true;
+                    damage = t.hp - 1;
+                    combos.add(SECOND_CHANCE_NOTE);
+                }
                 t.hp -= damage;
                 if (actor.passives.contains(Passives.BLOODTHIRST)) lifesteal += (int) Math.round(damage * 0.15);
+                if (damage > 0 && t != actor && t.passives.contains(Passives.THORNS)) thorns += (int) Math.round(damage * 0.2);
             }
             int heal = 0;
             if (ab.healPower() > 0 && t.isAlive()) {
@@ -408,6 +427,12 @@ public final class Battle {
                 hits.add(new ActionResult.Hit(actor, 0, healed, 0, false, List.of(), List.of(), false, List.of()));
             }
         }
+        if (thorns > 0 && actor.isAlive()) {
+            int dmg = Math.min(actor.hp, thorns);
+            actor.hp -= dmg;
+            hits.add(new ActionResult.Hit(actor, dmg, 0, 0, false, List.of(), List.of(), !actor.isAlive(),
+                    List.of(THORNS_NOTE)));
+        }
         ActionResult.Hit counter = null;
         Combatant counterBy = null;
         if (reaction == Reaction.PARRY && actor.side == Side.ENEMY && actor.isAlive() && ab.damagePower() > 0) {
@@ -423,6 +448,18 @@ public final class Battle {
         }
         return new ActionResult(actor, nameOverride != null ? nameOverride : ab.name(), ab.sequenceId(),
                 hits, false, false, actor.side == Side.ENEMY ? reaction : Reaction.NONE, counter, counterBy);
+    }
+
+    /** Константа защиты: при защите 40 цель получает половину урона (магия пробивает защиту вдвое лучше). */
+    public static final double DEF_K = 40;
+
+    /**
+     * Доля урона после защиты цели: K / (K + защита). Раньше защита вычиталась, и тяжёлая броня
+     * обнуляла слабых врагов; теперь броня режет урон в разы, но никогда не до нуля.
+     */
+    public static double mitigation(Combatant t, boolean magical) {
+        double def = Math.max(0, t.stats.def()) * (magical ? 0.5 : 1.0);
+        return DEF_K / (DEF_K + def);
     }
 
     /** Удар врага по партии, на который ответили уклонением или парированием. */

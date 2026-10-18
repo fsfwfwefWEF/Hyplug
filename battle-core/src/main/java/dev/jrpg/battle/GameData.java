@@ -28,6 +28,45 @@ public final class GameData {
     private final Map<String, EnemyTemplate> enemies = new LinkedHashMap<>();
     private final Map<String, Encounter> encounters = new LinkedHashMap<>();
     private Squads squads = new Squads();
+    private Difficulty difficulty = Difficulty.NORMAL;
+
+    /**
+     * Сложность: враги крепче базовых чисел из enemies.json (hp, atk, def — общие множители) и растут вместе
+     * с партией: за каждый средний уровень героев выше первого +hpPerLevel к здоровью, +atkPerLevel к силе и магии,
+     * +defPerLevel к защите. Боссам вместо hp/atk — bossHp/bossAtk, и растут они медленнее (×0.75): у них и так
+     * фазы и призыв. Меняется в settings.json → difficulty.
+     */
+    public record Difficulty(double hp, double atk, double def, double hpPerLevel, double atkPerLevel, double defPerLevel,
+                             double bossHp, double bossAtk) {
+        public static final Difficulty NORMAL = new Difficulty(1.6, 1.4, 1.0, 0.25, 0.20, 0.06, 1.3, 1.25);
+        public static final Difficulty NONE = new Difficulty(1, 1, 1, 0, 0, 0, 1, 1);
+
+        public Difficulty(double hp, double atk, double def, double hpPerLevel, double atkPerLevel, double defPerLevel) {
+            this(hp, atk, def, hpPerLevel, atkPerLevel, defPerLevel, hp, atk);
+        }
+    }
+
+    public void setDifficulty(Difficulty d) { this.difficulty = d == null ? Difficulty.NORMAL : d; }
+    public Difficulty difficulty() { return difficulty; }
+
+    /** Враг по шаблону с поправкой на сложность и уровень партии. */
+    public Combatant spawnEnemy(EnemyTemplate t, String instanceId, int partyLevel) {
+        Combatant c = t.create(instanceId);
+        int l = Math.max(0, partyLevel - 1);
+        Difficulty d = difficulty;
+        Stats s = t.stats();
+        double grow = t.boss() ? 0.75 : 1.0;
+        double hp = (t.boss() ? d.bossHp() : d.hp()) * (1 + d.hpPerLevel() * grow * l),
+                atk = (t.boss() ? d.bossAtk() : d.atk()) * (1 + d.atkPerLevel() * grow * l),
+                def = d.def() * (1 + d.defPerLevel() * grow * l);
+        Stats scaled = new Stats((int) Math.round(s.maxHp() * hp), s.maxMp(), (int) Math.round(s.atk() * atk),
+                (int) Math.round(s.mag() * atk), (int) Math.round(s.def() * def), s.spd());
+        Combatant out = new Combatant(c.id, c.name, c.side, scaled, c.abilities);
+        out.templateId = c.templateId;
+        out.boss = c.boss;
+        out.immunities.addAll(c.immunities);
+        return out;
+    }
 
     private GameData(Content content) {
         this.content = content;
@@ -166,9 +205,15 @@ public final class GameData {
     /** Собирает бой для встречи: враги по шаблонам, фазы, эксклюзивный скрипт, реплики, запрет бегства. */
     public Battle createBattle(Encounter e, List<Combatant> party, Map<String, Integer> inventory,
                                BattleListener listener, long seed) {
+        return createBattle(e, party, inventory, listener, seed, 1);
+    }
+
+    /** partyLevel — средний уровень героев: враги растут вместе с партией (см. {@link Difficulty}). */
+    public Battle createBattle(Encounter e, List<Combatant> party, Map<String, Integer> inventory,
+                               BattleListener listener, long seed, int partyLevel) {
         List<Combatant> all = new ArrayList<>(party);
         int n = 0;
-        for (Encounter.Spot s : e.enemies()) all.add(enemy(s.template()).create(s.template() + "#" + (++n)));
+        for (Encounter.Spot s : e.enemies()) all.add(spawnEnemy(enemy(s.template()), s.template() + "#" + (++n), partyLevel));
         Battle battle = new Battle(content, all, inventory, listener, seed);
         battle.setFleeAllowed(e.canFlee());
 
@@ -186,7 +231,7 @@ public final class GameData {
                 }
             });
         }
-        if (!e.phases().isEmpty()) scripts.add(new PhaseScript(e.phases(), this));
+        if (!e.phases().isEmpty()) scripts.add(new PhaseScript(e.phases(), this, partyLevel));
         if (e.script() != null) scripts.add(BOSS_SCRIPTS.get(e.script()).get());
         battle.setScript(BattleScript.combine(scripts.toArray(BattleScript[]::new)));
         return battle;

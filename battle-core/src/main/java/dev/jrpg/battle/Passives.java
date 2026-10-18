@@ -33,4 +33,16 @@ public final class Passives {
     public static final String BATTLE_MAGE = "battle_mage";
     /** Гибрид дамагер+танк: урон +35%, пока у себя меньше половины HP. */
     public static final String BERSERKER = "berserker";
+    /** Танк: возвращает 20% полученного урона ударившему. */
+    public static final String THORNS = "thorns";
+    /** Раз за бой смертельный удар оставляет 1 HP. */
+    public static final String SECOND_CHANCE = "second_chance";
+    /** Магический урон +15%. */
+    public static final String ARCANE_SURGE = "arcane_surge";
+    /** +1 AP в начале каждого хода. */
+    public static final String TACTICIAN = "tactician";
+    /** Скорость +20%: ходит чаще. */
+    public static final String SWIFT = "swift";
+    /** Криты чаще (+5%) и бьют x2 вместо x1.5. */
+    public static final String ASSASSIN = "assassin";
 }

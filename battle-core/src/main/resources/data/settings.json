@@ -135,6 +135,10 @@
   "preBattlePrompt": true,
   // Облёт камеры вокруг арены перед первым ходом.
   "introFlyby": true,
+  // Сложность. hp/atk/def — множители врагов к enemies.json; *PerLevel — рост за каждый средний уровень партии выше 1;
+  // bossHp/bossAtk — то же для боссов (растут медленнее). Легче: hp 1.2, atk 1.1; как в 0.9: все 1 и PerLevel 0.
+  "difficulty": { "hp": 1.6, "atk": 1.4, "def": 1.0, "hpPerLevel": 0.25, "atkPerLevel": 0.20, "defPerLevel": 0.06,
+    "bossHp": 1.3, "bossAtk": 1.25 },
   // Героя в бою играет кукла со скином игрока (ходит плавно); тело игрока на время боя уменьшается. false — как раньше.
   "heroDouble": true
 }

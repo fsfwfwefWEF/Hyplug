@@ -22,9 +22,16 @@ public final class PhaseScript implements BattleScript {
     private final Set<Phase> fired = new HashSet<>();
     private int summonCounter;
 
+    private final int partyLevel;
+
     public PhaseScript(List<Phase> phases, GameData data) {
+        this(phases, data, 1);
+    }
+
+    public PhaseScript(List<Phase> phases, GameData data, int partyLevel) {
         this.phases = phases;
         this.data = data;
+        this.partyLevel = partyLevel;
     }
 
     @Override
@@ -57,7 +64,7 @@ public final class PhaseScript implements BattleScript {
             }
             if (p.summon() != null) {
                 for (String t : p.summon()) {
-                    battle.summon(data.enemy(t).create(t + "#s" + (++summonCounter)));
+                    battle.summon(data.spawnEnemy(data.enemy(t), t + "#s" + (++summonCounter), partyLevel));
                 }
             }
         }

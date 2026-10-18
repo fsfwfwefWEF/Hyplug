@@ -235,9 +235,9 @@ public final class Content {
 
         // Враги отрядов (0.6)
         c.add(dmg("rend", "Разрыв", 0, 0, TargetType.SINGLE_ENEMY, 1.1, false,
-                List.of(new StatusApply("bleed", 0.6, 3)), 0, 100));
-        c.add(support("howl", "Вой", 2, 0, TargetType.ALL_ALLIES, 0, 0, List.of(),
-                List.of(new StatusApply("haste", 1.0, 2))));
+                List.of(new StatusApply("bleed", 0.4, 3)), 0, 100));
+        c.add(support("howl", "Вой", 3, 0, TargetType.ALL_ALLIES, 0, 0, List.of(),
+                List.of(new StatusApply("haste", 1.0, 1))));
         c.add(dmg("bone_crush", "Дробящий удар", 0, 0, TargetType.SINGLE_ENEMY, 1.2, false,
                 List.of(new StatusApply("armor_break", 0.4, 2)), 0, 110));
         c.add(dmg("trork_smash", "Удар дубиной", 2, 0, TargetType.SINGLE_ENEMY, 1.4, false,
@@ -252,6 +252,39 @@ public final class Content {
                 List.of("poison", "burn", "bleed", "slow", "stun", "frozen", "armor_break", "wet"), List.of()));
         c.add(support("sanctuary", "Святилище", 3, 24, TargetType.ALL_ALLIES, 0.25, 0, List.of(),
                 List.of(new StatusApply("regen", 1.0, 3))));
+
+        // Внешнее кольцо сетки (0.10)
+        c.add(support("shield_wall", "Стена щитов", 3, 0, TargetType.ALL_ALLIES, 0.1, 0, List.of(),
+                List.of(new StatusApply("guard", 1.0, 1))));
+        c.add(support("war_cry", "Боевой рёв", 3, 0, TargetType.ALL_ALLIES, 0, 0, List.of(),
+                List.of(new StatusApply("charged", 1.0, 3))));
+        c.add(support("mass_cure", "Исцеление всех", 1, 22, TargetType.ALL_ALLIES, 0.3, 0,
+                List.of("poison", "bleed", "burn"), List.of()));
+        c.add(support("haste_all", "Общее ускорение", 4, 20, TargetType.ALL_ALLIES, 0, 0, List.of(),
+                List.of(new StatusApply("haste", 1.0, 2))));
+        c.add(dmg("meteor", "Метеор", 5, 30, TargetType.ALL_ENEMIES, 1.6, true,
+                List.of(new StatusApply("burn", 0.5, 3)), 0, 140));
+        c.add(dmg("shadow_strike", "Удар из тени", 4, 0, TargetType.SINGLE_ENEMY, 2.2, false,
+                List.of(new StatusApply("bleed", 0.6, 3)), 0, 110));
+        c.add(dmg("frost_nova", "Ледяная волна", 3, 20, TargetType.ALL_ENEMIES, 0.9, true,
+                List.of(new StatusApply("slow", 0.5, 2)), 0, 120));
+        c.add(dmg("tempest", "Буря", 4, 26, TargetType.ALL_ENEMIES, 1.2, true,
+                List.of(new StatusApply("wet", 0.6, 3)), 0, 130));
+        c.add(dmg("earth_spike", "Каменный шип", 3, 0, TargetType.SINGLE_ENEMY, 1.5, false,
+                List.of(new StatusApply("armor_break", 0.5, 2)), 0, 110));
+        // Враги поумнее (0.10): защита, усиление, удары по всем
+        c.add(support("bone_wall", "Костяной панцирь", 2, 0, TargetType.SELF, 0.1, 0, List.of(),
+                List.of(new StatusApply("guard", 1.0, 2))));
+        c.add(dmg("war_stomp", "Топот", 3, 0, TargetType.ALL_ENEMIES, 0.7, false,
+                List.of(new StatusApply("slow", 0.4, 2)), 0, 120));
+        c.add(dmg("goblin_bomb", "Гоблинская бомба", 3, 0, TargetType.ALL_ENEMIES, 0.6, false,
+                List.of(new StatusApply("burn", 0.4, 2)), 0, 110));
+        c.add(support("frenzy_roar", "Рык ярости", 2, 0, TargetType.SELF, 0, 0, List.of(),
+                List.of(new StatusApply("charged", 1.0, 3))));
+        c.add(dmg("pounce", "Прыжок на горло", 2, 0, TargetType.SINGLE_ENEMY, 1.3, false,
+                List.of(new StatusApply("bleed", 0.4, 3)), 0, 100));
+        c.add(support("slime_split", "Слизистая броня", 2, 6, TargetType.ALL_ALLIES, 0.1, 0, List.of(),
+                List.of(new StatusApply("regen", 1.0, 2))));
 
         demoElements(c);
         demoCombos(c);
@@ -348,6 +381,36 @@ public final class Content {
         c.icon("queen_fang", "fang");
         c.icon("thunder", "thunder");
         c.icon("earthquake", "quake");
+        c.flavor("shield_wall", "Брам поднимает щит над всеми: партия в Защите и немного лечится.");
+        c.flavor("war_cry", "Рёв, от которого стынет кровь у врагов: следующий удар каждого союзника x1.5.");
+        c.flavor("mass_cure", "Свет на всю партию: лечит и снимает яд, огонь и кровотечение.");
+        c.flavor("haste_all", "Ветер в спину: вся партия ускоряется на 2 хода.");
+        c.flavor("meteor", "С неба падает пылающий камень: огромный урон огнём по всем врагам.");
+        c.flavor("shadow_strike", "Шаг в тень и удар в спину: очень сильный, рана кровоточит.");
+        c.flavor("frost_nova", "Волна холода от земли: лёд по всем врагам, замедляет. По мокрым — заморозка.");
+        c.flavor("tempest", "Буря с ливнем и молниями: бьёт всех и делает мокрыми.");
+        c.flavor("earth_spike", "Из-под земли бьёт каменный шип и пробивает броню.");
+        c.flavor("bone_wall", "Скелет собирает кости в панцирь: Защита на 2 хода.");
+        c.flavor("war_stomp", "Трорк топает так, что всех сбивает с ног: урон и замедление.");
+        c.flavor("goblin_bomb", "Гоблин швыряет самодельную бомбу во всю партию.");
+        c.flavor("frenzy_roar", "Враг ревёт и копит ярость: следующий удар x1.5.");
+        c.flavor("pounce", "Волк прыгает на самую слабую цель.");
+        c.flavor("slime_split", "Слизни обволакивают союзников: лечение и Реген.");
+        c.icon("shield_wall", "shield");
+        c.icon("war_cry", "focus");
+        c.icon("mass_cure", "heal");
+        c.icon("haste_all", "haste");
+        c.icon("meteor", "fire");
+        c.icon("shadow_strike", "bleed");
+        c.icon("frost_nova", "ice");
+        c.icon("tempest", "thunder");
+        c.icon("earth_spike", "quake");
+        c.icon("bone_wall", "shield");
+        c.icon("war_stomp", "quake");
+        c.icon("goblin_bomb", "bomb");
+        c.icon("frenzy_roar", "focus");
+        c.icon("pounce", "bleed");
+        c.icon("slime_split", "regen");
     }
 
     private static void demoElements(Content c) {
@@ -356,6 +419,11 @@ public final class Content {
         for (String id : List.of("thunder", "chain_lightning", "storm_blade")) c.element(id, Element.THUNDER);
         for (String id : List.of("water_jet", "goo_spit")) c.element(id, Element.WATER);
         c.element("earthquake", Element.EARTH);
+        c.element("earth_spike", Element.EARTH);
+        c.element("meteor", Element.FIRE);
+        c.element("goblin_bomb", Element.FIRE);
+        c.element("frost_nova", Element.ICE);
+        c.element("tempest", Element.THUNDER);
         for (String id : List.of("venom_bite", "acid_rain", "item_queen_fang", "venom_edge")) c.element(id, Element.POISON);
     }
 
@@ -401,12 +469,18 @@ public final class Content {
         c.add(new PassiveDef(Passives.HEALER_GRACE, "Благодать", "Лечение сильнее на 25%."));
         c.add(new PassiveDef(Passives.PALADIN, "Паладин", "Гибрид защитника и целителя: начинает бой с Регеном (3 хода) и Защитой."));
         c.add(new PassiveDef(Passives.BATTLE_MAGE, "Боевой маг", "Гибрид целителя и бойца: магический урон и лечение +20%."));
+        c.add(new PassiveDef(Passives.THORNS, "Шипы", "Возвращает 20% полученного урона тому, кто ударил."));
+        c.add(new PassiveDef(Passives.SECOND_CHANCE, "Второй шанс", "Раз за бой смертельный удар оставляет 1 HP."));
+        c.add(new PassiveDef(Passives.ARCANE_SURGE, "Всплеск магии", "Магический урон +15%."));
+        c.add(new PassiveDef(Passives.TACTICIAN, "Тактик", "+1 AP в начале каждого хода."));
+        c.add(new PassiveDef(Passives.SWIFT, "Стремительность", "Скорость +20%: ходит чаще."));
+        c.add(new PassiveDef(Passives.ASSASSIN, "Убийца", "+5% шанс крита, криты бьют x2 вместо x1.5."));
         c.add(new PassiveDef(Passives.BERSERKER, "Берсерк", "Гибрид бойца и защитника: +35% урона, пока у себя меньше половины HP."));
     }
 
     /**
      * Герои партии: характеристики, рост за уровень и круговая сетка навыков.
-     * Порядок узлов: центр, 6 узлов первого кольца (сверху по часовой), 12 второго, 6 внешних (см. Progression.Grid).
+     * Порядок узлов: центр, 6 узлов первого кольца (сверху по часовой), 12 второго, 6 третьего, 12 внешних (см. Progression.Grid).
      */
     private static void demoHeroes(Content c) {
         // Сетка: 1-6 кольцо 1, 7-18 кольцо 2, 19-24 внешнее. Сектора: защитник 1,2,7,8,9,19; целитель 3,4,11,12,13,21;
@@ -422,7 +496,11 @@ public final class Content {
                         pa(Passives.KEEN_EYE), pa(Passives.EXECUTIONER), ab("storm_blade"), ab("whirlwind"),
                         // внешнее: защ., мост, цел., мост, боец, мост
                         ab("bulwark"), pa(Passives.PALADIN), ab("rally"), pa(Passives.BATTLE_MAGE),
-                        ab("execute"), pa(Passives.BERSERKER))));
+                        ab("execute"), pa(Passives.BERSERKER),
+                        // внешнее кольцо 25-36: защ. 25-27, мост 28, цел. 29-31, мост 32, боец 33-35, мост 36
+                        st(Progression.Stat.HP, 40), pa(Passives.THORNS), st(Progression.Stat.DEF, 4), pa(Passives.SECOND_CHANCE),
+                        st(Progression.Stat.MAG, 4), ab("mass_cure"), st(Progression.Stat.SPD, 3), ab("war_cry"),
+                        st(Progression.Stat.ATK, 5), ab("shadow_strike"), pa(Passives.ASSASSIN), pa(Passives.TACTICIAN))));
         c.add(new Progression.HeroDef("lyra", "Лира", "Чародейка", Progression.Role.HEALER, new Stats(85, 70, 9, 24, 7, 14),
                 new Stats(7, 8, 1, 3, 1, 1), List.of("fireball", "blizzard", "cure", "haste_spell"), grid(
                         st(Progression.Stat.HP, 12), ab("barrier"), st(Progression.Stat.MAG, 3), ab("renew"),
@@ -431,7 +509,10 @@ public final class Content {
                         st(Progression.Stat.MP, 10), pa(Passives.HEALER_GRACE), ab("purify"), ab("thunder"),
                         pa(Passives.ELEMENTALIST), pa(Passives.COMBO_MASTER), ab("ice_lance"), pa(Passives.FIRST_STRIKE),
                         ab("bulwark"), pa(Passives.PALADIN), ab("sanctuary"), pa(Passives.BATTLE_MAGE),
-                        ab("chain_lightning"), pa(Passives.BERSERKER))));
+                        ab("chain_lightning"), pa(Passives.BERSERKER),
+                        st(Progression.Stat.HP, 25), pa(Passives.SECOND_CHANCE), st(Progression.Stat.DEF, 3), ab("haste_all"),
+                        st(Progression.Stat.MAG, 5), ab("mass_cure"), pa(Passives.ARCANE_SURGE), ab("frost_nova"),
+                        st(Progression.Stat.MP, 15), ab("meteor"), ab("tempest"), pa(Passives.TACTICIAN))));
         c.add(new Progression.HeroDef("bram", "Брам", "Страж", Progression.Role.TANK, new Stats(160, 15, 18, 6, 18, 8),
                 new Stats(16, 1, 2, 1, 3, 0), List.of("cleave", "rally"), grid(
                         st(Progression.Stat.DEF, 3), ab("provoke"), st(Progression.Stat.MP, 5), ab("second_wind"),
@@ -440,7 +521,10 @@ public final class Content {
                         st(Progression.Stat.MAG, 2), pa(Passives.HEALER_GRACE), ab("purify"), pa(Passives.FIRST_STRIKE),
                         pa(Passives.BLOODTHIRST), pa(Passives.KEEN_EYE), ab("sunder"), ab("armor_pierce"),
                         ab("bulwark"), pa(Passives.PALADIN), ab("sanctuary"), pa(Passives.BATTLE_MAGE),
-                        ab("earthquake"), pa(Passives.BERSERKER))));
+                        ab("earthquake"), pa(Passives.BERSERKER),
+                        st(Progression.Stat.HP, 50), ab("shield_wall"), pa(Passives.THORNS), pa(Passives.SECOND_CHANCE),
+                        st(Progression.Stat.MAG, 3), ab("mass_cure"), st(Progression.Stat.MP, 8), ab("war_cry"),
+                        st(Progression.Stat.ATK, 5), ab("earth_spike"), pa(Passives.SWIFT), st(Progression.Stat.DEF, 5))));
     }
 
     private static List<Progression.GridNode> grid(Progression.GridNode... nodes) {

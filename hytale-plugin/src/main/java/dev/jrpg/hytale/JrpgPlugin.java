@@ -35,7 +35,7 @@ public final class JrpgPlugin extends JavaPlugin {
      * Версия встроенных файлов данных. Если копия в папке мода старее, она сохраняется в backup-vN/
      * и заменяется новой (иначе новые враги/настройки не появятся у тех, кто уже запускал мод).
      */
-    private static final int DATA_VERSION = 13;
+    private static final int DATA_VERSION = 14;
     private static final String STARTER_GEAR_FLAG = "starterGear";
     /** Автосохранение загруженных игроков, с. */
     private static final long AUTOSAVE_S = 60;
@@ -145,6 +145,7 @@ public final class JrpgPlugin extends JavaPlugin {
             }
             data = GameData.load(content, dir);
             settings = Settings.parse(Files.readString(dir.resolve("settings.json")));
+            data.setDifficulty(settings.difficulty);
             ParticleCatalog.reset();
             GearVisuals.reset();
             return "Данные загружены из " + dir.toAbsolutePath();
@@ -154,6 +155,7 @@ public final class JrpgPlugin extends JavaPlugin {
             try {
                 data = GameData.load(content, null);
                 settings = Settings.parse(GameData.builtin("settings.json"));
+                data.setDifficulty(settings.difficulty);
             } catch (Exception fatal) {
                 throw new IllegalStateException("Встроенные данные повреждены", fatal);
             }
@@ -191,6 +193,11 @@ public final class JrpgPlugin extends JavaPlugin {
     public Progression.Party partyOf(UUID player) {
         load(player);
         return parties.get(player);
+    }
+
+    /** Средний уровень героев игрока: по нему растут враги (GameData.Difficulty). */
+    public int partyLevel(UUID player) {
+        return (int) Math.round(partyOf(player).heroes().stream().mapToInt(h -> h.level).average().orElse(1));
     }
 
     /** При первом обращении — прочитать сохранение игрока (или начать новое). */

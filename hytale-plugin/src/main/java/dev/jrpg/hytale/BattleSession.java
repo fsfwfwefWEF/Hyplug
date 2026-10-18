@@ -185,8 +185,10 @@ public final class BattleSession implements BattleListener {
     private void begin() {
         Content content = plugin.content();
         List<Combatant> party = plugin.partyOf(player.getUuid()).buildParty(content);
+        // Враги растут вместе с партией: средний уровень героев (см. GameData.Difficulty).
+        int level = plugin.partyLevel(player.getUuid());
         battle = plugin.data().createBattle(encounter, party,
-                plugin.inventoryOf(player.getUuid()), this, System.nanoTime());
+                plugin.inventoryOf(player.getUuid()), this, System.nanoTime(), level);
         // Парирование и уклонение убраны (2026-10-18: игроку неинтересны). Код реакций в battle-core остался
         // выключенным: враги бьют без фазы ожидания ответа.
         battle.setReactions(false);
@@ -1197,6 +1199,12 @@ public final class BattleSession implements BattleListener {
             sb.append(plugin.content().item(item).name()).append(n > 1 ? " x" + n : "");
         });
         addLog(sb.toString(), LOG_LOOT);
+        // Снаряжение — отдельной строкой цветом редкости, чтобы его было видно в журнале.
+        for (String item : got.keySet()) {
+            if (!plugin.content().hasGear(item)) continue;
+            dev.jrpg.battle.Equipment.Gear g = plugin.content().gear(item);
+            addLog("Снаряжение: " + g.name() + " (" + g.quality().label + ")", g.quality().color);
+        }
         return got;
     }
 
@@ -1291,7 +1299,7 @@ public final class BattleSession implements BattleListener {
 
     private String comboName(String id) {
         for (Combo k : battle.content().combos()) if (k.id().equals(id)) return k.name();
-        return id;
+        return dev.jrpg.battle.BattleText.COMBO_NAMES.getOrDefault(id, id);
     }
 
     /** Короткий итог действия для второй строки баннера. */

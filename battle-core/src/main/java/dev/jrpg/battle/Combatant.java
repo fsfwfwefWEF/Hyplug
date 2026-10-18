@@ -34,6 +34,8 @@ public final class Combatant {
     /** Счётчик готовности CTB: ходит тот, кто первым набрал {@link TurnQueue#THRESHOLD}. */
     public double ct;
     public final List<StatusInstance> statuses = new ArrayList<>();
+    /** Пассивка «Второй шанс» уже спасла в этом бою. */
+    public boolean secondChanceUsed;
 
     public Combatant(String id, String name, Side side, Stats stats, List<String> abilities) {
         this.id = id;
@@ -66,7 +68,8 @@ public final class Combatant {
     }
 
     public double effectiveSpeed() {
-        return Math.max(1.0, stats.spd() * multiplier(StatusDef.Kind.SPEED_MULT));
+        double swift = passives.contains(Passives.SWIFT) ? 1.2 : 1.0;
+        return Math.max(1.0, stats.spd() * multiplier(StatusDef.Kind.SPEED_MULT) * swift);
     }
 
     @Override
