@@ -7,7 +7,7 @@ package dev.jrpg.battle;
 public record Item(String id, String name, Ability effect, Kind kind, String description) {
     /** Вкладки рюкзака. */
     public enum Kind {
-        CONSUMABLE("Зелья"), BATTLE("Боевые"), MATERIAL("Материалы");
+        CONSUMABLE("Зелья"), BATTLE("Боевые"), MATERIAL("Материалы"), GEAR("Снаряжение");
 
         public final String label;
 

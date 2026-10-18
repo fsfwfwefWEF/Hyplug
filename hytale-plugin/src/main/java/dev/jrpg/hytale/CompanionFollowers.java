@@ -111,6 +111,21 @@ final class CompanionFollowers {
         if (g != null) runIn(g.world, () -> despawn(g));
     }
 
+    /** Снаряжение поменяли в меню — переодеть идущих за игроком компаньонов. */
+    void redress(UUID player) {
+        Group g = groups.get(player);
+        if (g == null) return;
+        runIn(g.world, () -> {
+            for (Follower f : g.list) {
+                try {
+                    GearVisuals.dressNpc(g.store, f.ref, plugin.partyOf(player).hero(f.heroId), plugin.content());
+                } catch (IllegalArgumentException ignored) {
+                    // героя убрали из данных
+                }
+            }
+        });
+    }
+
     void clearAll() {
         for (UUID id : List.copyOf(groups.keySet())) forget(id);
     }
@@ -301,6 +316,7 @@ final class CompanionFollowers {
             HumanLook.Look look = HumanLook.of(h.def.id(), plugin.settings().companionLooks.get(h.def.id()));
             Ref<EntityStore> ref = Fx.spawnPuppet(store, role, h.def.name(), at, yaw, h.def.name(), look);
             if (ref == null) continue;
+            GearVisuals.dressNpc(store, ref, h, plugin.content());
             g.list.add(new Follower(h.def.id(), ref, new Vector3d(at), yaw));
         }
         if (g.list.isEmpty()) return null;

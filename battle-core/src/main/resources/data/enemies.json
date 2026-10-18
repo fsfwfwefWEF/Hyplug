@@ -3,7 +3,7 @@
     "stats": { "maxHp": 90, "maxMp": 0, "atk": 17, "mag": 0, "def": 8, "spd": 11 },
     "abilities": ["goblin_frenzy"],
     "anim": { "attack": ["SwingWeaponAir", "HitFaceClub", "KickGround"], "cast": ["Taunt"] },
-    "loot": [ { "item": "goblin_scrap", "count": 1, "chance": 0.7 }, { "item": "potion", "count": 1, "chance": 0.2 } ] },
+    "loot": [ { "item": "goblin_scrap", "count": 1, "chance": 0.7 }, { "item": "potion", "count": 1, "chance": 0.2 }, { "item": "copper_daggers", "count": 1, "chance": 0.06 }, { "item": "leather_gloves", "count": 1, "chance": 0.08 } ] },
   { "id": "spider", "role": "Spider", "name": "Ядовитый паук", "model": "Spider",
     "stats": { "maxHp": 70, "maxMp": 0, "atk": 15, "mag": 0, "def": 6, "spd": 15 },
     "abilities": ["venom_bite", "web"],
@@ -27,16 +27,16 @@
     "stats": { "maxHp": 75, "maxMp": 0, "atk": 16, "mag": 0, "def": 5, "spd": 16 },
     "abilities": ["rend", "howl"],
     "anim": { "attack": ["Threaten", "Alerted"], "cast": ["Howl"], "down": ["Laydown", "Sleep"], "wake": ["Wake"] },
-    "loot": [ { "item": "wolf_fang", "count": 1, "chance": 0.7 } ] },
+    "loot": [ { "item": "wolf_fang", "count": 1, "chance": 0.7 }, { "item": "leather_boots", "count": 1, "chance": 0.08 } ] },
   { "id": "skeleton", "role": "Skeleton|Skeleton_Soldier|Skeleton_Fighter|Skeleton_Archer", "name": "Скелет", "model": "Skeleton",
     "immunities": ["poison", "bleed"],
     "stats": { "maxHp": 95, "maxMp": 0, "atk": 15, "mag": 0, "def": 12, "spd": 9 },
     "abilities": ["bone_crush"],
     "anim": { "weapon": ["Sword", "Longsword", "Shortsword", "Default"], "attack": ["SwingWeaponAir"] },
-    "loot": [ { "item": "bone", "count": 2, "chance": 0.8 }, { "item": "potion", "count": 1, "chance": 0.15 } ] },
+    "loot": [ { "item": "bone", "count": 2, "chance": 0.8 }, { "item": "potion", "count": 1, "chance": 0.15 }, { "item": "bone_saber", "count": 1, "chance": 0.08 } ] },
   { "id": "trork", "role": "Trork_Warrior|Trork_Brawler|Trork_Chieftain", "name": "Трорк-громила", "model": "Trork_Warrior",
     "stats": { "maxHp": 140, "maxMp": 0, "atk": 20, "mag": 0, "def": 10, "spd": 7 },
     "abilities": ["trork_smash"],
     "anim": { "weapon": ["Battleaxe", "Axe", "Club", "Mace", "Default"], "cast": ["Roar", "BrawlTaunt"], "death": ["Knockedout", "KnockedoutLaydown"], "knockdown": ["Knockedout"], "down": ["KnockedoutLaydown"], "wake": ["KnockedoutWake"] },
-    "loot": [ { "item": "trork_tusk", "count": 1, "chance": 0.6 }, { "item": "potion", "count": 1, "chance": 0.25 } ] }
+    "loot": [ { "item": "trork_tusk", "count": 1, "chance": 0.6 }, { "item": "potion", "count": 1, "chance": 0.25 }, { "item": "iron_mace", "count": 1, "chance": 0.07 }, { "item": "iron_helm", "count": 1, "chance": 0.05 } ] }
 ]

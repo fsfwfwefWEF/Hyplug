@@ -23,6 +23,10 @@ public final class Combatant {
     public final java.util.Set<String> passives = new java.util.HashSet<>();
     /** Ссылка на сущность/модель в адаптере (например, UUID NPC в Hytale). */
     public String entityKey;
+    /** Прибавка оружия к силе удара и магии (см. {@link Equipment#physBonus}); у врагов 0. */
+    public double weaponPhys, weaponMag;
+    /** Стихия оружия: красит обычную атаку (null — физическая). */
+    public String weaponElement;
 
     public int hp;
     public int mp;

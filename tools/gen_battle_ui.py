@@ -465,7 +465,7 @@ def prebattle():
 # ---------- рюкзак ----------
 
 BAG_COLS, BAG_ROWS, CELL = 6, 4, 86
-BAG_TABS = ["Все", "Зелья", "Боевые", "Материалы"]
+BAG_TABS = ["Все", "Зелья", "Боевые", "Материалы", "Снаряжение"]
 BAG_SORTS = [("SortKind", "Тип"), ("SortName", "Имя"), ("SortCount", "Кол-во")]
 
 
@@ -484,7 +484,7 @@ def bag_cell(i):
 
 def backpack():
     tabs = group("Tabs", ["Anchor: (Height: 34);", "LayoutMode: Left;"],
-                 sum(([button(f"Tab{i}", t, 130, 32), spacer(w=6)] for i, t in enumerate(BAG_TABS)), [])
+                 sum(([button(f"Tab{i}", t, 112, 32), spacer(w=5)] for i, t in enumerate(BAG_TABS)), [])
                  + [spacer(flex=True), label("", "Сортировка:", 13, DIM, width=100, height=32)]
                  + sum(([button(bid, t, 96, 32), spacer(w=4)] for bid, t in BAG_SORTS), []))
     grid_w, grid_h = BAG_COLS * CELL, BAG_ROWS * CELL
@@ -532,8 +532,86 @@ def backpack():
         spacer(flex=True),
     ])
     write("Backpack.ui", '$C = "../Common.ui";\n\n'
-          "// Рюкзак: вкладки-фильтры #Tab0..3, сортировка #SortKind/#SortName/#SortCount, ячейки #S<n>\n"
+          "// Рюкзак: вкладки-фильтры #Tab0..4, сортировка #SortKind/#SortName/#SortCount, ячейки #S<n>\n"
           "// (#S<n>Sel — выбрана, #S<n>Btn — кнопка, #S<n>Icon — иконка, #S<n>Count — количество).\n"
+          "// Собрано tools/gen_battle_ui.py — правь скрипт.\n\n" + root + "\n")
+
+
+# ---------- экипировка ----------
+
+EQ_SLOTS = 8
+EQ_ITEMS = 8
+EQ_CMP = 12
+EQ_ROW = 38
+
+
+def sel_row(id_, w, h, text_w, extra=None):
+    """Строка-кнопка с подсветкой выбора #<id>Sel под ней; extra — подпись справа (#<id>Q)."""
+    kids = [f"Group #{id_}Sel {{ Anchor: (Left: 0, Top: 0, Width: {w}, Height: {h}); Background: #e8c46a(0.35);\n"
+            f"  Group {{ Anchor: (Left: 2, Top: 2, Width: {w - 4}, Height: {h - 4}); Background: #fff0b0(0.30); }}\n}}",
+            button(f"{id_}Btn", "", text_w, h - 6, left=3, top=3)]
+    if extra:
+        kids.append(f'Label #{id_}Q {{ Text: ""; Anchor: (Left: {text_w + 10}, Top: 9, Width: {w - text_w - 12}, Height: 20); '
+                    f"Style: (FontSize: 12, TextColor: {DIM}, RenderBold: true); }}")
+    return group(id_, [f"Anchor: (Width: {w}, Height: {h});"], kids)
+
+
+def equipment():
+    tabs = group("Tabs", ["Anchor: (Height: 34);", "LayoutMode: Left;"],
+                 sum(([button(f"Tab{i}", "", 200, 32), spacer(w=6)] for i in range(PARTY)), [])
+                 + [spacer(flex=True), label("Hint", "", 12, DIM, width=330, height=32, wrap=True)])
+    left = group("SlotCol", ["Anchor: (Width: 330);", "LayoutMode: Top;", f"Background: {PANEL};", "Padding: (Full: 8);"], [
+        label("HeroName", "", 18, GOLD, True, height=24),
+        label("HeroSub", "", 12, DIM, height=18),
+        spacer(h=4),
+    ] + [sel_row(f"Slot{i}", 314, EQ_ROW, 308) for i in range(EQ_SLOTS)] + [
+        spacer(h=4),
+        label("HeroStats", "", 12, TEXT, height=52, wrap=True),
+    ])
+    middle = group("ListCol", ["FlexWeight: 1;", "LayoutMode: Top;", f"Background: {PANEL2};", "Padding: (Full: 8);"], [
+        label("ListTitle", "", 16, GOLD, True, height=24),
+        label("ListSub", "", 12, DIM, height=18),
+        spacer(h=4),
+    ] + [sel_row(f"Item{i}", 380, EQ_ROW, 262, extra=True) for i in range(EQ_ITEMS)] + [
+        spacer(h=4),
+        group("", ["Anchor: (Height: 30);", "LayoutMode: Left;"], [
+            button("PrevPage", "<", 50, 28), spacer(w=6),
+            label("Page", "", 12, DIM, height=28, flex=True),
+            button("NextPage", ">", 50, 28),
+        ]),
+        label("Empty", "", 12, DIM, height=40, wrap=True),
+    ])
+    right = group("CmpCol", ["Anchor: (Width: 360);", "LayoutMode: Top;", f"Background: {PANEL};", "Padding: (Full: 10);"], [
+        label("CmpTitle", "", 17, GOLD, True, height=24),
+        label("CmpSub", "", 12, DIM, height=18),
+        spacer(h=4),
+    ] + [label(f"Cmp{i}", "", 13, TEXT, height=19) for i in range(EQ_CMP)] + [
+        label("CmpDesc", "", 12, DIM, height=58, wrap=True),
+        label("Message", "", 12, "#ffd27a", height=32, wrap=True),
+        group("", ["Anchor: (Height: 34);", "LayoutMode: Left;"], [
+            button("Equip", "Надеть", 168, 32), spacer(w=4), button("Unequip", "Снять", 168, 32)]),
+        spacer(h=4),
+        group("", ["Anchor: (Height: 34);", "LayoutMode: Left;"], [
+            button("Back", "Меню героя", 168, 32), spacer(w=4), button("Close", "Закрыть", 168, 32, cancel=True)]),
+    ])
+    body_h = 24 + 18 + 4 + EQ_SLOTS * EQ_ROW + 4 + 52 + 16
+    window = group("Window", ["Anchor: (Width: 1130);", "LayoutMode: Top;", "Background: #070b12(0.95);",
+                              "Padding: (Full: 12);"], [
+        group("", ["Anchor: (Height: 32);", "LayoutMode: Left;"], [
+            label("", "ЭКИПИРОВКА", 22, GOLD, True, height=30, flex=True),
+        ]),
+        tabs,
+        spacer(h=8),
+        group("", [f"Anchor: (Height: {body_h});", "LayoutMode: Left;"], [left, spacer(w=8), middle, spacer(w=8), right]),
+    ])
+    root = group("", ["LayoutMode: Top;"], [
+        spacer(flex=True),
+        group("", [f"Anchor: (Height: {body_h + 110});", "LayoutMode: Left;"], [spacer(flex=True), window, spacer(flex=True)]),
+        spacer(flex=True),
+    ])
+    write("Equipment.ui", '$C = "../Common.ui";\n\n'
+          "// Экипировка: вкладки героев #Tab0..2, слоты #Slot0..7 (#Slot<n>Sel, #Slot<n>Btn), вещи из рюкзака\n"
+          "// #Item0..7 (+ #Item<n>Q — качество), сравнение #Cmp0..11, кнопки #Equip/#Unequip/#Back/#Close.\n"
           "// Собрано tools/gen_battle_ui.py — правь скрипт.\n\n" + root + "\n")
 
 
@@ -561,3 +639,4 @@ if __name__ == "__main__":
     progression()
     prebattle()
     backpack()
+    equipment()

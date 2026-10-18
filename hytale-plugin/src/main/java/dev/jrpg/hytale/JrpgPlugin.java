@@ -30,12 +30,13 @@ import java.util.logging.Level;
  * здесь связь с Hytale: команда /jrpg, боевые сессии, автостарт у встреч.
  */
 public final class JrpgPlugin extends JavaPlugin {
-    private static final String[] DATA_FILES = {"enemies.json", "encounters.json", "settings.json", "squads.json"};
+    private static final String[] DATA_FILES = {"enemies.json", "encounters.json", "settings.json", "squads.json", "equipment.json"};
     /**
      * Версия встроенных файлов данных. Если копия в папке мода старее, она сохраняется в backup-vN/
      * и заменяется новой (иначе новые враги/настройки не появятся у тех, кто уже запускал мод).
      */
-    private static final int DATA_VERSION = 9;
+    private static final int DATA_VERSION = 10;
+    private static final String STARTER_GEAR_FLAG = "starterGear";
     /** Автосохранение загруженных игроков, с. */
     private static final long AUTOSAVE_S = 60;
     private static JrpgPlugin instance;
@@ -130,6 +131,7 @@ public final class JrpgPlugin extends JavaPlugin {
             data = GameData.load(content, dir);
             settings = Settings.parse(Files.readString(dir.resolve("settings.json")));
             ParticleCatalog.reset();
+            GearVisuals.reset();
             return "Данные загружены из " + dir.toAbsolutePath();
         } catch (Exception e) {
             getLogger().at(Level.SEVERE).log("JRPG: ошибка в файлах данных (" + dir + "): " + e.getMessage()
@@ -190,6 +192,11 @@ public final class JrpgPlugin extends JavaPlugin {
             log("Загружено сохранение игрока " + player);
         } else {
             inv = new java.util.LinkedHashMap<>(Content.demoInventory());
+        }
+        // Запасные вещи снаряжения кладутся один раз (и в старые сохранения): есть что сравнить и надеть.
+        if (!(fl.get(STARTER_GEAR_FLAG) instanceof Boolean b && b)) {
+            content.starterBag().forEach((k, v) -> inv.merge(k, v, Integer::sum));
+            fl.put(STARTER_GEAR_FLAG, true);
         }
         inventories.put(player, java.util.Collections.synchronizedMap(inv));
         flags.put(player, fl);
@@ -334,6 +341,11 @@ public final class JrpgPlugin extends JavaPlugin {
     boolean isBattlePuppet(Ref<EntityStore> ref) {
         for (BattleSession s : sessions.values()) if (s.owns(ref)) return true;
         return false;
+    }
+
+    /** Открыть экипировку (вызывать в потоке мира). heroId — какая вкладка открыта (null — первая). */
+    public void openEquipment(PlayerRef playerRef, Ref<EntityStore> ref, Store<EntityStore> store, String heroId) {
+        Pages.open(this, playerRef, ref, store, new EquipmentPage(playerRef, this, heroId));
     }
 
     /** Открыть рюкзак (вызывать в потоке мира). */

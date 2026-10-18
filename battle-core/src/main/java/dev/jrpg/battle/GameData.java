@@ -36,6 +36,7 @@ public final class GameData {
     /** dataDir == null → встроенные данные из jar. */
     public static GameData load(Content content, Path dataDir) throws IOException {
         GameData d = new GameData(content);
+        Equipment.load(content, read(dataDir, "equipment.json"));
         for (Object o : (List<?>) Json.parse(read(dataDir, "enemies.json"))) {
             EnemyTemplate t = parseEnemy(Json.obj(o));
             d.enemies.put(t.id(), t);

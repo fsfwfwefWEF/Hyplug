@@ -321,6 +321,8 @@ public final class Battle {
 
         List<ActionResult.Hit> hits = new ArrayList<>();
         String element = content.element(ab);
+        // Обычная атака бьёт стихией оружия (огненный посох — огнём), навыки — своей.
+        if (Content.ATTACK.equals(ab.id()) && actor.weaponElement != null) element = actor.weaponElement;
         int lifesteal = 0;
         for (Combatant t : resolveTargets(actor, ab.target(), targetId)) {
             int damage = 0;
@@ -348,7 +350,10 @@ public final class Battle {
                     comboMult *= 1.3;
                     comboBonus *= 1.3;
                 }
-                int power = ab.magical() ? actor.stats.mag() : actor.stats.atk();
+                // Сила = стат героя + мощь оружия × класс (предметы вроде бомбы от оружия не растут).
+                boolean fromItem = ab.id().startsWith("item_");
+                double power = ab.magical() ? actor.stats.mag() + (fromItem ? 0 : actor.weaponMag)
+                        : actor.stats.atk() + (fromItem ? 0 : actor.weaponPhys);
                 double raw = power * ab.damagePower() * actionMult * (0.9 + random.nextDouble() * 0.2)
                         - t.stats.def() * (ab.magical() ? 0.25 : 0.5);
                 double critChance = 0.05 + (actor.passives.contains(Passives.KEEN_EYE) ? 0.10 : 0);

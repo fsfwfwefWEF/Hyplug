@@ -22,14 +22,14 @@ import java.util.Map;
 
 /**
  * Рюкзак партии (Common/UI/Custom/JrpgBattle/Backpack.ui, собирается tools/gen_battle_ui.py):
- * сетка ячеек с иконками и количеством, вкладки «Все / Зелья / Боевые / Материалы», сортировка
+ * сетка ячеек с иконками и количеством, вкладки «Все / Зелья / Боевые / Материалы / Снаряжение», сортировка
  * по типу, имени и количеству, справа описание выбранного предмета и «Выбросить 1».
  */
 public final class BackpackPage extends InteractiveCustomUIPage<BattleMenuPage.Click> {
     public static final String LAYOUT = "JrpgBattle/Backpack.ui";
-    private static final int CELLS = 24, TABS = 4;
-    private static final String[] TAB_NAMES = {"Все", "Зелья", "Боевые", "Материалы"};
-    private static final Item.Kind[] TAB_KINDS = {null, Item.Kind.CONSUMABLE, Item.Kind.BATTLE, Item.Kind.MATERIAL};
+    private static final int CELLS = 24, TABS = 5;
+    private static final String[] TAB_NAMES = {"Все", "Зелья", "Боевые", "Материалы", "Снаряжение"};
+    private static final Item.Kind[] TAB_KINDS = {null, Item.Kind.CONSUMABLE, Item.Kind.BATTLE, Item.Kind.MATERIAL, Item.Kind.GEAR};
     private static final String[][] SORTS = {{"#SortKind", "Тип"}, {"#SortName", "Имя"}, {"#SortCount", "Кол-во"}};
 
     private final JrpgPlugin plugin;

@@ -39,7 +39,7 @@
         "selfStatuses": [ { "statusId": "haste", "chance": 1.0, "turns": 99 } ] }
     ],
     "script": "spider_queen",
-    "loot": [ { "item": "queen_fang", "count": 1, "chance": 1.0 }, { "item": "potion", "count": 3, "chance": 1.0 } ],
+    "loot": [ { "item": "queen_fang", "count": 1, "chance": 1.0 }, { "item": "potion", "count": 3, "chance": 1.0 }, { "item": "dawn_blade", "count": 1, "chance": 1.0 } ],
     "exp": 500
   }
 ]

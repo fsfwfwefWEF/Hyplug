@@ -176,24 +176,51 @@ public final class Progression {
         public int points = START_POINTS;
         /** Открытые узлы сетки (центр открыт всегда). */
         public final Set<Integer> unlocked = new LinkedHashSet<>();
+        /** Надетое снаряжение: слот → id вещи ({@link Equipment}). */
+        public final Map<Equipment.Slot, String> equipped = new java.util.EnumMap<>(Equipment.Slot.class);
+        /** Реестр вещей (null в тестах без снаряжения). */
+        Content content;
 
         Hero(HeroDef def) {
             this.def = def;
             unlocked.add(0);
         }
 
+        /** Вещь в слоте или null. */
+        public Equipment.Gear gear(Equipment.Slot slot) {
+            String id = equipped.get(slot);
+            return id == null || content == null || !content.hasGear(id) ? null : content.gear(id);
+        }
+
         public GridNode node(int i) {
             return def.grid().get(i);
         }
 
-        /** Итоговые характеристики: база + рост за уровни + узлы сетки. */
+        /** Итоговые характеристики: база + рост за уровни + узлы сетки + снаряжение. */
         public Stats stats() {
+            return statsFor(equipped);
+        }
+
+        /** Характеристики с другим набором снаряжения (для сравнения в меню). */
+        public Stats statsFor(Map<Equipment.Slot, String> eq) {
             int l = level - 1;
             Stats b = def.base(), g = def.growth();
             int[] add = new int[Stat.values().length];
             for (int i : unlocked) {
                 GridNode n = node(i);
                 if (n.kind() == NodeKind.STAT) add[n.stat().ordinal()] += n.value();
+            }
+            if (content != null) {
+                for (String id : eq.values()) {
+                    if (!content.hasGear(id)) continue;
+                    Stats g2 = content.gear(id).bonus();
+                    add[Stat.HP.ordinal()] += g2.maxHp();
+                    add[Stat.MP.ordinal()] += g2.maxMp();
+                    add[Stat.ATK.ordinal()] += g2.atk();
+                    add[Stat.MAG.ordinal()] += g2.mag();
+                    add[Stat.DEF.ordinal()] += g2.def();
+                    add[Stat.SPD.ordinal()] += g2.spd();
+                }
             }
             return new Stats(
                     b.maxHp() + g.maxHp() * l + add[Stat.HP.ordinal()],
@@ -210,6 +237,8 @@ public final class Progression {
                 GridNode n = node(i);
                 if (unlocked.contains(i) && n.kind() == NodeKind.ABILITY && !out.contains(n.ref())) out.add(n.ref());
             }
+            // Навыки оружия и вещей доступны, пока вещь надета.
+            if (content != null) for (String a : Equipment.skills(content, equipped)) if (!out.contains(a)) out.add(a);
             return out;
         }
 
@@ -276,7 +305,12 @@ public final class Progression {
         private final Map<String, Hero> heroes = new LinkedHashMap<>();
 
         public Party(Content content) {
-            for (HeroDef d : content.heroes()) heroes.put(d.id(), new Hero(d));
+            for (HeroDef d : content.heroes()) {
+                Hero h = new Hero(d);
+                h.content = content;
+                h.equipped.putAll(content.startGear(d.id()));
+                heroes.put(d.id(), h);
+            }
         }
 
         public List<Hero> heroes() { return List.copyOf(heroes.values()); }
@@ -293,6 +327,11 @@ public final class Progression {
             for (Hero h : heroes.values()) {
                 Combatant c = new Combatant(h.def.id(), h.def.name(), Side.PARTY, h.stats(), h.abilities());
                 c.passives.addAll(h.passives());
+                Equipment.Gear w = h.gear(Equipment.Slot.WEAPON);
+                c.weaponPhys = Equipment.physBonus(w);
+                c.weaponMag = Equipment.magBonus(w);
+                c.weaponElement = w == null ? null : w.element();
+                if (h.content != null) c.immunities.addAll(Equipment.immunities(h.content, h.equipped));
                 out.add(c);
             }
             return out;

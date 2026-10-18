@@ -184,6 +184,53 @@ public final class Describe {
         return item.effect() == null ? "bag" : abilityIcon(content, item.effect());
     }
 
+    /** Описание вещи снаряжения: слот, качество, мощь и классы, статы, навыки, иммунитеты. */
+    public static String gear(Content content, Equipment.Gear g) {
+        StringBuilder sb = new StringBuilder();
+        sb.append(g.accessory() ? "Аксессуар" : g.slot().label).append(" · ").append(g.quality().label);
+        if (g.twoHanded()) sb.append(" · двуручное");
+        if (g.power() > 0) {
+            sb.append("\nМощь ").append(g.power()).append("   класс: ATK ").append(g.grade("atk"))
+                    .append(", MAG ").append(g.grade("mag")).append(", SPD ").append(g.grade("spd"));
+        }
+        if (g.element() != null) sb.append("\nСтихия удара: ").append(Element.name(g.element()));
+        String bonus = bonus(g.bonus());
+        if (!bonus.isEmpty()) sb.append("\n").append(bonus);
+        if (!g.skills().isEmpty()) {
+            sb.append("\nНавыки: ");
+            for (int i = 0; i < g.skills().size(); i++) {
+                if (i > 0) sb.append(", ");
+                sb.append(content.ability(g.skills().get(i)).name());
+            }
+        }
+        if (!g.immunities().isEmpty()) {
+            sb.append("\nИммунитет: ");
+            for (int i = 0; i < g.immunities().size(); i++) {
+                if (i > 0) sb.append(", ");
+                sb.append(content.status(g.immunities().get(i)).name());
+            }
+        }
+        return sb.toString();
+    }
+
+    /** "Здоровье +10, Защита +3, Скорость -1" (нулевые пропускаются). */
+    public static String bonus(Stats b) {
+        StringBuilder sb = new StringBuilder();
+        part(sb, "Здоровье", b.maxHp());
+        part(sb, "Мана", b.maxMp());
+        part(sb, "Атака", b.atk());
+        part(sb, "Магия", b.mag());
+        part(sb, "Защита", b.def());
+        part(sb, "Скорость", b.spd());
+        return sb.toString();
+    }
+
+    private static void part(StringBuilder sb, String name, int v) {
+        if (v == 0) return;
+        if (sb.length() > 0) sb.append(", ");
+        sb.append(name).append(v > 0 ? " +" : " ").append(v);
+    }
+
     /** Описание предмета для рюкзака: вид, художественный текст и что делает в бою. */
     public static String item(Content content, Item item, int count) {
         StringBuilder sb = new StringBuilder(item.kind().label + "   в рюкзаке: " + count);
@@ -191,6 +238,7 @@ public final class Describe {
         if (flavor.isEmpty()) flavor = item.description();
         if (!flavor.isEmpty()) sb.append("\n").append(flavor);
         if (item.effect() != null) sb.append("\nВ бою: ").append(ability(content, item.effect()));
+        if (content.hasGear(item.id())) sb.append("\n").append(gear(content, content.gear(item.id())));
         else sb.append("\nВ бою не используется.");
         return sb.toString();
     }

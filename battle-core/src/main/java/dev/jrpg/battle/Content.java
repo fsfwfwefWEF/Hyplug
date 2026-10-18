@@ -21,6 +21,9 @@ public final class Content {
     private final Map<String, String> elements = new HashMap<>();
     private final List<Combo> combos = new java.util.ArrayList<>();
     private final Map<String, PassiveDef> passives = new java.util.LinkedHashMap<>();
+    private final Map<String, Equipment.Gear> gear = new java.util.LinkedHashMap<>();
+    private final Map<String, Map<Equipment.Slot, String>> startGear = new HashMap<>();
+    private Map<String, Integer> starterBag = Map.of();
 
     public void add(StatusDef s) { statuses.put(s.id(), s); }
     public void add(Ability a) { abilities.put(a.id(), a); }
@@ -31,6 +34,29 @@ public final class Content {
         BattleText.COMBO_NAMES.put(k.id(), k.name());
     }
     public void add(PassiveDef p) { passives.put(p.id(), p); }
+
+    /** Вещь снаряжения; в рюкзаке она лежит как предмет вида «Снаряжение». */
+    public void add(Equipment.Gear g) {
+        gear.put(g.id(), g);
+        items.put(g.id(), new Item(g.id(), g.name(), null, Item.Kind.GEAR, g.description()));
+    }
+
+    /** Перед перечитыванием equipment.json. */
+    public void clearGear() {
+        for (String id : gear.keySet()) items.remove(id);
+        gear.clear();
+        startGear.clear();
+    }
+
+    public Equipment.Gear gear(String id) { return require(gear, id, "вещь снаряжения"); }
+    public boolean hasGear(String id) { return gear.containsKey(id); }
+    public java.util.Collection<Equipment.Gear> gearList() { return gear.values(); }
+    public void startGear(String heroId, Map<Equipment.Slot, String> eq) { startGear.put(heroId, eq); }
+    /** Снаряжение героя в новой игре (пусто, если не задано). */
+    public Map<Equipment.Slot, String> startGear(String heroId) { return startGear.getOrDefault(heroId, Map.of()); }
+    public void starterBag(Map<String, Integer> bag) { starterBag = Map.copyOf(bag); }
+    /** Запасные вещи, которые кладутся в рюкзак один раз (чтобы было что сравнить и надеть). */
+    public Map<String, Integer> starterBag() { return starterBag; }
 
     /** Стихия способности ({@link Element}); урон без явной стихии считается физическим, поддержка — "". */
     public String element(Ability a) {
@@ -119,6 +145,18 @@ public final class Content {
         c.add(dmg("cleave", "Рассечение", 3, 0, TargetType.ALL_ENEMIES, 0.9, false, List.of(), 0, 120));
         c.add(support("rally", "Боевой клич", 4, 0, TargetType.ALL_ALLIES, 0.1, 0, List.of(),
                 List.of(new StatusApply("regen", 1.0, 3))));
+        // Навыки оружия (equipment.json → skills): доступны, пока оружие в руке.
+        c.add(dmg("blade_rush", "Натиск клинка", 2, 0, TargetType.SINGLE_ENEMY, 1.4, false,
+                List.of(new StatusApply("bleed", 0.3, 3)), 0, 100));
+        c.add(dmg("armor_split", "Раскол брони", 3, 0, TargetType.SINGLE_ENEMY, 1.1, false,
+                List.of(new StatusApply("armor_break", 1.0, 2)), 0, 120));
+        c.add(dmg("piercing_lunge", "Пронзающий выпад", 2, 0, TargetType.SINGLE_ENEMY, 1.3, false,
+                List.of(new StatusApply("bleed", 0.5, 3)), 0, 100));
+        c.add(dmg("arcane_bolt", "Чародейский заряд", 0, 6, TargetType.SINGLE_ENEMY, 1.3, true, List.of(), 0, 100));
+        c.add(dmg("venom_edge", "Яд на клинке", 1, 0, TargetType.SINGLE_ENEMY, 0.8, false,
+                List.of(new StatusApply("poison", 0.7, 3)), 0, 90));
+        c.add(dmg("dawn_strike", "Рассветный удар", 4, 0, TargetType.SINGLE_ENEMY, 2.0, false,
+                List.of(new StatusApply("burn", 0.6, 3)), 0, 120));
         // Враги
         c.add(dmg("venom_bite", "Ядовитый укус", 0, 0, TargetType.SINGLE_ENEMY, 0.9, false,
                 List.of(new StatusApply("poison", 0.8, 3)), 0, 100));
@@ -226,6 +264,12 @@ public final class Content {
     private static void demoFlavor(Content c) {
         c.flavor(ATTACK, "Обычный удар оружием. Копит очки действия (AP) для способностей.");
         c.flavor(DEFEND, "Встать в защиту до своего следующего хода.");
+        c.flavor("blade_rush", "Навык меча: серия быстрых ударов, может пустить кровь.");
+        c.flavor("armor_split", "Навык топора и булавы: тяжёлый удар раскалывает броню, цель получает больше урона.");
+        c.flavor("piercing_lunge", "Навык копья: длинный выпад, оставляет глубокую рану.");
+        c.flavor("arcane_bolt", "Навык посоха: сгусток чистой магии без затрат AP.");
+        c.flavor("venom_edge", "Навык кинжалов: клинки смазаны ядом.");
+        c.flavor("dawn_strike", "Навык Клинка рассвета: удар пламенем зари, поджигает цель.");
         c.flavor("fire_slash", "Клинок, объятый пламенем, оставляет горящую рану.");
         c.flavor("shield_bash", "Тяжёлый удар щитом, может оглушить.");
         c.flavor("focus", "Сосредоточиться: следующий удар будет мощнее.");
@@ -273,6 +317,12 @@ public final class Content {
         c.flavor("second_wind", "Брам переводит дыхание: лечение, снимает яд и кровь, встаёт в защиту.");
         c.flavor("goo_spit", "Слизень плюётся: цель промокает.");
         c.icon(ATTACK, "sword");
+        c.icon("blade_rush", "sword");
+        c.icon("armor_split", "crack");
+        c.icon("piercing_lunge", "bleed");
+        c.icon("arcane_bolt", "magic");
+        c.icon("venom_edge", "poison");
+        c.icon("dawn_strike", "fire");
         c.icon("bleeding_cut", "bleed");
         c.icon("armor_pierce", "crack");
         c.icon("sunder", "crack");
@@ -301,12 +351,12 @@ public final class Content {
     }
 
     private static void demoElements(Content c) {
-        for (String id : List.of("fire_slash", "fireball", "item_bomb")) c.element(id, Element.FIRE);
+        for (String id : List.of("fire_slash", "fireball", "item_bomb", "dawn_strike")) c.element(id, Element.FIRE);
         for (String id : List.of("blizzard", "ice_lance")) c.element(id, Element.ICE);
         for (String id : List.of("thunder", "chain_lightning", "storm_blade")) c.element(id, Element.THUNDER);
         for (String id : List.of("water_jet", "goo_spit")) c.element(id, Element.WATER);
         c.element("earthquake", Element.EARTH);
-        for (String id : List.of("venom_bite", "acid_rain", "item_queen_fang")) c.element(id, Element.POISON);
+        for (String id : List.of("venom_bite", "acid_rain", "item_queen_fang", "venom_edge")) c.element(id, Element.POISON);
     }
 
     /**

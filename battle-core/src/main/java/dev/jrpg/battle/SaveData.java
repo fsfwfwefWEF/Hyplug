@@ -25,6 +25,9 @@ public final class SaveData {
             m.put("exp", h.exp);
             m.put("points", h.points);
             m.put("unlocked", new ArrayList<>(h.unlocked));
+            Map<String, Object> eq = new LinkedHashMap<>();
+            h.equipped.forEach((slot, id) -> eq.put(slot.key(), id));
+            m.put("equipped", eq);
             heroes.put(h.def.id(), m);
         }
         root.put("heroes", heroes);
@@ -69,6 +72,16 @@ public final class SaveData {
             for (Object n : Json.list(m, "unlocked")) {
                 int i = ((Number) n).intValue();
                 if (i >= 0 && i < Progression.Grid.SIZE) h.unlocked.add(i);
+            }
+            // Снаряжение: старые сохранения без него оставляют стартовое; незнакомые вещи пропускаются.
+            if (m.get("equipped") != null && h.content != null) {
+                h.equipped.clear();
+                Json.obj(m.get("equipped")).forEach((k, v) -> {
+                    Equipment.Slot slot = Equipment.Slot.parse(k);
+                    if (slot != null && v instanceof String id && h.content.hasGear(id) && h.content.gear(id).fits(slot)) {
+                        h.equipped.put(slot, id);
+                    }
+                });
             }
         }
     }

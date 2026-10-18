@@ -27,6 +27,7 @@ import javax.annotation.Nonnull;
  * /jrpg squad <id|random> — поставить отряд из squads.json в 12-16 блоках (проверка)
  * /jrpg squads — отряды вокруг игрока
  * /jrpg bag — рюкзак (добыча, зелья, сортировка)
+ * /jrpg gear — экипировка героев (оружие, броня, аксессуары)
  * /jrpg follow — компаньоны ходят за игроком / остаются
  * /jrpg particles <часть имени> — какие системы частиц есть в игре (для settings.json)
  * /jrpg gmkey — клавиша режима открывает меню героя / снова переключает режим
@@ -47,6 +48,7 @@ public final class JrpgCommand extends AbstractCommandCollection {
         addSubCommand(new SquadCmd(plugin));
         addSubCommand(new SquadsCmd(plugin));
         addSubCommand(new Bag(plugin));
+        addSubCommand(new Gear(plugin));
         addSubCommand(new Follow(plugin));
         addSubCommand(new Particles(plugin));
         addSubCommand(new GameMenuKey.Toggle(plugin));
@@ -66,6 +68,18 @@ public final class JrpgCommand extends AbstractCommandCollection {
                 return;
             }
             plugin.openBackpack(playerRef, ref, store);
+        }
+    }
+
+    static final class Gear extends Sub {
+        Gear(JrpgPlugin plugin) {
+            super(plugin, "gear", "Экипировка героев");
+        }
+
+        @Override
+        protected void execute(@Nonnull CommandContext ctx, @Nonnull Store<EntityStore> store,
+                               @Nonnull Ref<EntityStore> ref, @Nonnull PlayerRef playerRef, @Nonnull World world) {
+            plugin.openEquipment(playerRef, ref, store, null);
         }
     }
 

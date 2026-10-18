@@ -72,6 +72,8 @@ public final class BattleSession implements BattleListener {
     private final Map<String, Integer> speechSeq = new java.util.concurrent.ConcurrentHashMap<>();
     /** Подпись игрока до боя (на время реплики героя её заменяет окно реплики). */
     private String heroPlate;
+    /** Оружие и броня героя, выданные игроку на бой (вернуть в cleanup). */
+    private GearVisuals.Loan heroLoan;
     private boolean heroPlateRead;
     private Battle battle;
     private BattleMenu menu;
@@ -207,6 +209,7 @@ public final class BattleSession implements BattleListener {
                 puppets.put(c.id, playerEntity);
                 Fx.teleportPlayer(store, playerEntity, pos, yaw);
                 Fx.ensureCombatText(store, playerEntity, c.name);
+                heroLoan = GearVisuals.lendToPlayer(store, playerEntity, heroOf(c.id));
             } else {
                 spawnPuppet(c, plugin.settings().companionRoles.get(c.id), pos, yaw);
             }
@@ -271,6 +274,16 @@ public final class BattleSession implements BattleListener {
         Ref<EntityStore> ref = Fx.spawnPuppet(store, roleSpec, c.name, pos, yaw, BattleText.nameplate(c, false), look);
         if (ref == null) return;
         puppets.put(c.id, ref);
+        if (c.side == Side.PARTY) GearVisuals.dressNpc(store, ref, heroOf(c.id), plugin.content());
+    }
+
+    /** Прогресс героя партии (снаряжение) или null. */
+    private dev.jrpg.battle.Progression.Hero heroOf(String id) {
+        try {
+            return plugin.partyOf(player.getUuid()).hero(id);
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
     }
 
     private void despawn(String id) {
@@ -1230,6 +1243,8 @@ public final class BattleSession implements BattleListener {
         // Игрок мог «лежать» (повержен или оглушён) — вернуть обычную позу.
         Fx.stopAnimation(store, playerEntity, com.hypixel.hytale.protocol.AnimationSlot.Status);
         if (heroPlateRead) Fx.restoreNameplate(store, playerEntity, heroPlate);
+        GearVisuals.restorePlayer(store, playerEntity, heroLoan);
+        heroLoan = null;
         despawnPuppets();
         plugin.followers().resume(player.getUuid());
         if (camera != null) camera.reset();

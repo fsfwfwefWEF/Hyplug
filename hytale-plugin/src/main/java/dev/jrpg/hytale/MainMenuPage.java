@@ -18,7 +18,7 @@ import javax.annotation.Nonnull;
 
 /**
  * Меню героя на клавише режима (Common/UI/Custom/JrpgBattle/MainMenu.ui, написан вручную):
- * прокачка, рюкзак, компаньоны идут / ждут, смена режима игры (саму клавишу перехватывает GameMenuKey).
+ * прокачка, экипировка, рюкзак, компаньоны идут / ждут, смена режима игры (саму клавишу перехватывает GameMenuKey).
  */
 public final class MainMenuPage extends InteractiveCustomUIPage<BattleMenuPage.Click> {
     public static final String LAYOUT = "JrpgBattle/MainMenu.ui";
@@ -35,6 +35,7 @@ public final class MainMenuPage extends InteractiveCustomUIPage<BattleMenuPage.C
                       @Nonnull Store<EntityStore> store) {
         cmd.append(LAYOUT);
         bind(evt, "#Party", "party");
+        bind(evt, "#Gear", "gear");
         bind(evt, "#Bag", "bag");
         bind(evt, "#Follow", "follow");
         bind(evt, "#Mode", "mode");
@@ -53,6 +54,7 @@ public final class MainMenuPage extends InteractiveCustomUIPage<BattleMenuPage.C
         switch (data.action == null ? "" : data.action) {
             // Другое окно сменяет это сразу, без закрытия между ними (см. Pages).
             case "party" -> plugin.openProgression(playerRef, ref, store, null);
+            case "gear" -> plugin.openEquipment(playerRef, ref, store, null);
             case "bag" -> plugin.openBackpack(playerRef, ref, store);
             case "follow" -> {
                 boolean on = !plugin.flag(playerRef.getUuid(), CompanionFollowers.FLAG, true);

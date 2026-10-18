@@ -1,14 +1,14 @@
 $C = "../Common.ui";
 
 // Меню героя на клавише режима (MainMenuPage). Написано вручную, не через tools/gen_battle_ui.py.
-// Кнопки: #Party, #Bag, #Follow, #Mode, #Close; тексты #Follow и #Mode ставит код.
+// Кнопки: #Party, #Gear, #Bag, #Follow, #Mode, #Close; тексты #Follow и #Mode ставит код.
 
 Group {
   LayoutMode: Top;
 
   Group { FlexWeight: 1; }
   Group {
-    Anchor: (Height: 400);
+    Anchor: (Height: 448);
     LayoutMode: Left;
 
     Group { FlexWeight: 1; }
@@ -35,6 +35,15 @@ Group {
 
         Group { FlexWeight: 1; }
         $C.@SecondaryTextButton #Party { @Text = "Прокачка партии"; Anchor: (Width: 340, Height: 40); }
+        Group { FlexWeight: 1; }
+      }
+      Group { Anchor: (Height: 8); }
+      Group {
+        Anchor: (Height: 40);
+        LayoutMode: Left;
+
+        Group { FlexWeight: 1; }
+        $C.@SecondaryTextButton #Gear { @Text = "Экипировка"; Anchor: (Width: 340, Height: 40); }
         Group { FlexWeight: 1; }
       }
       Group { Anchor: (Height: 8); }

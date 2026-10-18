@@ -363,3 +363,27 @@ jrpg-mod/
 - `Describe.turns` стал public. Версия 0.7.4, `DATA_VERSION` 9.
 
 **Проверено:** тесты, голый сервер грузит сборку (462 SEVERE как раньше). В игре не проверено. Экипировка — следующий шаг (0.8.0) по презентации https://claude.ai/artifact/M6gZvS4ERofvXtMjgjB115.
+
+## Сессия 15 (2026-10-18): 0.8.0 — экипировка, этапы 1–3 макета
+
+Что сделано
+- battle-core `Equipment`: слоты (WEAPON, OFFHAND, HEAD, CHEST, HANDS, LEGS, ACC1, ACC2), качество, вещь `Gear`
+  (мощь, классы S–E по atk/mag/spd, стихия, бонус статов, иммунитеты, навыки, twoHanded, model для Hytale).
+  `equip/unequip/candidates/compare`. Данные в `data/equipment.json` (items, start, starterBag, grades).
+- Формула (Battle.useAbility): сила = стат + мощь × класс; физический класс = ATK + ½ SPD, магический = MAG.
+  Предметы `item_*` от оружия не растут. Обычная атака берёт стихию оружия (`Combatant.weaponElement`).
+- `Progression.Hero.equipped` + `statsFor(eq)`: статы вещей входят в `stats()`, навыки вещей в `abilities()`,
+  иммунитеты — в бойца при `buildParty`. Сохранение: `heroes.<id>.equipped` (старые сейвы получают стартовое).
+- Вещи — предметы рюкзака вида `Item.Kind.GEAR` (вкладка «Снаряжение»). Новые навыки оружия в Content.demo:
+  blade_rush, armor_split, piercing_lunge, arcane_bolt, venom_edge, dawn_strike. Лут: снаряжение у врагов и королевы.
+- Плагин: `GearVisuals` ищет предмет Hytale по `model` (точный id или слова + проверка слота брони), пишет в лог
+  найденное и списки «Оружие в игре» / «Броня в игре». Компаньонам: `InventoryHelper.setHotbarItem/setOffHandItem`,
+  броня через `InventoryComponent.Armor` + `useArmor`. Игроку на бой: оружие в свободную ячейку хотбара (или вместо
+  активного предмета, с возвратом), броня только в пустые слоты; `restorePlayer` в cleanup.
+- `EquipmentPage` + `Equipment.ui` (генератор): вкладки героев, 8 слотов, вещи рюкзака, сравнение цветом.
+  Кнопка «Экипировка» в меню героя, `/jrpg gear`. В бою менять нельзя. После смены переодеваются идущие компаньоны.
+- Тесты: `EquipmentTest` (стартовое, обмен с рюкзаком, двуручное, аксессуары, урон, сейв).
+- DATA_VERSION 10 (equipment.json в DATA_FILES), флаг игрока `starterGear` — запасные вещи кладутся один раз.
+
+Не проверено в игре: id предметов Hytale (подбираются по словам), видна ли броня на человеческих моделях NPC.
+Дальше по плану: этап 4 — качество/кузнец/улучшения, именное оружие боссов; баланс урона после теста.
