@@ -1,0 +1,80 @@
+$C = "../Common.ui";
+
+// Меню героя на клавише режима (MainMenuPage). Написано вручную, не через tools/gen_battle_ui.py.
+// Кнопки: #Party, #Bag, #Follow, #Mode, #Close; тексты #Follow и #Mode ставит код.
+
+Group {
+  LayoutMode: Top;
+
+  Group { FlexWeight: 1; }
+  Group {
+    Anchor: (Height: 400);
+    LayoutMode: Left;
+
+    Group { FlexWeight: 1; }
+    Group #Window {
+      Anchor: (Width: 420);
+      LayoutMode: Top;
+      Background: #070b12(0.94);
+      Padding: (Full: 16);
+
+      Label #Title {
+        Text: "Меню героя";
+        Anchor: (Height: 30);
+        Style: (FontSize: 22, TextColor: #e8c46a, RenderBold: true);
+      }
+      Label #Sub {
+        Text: "Открывается клавишей режима. Креатив включается кнопкой ниже.";
+        Anchor: (Height: 36);
+        Style: (FontSize: 13, TextColor: #9fb0c6, Wrap: true);
+      }
+      Group { Anchor: (Height: 8); }
+      Group {
+        Anchor: (Height: 40);
+        LayoutMode: Left;
+
+        Group { FlexWeight: 1; }
+        $C.@SecondaryTextButton #Party { @Text = "Прокачка партии"; Anchor: (Width: 340, Height: 40); }
+        Group { FlexWeight: 1; }
+      }
+      Group { Anchor: (Height: 8); }
+      Group {
+        Anchor: (Height: 40);
+        LayoutMode: Left;
+
+        Group { FlexWeight: 1; }
+        $C.@SecondaryTextButton #Bag { @Text = "Рюкзак"; Anchor: (Width: 340, Height: 40); }
+        Group { FlexWeight: 1; }
+      }
+      Group { Anchor: (Height: 8); }
+      Group {
+        Anchor: (Height: 40);
+        LayoutMode: Left;
+
+        Group { FlexWeight: 1; }
+        $C.@SecondaryTextButton #Follow { @Text = "Компаньоны"; Anchor: (Width: 340, Height: 40); }
+        Group { FlexWeight: 1; }
+      }
+      Group { Anchor: (Height: 8); }
+      Group {
+        Anchor: (Height: 40);
+        LayoutMode: Left;
+
+        Group { FlexWeight: 1; }
+        $C.@SecondaryTextButton #Mode { @Text = "Режим игры"; Anchor: (Width: 340, Height: 40); }
+        Group { FlexWeight: 1; }
+      }
+      Group { Anchor: (Height: 14); }
+      Group {
+        Anchor: (Height: 40);
+        LayoutMode: Left;
+
+        Group { FlexWeight: 1; }
+        $C.@CancelTextButton #Close { @Text = "Закрыть"; Anchor: (Width: 340, Height: 40); }
+        Group { FlexWeight: 1; }
+      }
+    }
+    Group { FlexWeight: 1; }
+  }
+  Group { FlexWeight: 1; }
+}

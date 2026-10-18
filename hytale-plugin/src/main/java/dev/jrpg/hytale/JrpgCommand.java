@@ -29,6 +29,8 @@ import javax.annotation.Nonnull;
  * /jrpg bag — рюкзак (добыча, зелья, сортировка)
  * /jrpg follow — компаньоны ходят за игроком / остаются
  * /jrpg particles <часть имени> — какие системы частиц есть в игре (для settings.json)
+ * /jrpg gmkey — клавиша режима открывает меню героя / снова переключает режим
+ * /jrpg music <id|off> — включить трек боя (проверка) / выключить
  */
 public final class JrpgCommand extends AbstractCommandCollection {
 
@@ -47,6 +49,8 @@ public final class JrpgCommand extends AbstractCommandCollection {
         addSubCommand(new Bag(plugin));
         addSubCommand(new Follow(plugin));
         addSubCommand(new Particles(plugin));
+        addSubCommand(new GameMenuKey.Toggle(plugin));
+        addSubCommand(new GameMenuKey.MusicCmd(plugin));
     }
 
     static final class Bag extends Sub {

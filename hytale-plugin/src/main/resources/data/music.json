@@ -1,0 +1,9 @@
+{
+  "_help": "Музыка боёв. Значение — id MusicContainer (файл Server/Audio/MusicContainers/<id>.json в моде). Выбор: encounters[id встречи] → bosses (unique-встречи) → squads (случайные отряды) → default. В encounters пустая строка — бой без своей музыки (играет музыка мира); пустые bosses/squads — берётся default. Проверить трек: /jrpg music <id>, выключить: /jrpg music off. После правки: /jrpg reload.",
+  "default": "Jrpg_Battle_Darkness",
+  "bosses": "",
+  "squads": "",
+  "encounters": {
+    "spider_queen_lair": "Jrpg_Battle_Darkness"
+  }
+}

@@ -155,6 +155,7 @@ public final class BattleSession implements BattleListener {
         plugin.sessions().put(player.getUuid(), s);
         try {
             s.begin();
+            BattleMusic.start(plugin, encounter, store, ref);
         } catch (Throwable t) {
             plugin.warn("Бой не запустился", t);
             s.cleanup();
@@ -1126,6 +1127,7 @@ public final class BattleSession implements BattleListener {
         despawnPuppets();
         plugin.followers().resume(player.getUuid());
         if (camera != null) camera.reset();
+        BattleMusic.stop(plugin, store, playerEntity);
         if (closeMenu && page != null) {
             try {
                 page.closePage();

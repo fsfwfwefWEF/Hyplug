@@ -322,3 +322,13 @@ jrpg-mod/
 **Проверено:** 42 теста, голый сервер 0.7.2 грузит 0.7.1. В игре не проверено: имена анимаций оружия (подбираются по словам, смотреть лог), держится ли поза в слоте Status, уборка копий.
 
 **Как перенести:** куклы спавнить только через `Fx.spawnPuppet` (компоненты до появления). Любое движение куклы — через `NpcMover` или `Fx.place` + `Fx.setMovement`, и в конце обязательно `idle`.
+
+## 2026-10-18: сессия 12, общая сборка 0.7.2 (0.7.1 + меню на клавише режима и музыка)
+
+Слита работа треда «Звуки, диалоги и катсцены» (копия /mnt/project-files/jrpg-mod-audio-menu/, описание там в MERGE.md) с 0.7.1.
+
+- Новые файлы: `GameMenuKey` (перехват чат-пакета `/gm`, `/gm c`, `/gm a` через `PacketAdapters.registerInbound`, открывает `MainMenuPage` через `Pages`; в бою — меню боя; флаг игрока `gmKeyMenu`, `/jrpg gmkey`; `/jrpg music <id|off>`), `MainMenuPage` + `MainMenu.ui` (прокачка, рюкзак, компаньоны, режим через `CommandManager.handleCommand`), `BattleMusic` (`ForcedMusicTracker.setCurrentContainerIndex`, выбор по `music.json`: encounters → bosses → squads → default; `music.json` копируется в папку мода лениво), контейнер `Server/Audio/MusicContainers/Jrpg_Battle_Darkness.json`, трек `Common/Music/Jrpg/Battle_Darkness_Before_The_Dawn.ogg`.
+- Правки: `BattleSession.start` → `BattleMusic.start` после `begin()`, `cleanup` → `BattleMusic.stop`; `JrpgCommand` — две подкоманды; `JrpgPlugin` — `menuKey.start()/stop()`.
+- Версия 0.7.2, `DATA_VERSION` остаётся 7.
+
+**Проверено:** 42 теста, голый сервер 0.7.2 грузит сборку без новых ошибок. В игре не проверено.

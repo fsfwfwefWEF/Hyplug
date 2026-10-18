@@ -52,6 +52,7 @@ public final class JrpgPlugin extends JavaPlugin {
     private Saves saves;
     private final CompanionFollowers followers = new CompanionFollowers(this);
     private final NpcMover mover = new NpcMover(this);
+    private final GameMenuKey menuKey = new GameMenuKey(this);
     /** Свой планировщик для пауз между ходами; всё, что трогает мир, переносится в world.execute. */
     private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor(r -> {
         Thread t = new Thread(r, "jrpg-scheduler");
@@ -82,12 +83,14 @@ public final class JrpgPlugin extends JavaPlugin {
         scheduler.scheduleAtFixedRate(this::autosave, AUTOSAVE_S, AUTOSAVE_S, TimeUnit.SECONDS);
         followers.start();
         mover.start();
+        menuKey.start();
         getEventRegistry().register(PlayerDisconnectEvent.class, e -> onDisconnect(e.getPlayerRef()));
         getLogger().at(Level.INFO).log("JRPG Battles: загружено встреч " + data.encounters().size());
     }
 
     @Override
     protected void shutdown() {
+        menuKey.stop();
         for (BattleSession s : sessions.values()) s.abort("сервер останавливается");
         clearSquads();
         followers.clearAll();
