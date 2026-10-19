@@ -587,6 +587,7 @@ public final class BattleSession implements BattleListener {
     Battle battle() { return battle; }
     BattleMenu menu() { return menu; }
     Settings settings() { return plugin.settings(); }
+    JrpgPlugin plugin() { return plugin; }
     String banner() { return banner; }
     String bannerSub() { return bannerSub; }
     List<String> logLines() { return List.copyOf(log); }

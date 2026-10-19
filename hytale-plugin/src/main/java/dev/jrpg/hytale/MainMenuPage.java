@@ -41,6 +41,7 @@ public final class MainMenuPage extends InteractiveCustomUIPage<BattleMenuPage.C
         bind(evt, "#Mode", "mode");
         bind(evt, "#Close", "close");
         fill(cmd, store, ref);
+        WindowIntro.play(this, playerRef, plugin, store, cmd, LAYOUT);
     }
 
     private static void bind(UIEventBuilder evt, String selector, String action) {

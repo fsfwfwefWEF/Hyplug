@@ -15,6 +15,7 @@ thunder
 quake
 ether
 potion
+antidote
 bomb
 flee
 bag

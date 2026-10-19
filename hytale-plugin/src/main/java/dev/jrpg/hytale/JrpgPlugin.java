@@ -54,6 +54,7 @@ public final class JrpgPlugin extends JavaPlugin {
     private final CompanionFollowers followers = new CompanionFollowers(this);
     private final NpcMover mover = new NpcMover(this);
     private final GameMenuKey menuKey = new GameMenuKey(this);
+    private final ClickBuffer clickBuffer = new ClickBuffer(this);
     /** Свой планировщик для пауз между ходами; всё, что трогает мир, переносится в world.execute. */
     private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor(r -> {
         Thread t = new Thread(r, "jrpg-scheduler");
@@ -85,6 +86,7 @@ public final class JrpgPlugin extends JavaPlugin {
         followers.start();
         mover.start();
         menuKey.start();
+        clickBuffer.start();
         getEventRegistry().register(PlayerDisconnectEvent.class, e -> onDisconnect(e.getPlayerRef()));
         // Мышь в мире во время боя (камера боя включает курсор и отправку движения мыши): наведение и клик по врагу.
         getEventRegistry().register(com.hypixel.hytale.server.core.event.events.player.PlayerMouseMotionEvent.class, e -> {
@@ -107,6 +109,7 @@ public final class JrpgPlugin extends JavaPlugin {
     @Override
     protected void shutdown() {
         menuKey.stop();
+        clickBuffer.stop();
         for (BattleSession s : sessions.values()) s.abort("сервер останавливается");
         clearSquads();
         followers.clearAll();

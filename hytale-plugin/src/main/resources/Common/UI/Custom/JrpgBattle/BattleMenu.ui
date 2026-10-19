@@ -95,52 +95,56 @@ Group {
       Group #E0 {
         Anchor: (Width: 214, Height: 84);
 
-        Group #E0Glow {
+        Group #E0Move {
           Anchor: (Left: 0, Top: 0, Width: 214, Height: 84);
-          Background: (TexturePath: "jr_panel_gold.png", Border: 22);
-        }
-        Group #E0Bg { Anchor: (Left: 2, Top: 2, Width: 210, Height: 80); Background: (TexturePath: "jr_panel_enemy.png", Border: 22); }
-        Group {
-          Anchor: (Left: 0, Top: 0, Width: 214, Height: 84);
-          LayoutMode: Top;
-          Padding: (Left: 11, Right: 9, Top: 9, Bottom: 7);
 
-          Group {
-            Anchor: (Height: 28);
-            LayoutMode: Left;
-
-            Group #E0Icon { Anchor: (Width: 26, Height: 26); }
-            Group { Anchor: (Width: 6); }
-            Label #E0Name {
-              Text: "";
-              Anchor: (Height: 26);
-              FlexWeight: 1;
-              Style: (FontSize: 15, TextColor: #ffb3a6, RenderBold: true);
-            }
-            $C.@SecondaryTextButton #E0Info { @Text = "?"; Anchor: (Width: 26, Height: 24); }
+          Group #E0Glow {
+            Anchor: (Left: 0, Top: 0, Width: 214, Height: 84);
+            Background: (TexturePath: "jr_panel_gold.png", Border: 22);
           }
+          Group #E0Bg { Anchor: (Left: 2, Top: 2, Width: 210, Height: 80); Background: (TexturePath: "jr_panel_enemy.png", Border: 22); }
           Group {
-            Anchor: (Height: 14);
-            LayoutMode: Left;
+            Anchor: (Left: 0, Top: 0, Width: 214, Height: 84);
+            LayoutMode: Top;
+            Padding: (Left: 11, Right: 9, Top: 9, Bottom: 7);
 
-            Group #E0HpBack {
-              Anchor: (Width: 150, Height: 7);
+            Group {
+              Anchor: (Height: 28);
               LayoutMode: Left;
-              Background: (TexturePath: "jr_bar_back.png");
-              Group #E0HpFill { Anchor: (Width: 150, Height: 7); Background: (TexturePath: "jr_bar_ehp.png"); }
+
+              Group #E0Icon { Anchor: (Width: 26, Height: 26); }
+              Group { Anchor: (Width: 6); }
+              Label #E0Name {
+                Text: "";
+                Anchor: (Height: 26);
+                FlexWeight: 1;
+                Style: (FontSize: 15, TextColor: #ffb3a6, RenderBold: true);
+              }
+              $C.@SecondaryTextButton #E0Info { @Text = "?"; Anchor: (Width: 26, Height: 24); }
             }
-            Group { Anchor: (Width: 6); }
-            Label #E0Hp {
-              Text: "";
+            Group {
               Anchor: (Height: 14);
-              FlexWeight: 1;
-              Style: (FontSize: 12, TextColor: #b4c2d6);
+              LayoutMode: Left;
+
+              Group #E0HpBack {
+                Anchor: (Width: 150, Height: 7);
+                LayoutMode: Left;
+                Background: (TexturePath: "jr_bar_back.png");
+                Group #E0HpFill { Anchor: (Width: 150, Height: 7); Background: (TexturePath: "jr_bar_ehp.png"); }
+              }
+              Group { Anchor: (Width: 6); }
+              Label #E0Hp {
+                Text: "";
+                Anchor: (Height: 14);
+                FlexWeight: 1;
+                Style: (FontSize: 12, TextColor: #b4c2d6);
+              }
             }
-          }
-          Group { Anchor: (Height: 2); }
-          Group #E0Status {
-            Anchor: (Height: 22);
-            LayoutMode: Left;
+            Group { Anchor: (Height: 2); }
+            Group #E0Status {
+              Anchor: (Height: 22);
+              LayoutMode: Left;
+            }
           }
         }
       }
@@ -148,52 +152,56 @@ Group {
       Group #E1 {
         Anchor: (Width: 214, Height: 84);
 
-        Group #E1Glow {
+        Group #E1Move {
           Anchor: (Left: 0, Top: 0, Width: 214, Height: 84);
-          Background: (TexturePath: "jr_panel_gold.png", Border: 22);
-        }
-        Group #E1Bg { Anchor: (Left: 2, Top: 2, Width: 210, Height: 80); Background: (TexturePath: "jr_panel_enemy.png", Border: 22); }
-        Group {
-          Anchor: (Left: 0, Top: 0, Width: 214, Height: 84);
-          LayoutMode: Top;
-          Padding: (Left: 11, Right: 9, Top: 9, Bottom: 7);
 
-          Group {
-            Anchor: (Height: 28);
-            LayoutMode: Left;
-
-            Group #E1Icon { Anchor: (Width: 26, Height: 26); }
-            Group { Anchor: (Width: 6); }
-            Label #E1Name {
-              Text: "";
-              Anchor: (Height: 26);
-              FlexWeight: 1;
-              Style: (FontSize: 15, TextColor: #ffb3a6, RenderBold: true);
-            }
-            $C.@SecondaryTextButton #E1Info { @Text = "?"; Anchor: (Width: 26, Height: 24); }
+          Group #E1Glow {
+            Anchor: (Left: 0, Top: 0, Width: 214, Height: 84);
+            Background: (TexturePath: "jr_panel_gold.png", Border: 22);
           }
+          Group #E1Bg { Anchor: (Left: 2, Top: 2, Width: 210, Height: 80); Background: (TexturePath: "jr_panel_enemy.png", Border: 22); }
           Group {
-            Anchor: (Height: 14);
-            LayoutMode: Left;
+            Anchor: (Left: 0, Top: 0, Width: 214, Height: 84);
+            LayoutMode: Top;
+            Padding: (Left: 11, Right: 9, Top: 9, Bottom: 7);
 
-            Group #E1HpBack {
-              Anchor: (Width: 150, Height: 7);
+            Group {
+              Anchor: (Height: 28);
               LayoutMode: Left;
-              Background: (TexturePath: "jr_bar_back.png");
-              Group #E1HpFill { Anchor: (Width: 150, Height: 7); Background: (TexturePath: "jr_bar_ehp.png"); }
+
+              Group #E1Icon { Anchor: (Width: 26, Height: 26); }
+              Group { Anchor: (Width: 6); }
+              Label #E1Name {
+                Text: "";
+                Anchor: (Height: 26);
+                FlexWeight: 1;
+                Style: (FontSize: 15, TextColor: #ffb3a6, RenderBold: true);
+              }
+              $C.@SecondaryTextButton #E1Info { @Text = "?"; Anchor: (Width: 26, Height: 24); }
             }
-            Group { Anchor: (Width: 6); }
-            Label #E1Hp {
-              Text: "";
+            Group {
               Anchor: (Height: 14);
-              FlexWeight: 1;
-              Style: (FontSize: 12, TextColor: #b4c2d6);
+              LayoutMode: Left;
+
+              Group #E1HpBack {
+                Anchor: (Width: 150, Height: 7);
+                LayoutMode: Left;
+                Background: (TexturePath: "jr_bar_back.png");
+                Group #E1HpFill { Anchor: (Width: 150, Height: 7); Background: (TexturePath: "jr_bar_ehp.png"); }
+              }
+              Group { Anchor: (Width: 6); }
+              Label #E1Hp {
+                Text: "";
+                Anchor: (Height: 14);
+                FlexWeight: 1;
+                Style: (FontSize: 12, TextColor: #b4c2d6);
+              }
             }
-          }
-          Group { Anchor: (Height: 2); }
-          Group #E1Status {
-            Anchor: (Height: 22);
-            LayoutMode: Left;
+            Group { Anchor: (Height: 2); }
+            Group #E1Status {
+              Anchor: (Height: 22);
+              LayoutMode: Left;
+            }
           }
         }
       }
@@ -201,52 +209,56 @@ Group {
       Group #E2 {
         Anchor: (Width: 214, Height: 84);
 
-        Group #E2Glow {
+        Group #E2Move {
           Anchor: (Left: 0, Top: 0, Width: 214, Height: 84);
-          Background: (TexturePath: "jr_panel_gold.png", Border: 22);
-        }
-        Group #E2Bg { Anchor: (Left: 2, Top: 2, Width: 210, Height: 80); Background: (TexturePath: "jr_panel_enemy.png", Border: 22); }
-        Group {
-          Anchor: (Left: 0, Top: 0, Width: 214, Height: 84);
-          LayoutMode: Top;
-          Padding: (Left: 11, Right: 9, Top: 9, Bottom: 7);
 
-          Group {
-            Anchor: (Height: 28);
-            LayoutMode: Left;
-
-            Group #E2Icon { Anchor: (Width: 26, Height: 26); }
-            Group { Anchor: (Width: 6); }
-            Label #E2Name {
-              Text: "";
-              Anchor: (Height: 26);
-              FlexWeight: 1;
-              Style: (FontSize: 15, TextColor: #ffb3a6, RenderBold: true);
-            }
-            $C.@SecondaryTextButton #E2Info { @Text = "?"; Anchor: (Width: 26, Height: 24); }
+          Group #E2Glow {
+            Anchor: (Left: 0, Top: 0, Width: 214, Height: 84);
+            Background: (TexturePath: "jr_panel_gold.png", Border: 22);
           }
+          Group #E2Bg { Anchor: (Left: 2, Top: 2, Width: 210, Height: 80); Background: (TexturePath: "jr_panel_enemy.png", Border: 22); }
           Group {
-            Anchor: (Height: 14);
-            LayoutMode: Left;
+            Anchor: (Left: 0, Top: 0, Width: 214, Height: 84);
+            LayoutMode: Top;
+            Padding: (Left: 11, Right: 9, Top: 9, Bottom: 7);
 
-            Group #E2HpBack {
-              Anchor: (Width: 150, Height: 7);
+            Group {
+              Anchor: (Height: 28);
               LayoutMode: Left;
-              Background: (TexturePath: "jr_bar_back.png");
-              Group #E2HpFill { Anchor: (Width: 150, Height: 7); Background: (TexturePath: "jr_bar_ehp.png"); }
+
+              Group #E2Icon { Anchor: (Width: 26, Height: 26); }
+              Group { Anchor: (Width: 6); }
+              Label #E2Name {
+                Text: "";
+                Anchor: (Height: 26);
+                FlexWeight: 1;
+                Style: (FontSize: 15, TextColor: #ffb3a6, RenderBold: true);
+              }
+              $C.@SecondaryTextButton #E2Info { @Text = "?"; Anchor: (Width: 26, Height: 24); }
             }
-            Group { Anchor: (Width: 6); }
-            Label #E2Hp {
-              Text: "";
+            Group {
               Anchor: (Height: 14);
-              FlexWeight: 1;
-              Style: (FontSize: 12, TextColor: #b4c2d6);
+              LayoutMode: Left;
+
+              Group #E2HpBack {
+                Anchor: (Width: 150, Height: 7);
+                LayoutMode: Left;
+                Background: (TexturePath: "jr_bar_back.png");
+                Group #E2HpFill { Anchor: (Width: 150, Height: 7); Background: (TexturePath: "jr_bar_ehp.png"); }
+              }
+              Group { Anchor: (Width: 6); }
+              Label #E2Hp {
+                Text: "";
+                Anchor: (Height: 14);
+                FlexWeight: 1;
+                Style: (FontSize: 12, TextColor: #b4c2d6);
+              }
             }
-          }
-          Group { Anchor: (Height: 2); }
-          Group #E2Status {
-            Anchor: (Height: 22);
-            LayoutMode: Left;
+            Group { Anchor: (Height: 2); }
+            Group #E2Status {
+              Anchor: (Height: 22);
+              LayoutMode: Left;
+            }
           }
         }
       }
@@ -254,52 +266,56 @@ Group {
       Group #E3 {
         Anchor: (Width: 214, Height: 84);
 
-        Group #E3Glow {
+        Group #E3Move {
           Anchor: (Left: 0, Top: 0, Width: 214, Height: 84);
-          Background: (TexturePath: "jr_panel_gold.png", Border: 22);
-        }
-        Group #E3Bg { Anchor: (Left: 2, Top: 2, Width: 210, Height: 80); Background: (TexturePath: "jr_panel_enemy.png", Border: 22); }
-        Group {
-          Anchor: (Left: 0, Top: 0, Width: 214, Height: 84);
-          LayoutMode: Top;
-          Padding: (Left: 11, Right: 9, Top: 9, Bottom: 7);
 
-          Group {
-            Anchor: (Height: 28);
-            LayoutMode: Left;
-
-            Group #E3Icon { Anchor: (Width: 26, Height: 26); }
-            Group { Anchor: (Width: 6); }
-            Label #E3Name {
-              Text: "";
-              Anchor: (Height: 26);
-              FlexWeight: 1;
-              Style: (FontSize: 15, TextColor: #ffb3a6, RenderBold: true);
-            }
-            $C.@SecondaryTextButton #E3Info { @Text = "?"; Anchor: (Width: 26, Height: 24); }
+          Group #E3Glow {
+            Anchor: (Left: 0, Top: 0, Width: 214, Height: 84);
+            Background: (TexturePath: "jr_panel_gold.png", Border: 22);
           }
+          Group #E3Bg { Anchor: (Left: 2, Top: 2, Width: 210, Height: 80); Background: (TexturePath: "jr_panel_enemy.png", Border: 22); }
           Group {
-            Anchor: (Height: 14);
-            LayoutMode: Left;
+            Anchor: (Left: 0, Top: 0, Width: 214, Height: 84);
+            LayoutMode: Top;
+            Padding: (Left: 11, Right: 9, Top: 9, Bottom: 7);
 
-            Group #E3HpBack {
-              Anchor: (Width: 150, Height: 7);
+            Group {
+              Anchor: (Height: 28);
               LayoutMode: Left;
-              Background: (TexturePath: "jr_bar_back.png");
-              Group #E3HpFill { Anchor: (Width: 150, Height: 7); Background: (TexturePath: "jr_bar_ehp.png"); }
+
+              Group #E3Icon { Anchor: (Width: 26, Height: 26); }
+              Group { Anchor: (Width: 6); }
+              Label #E3Name {
+                Text: "";
+                Anchor: (Height: 26);
+                FlexWeight: 1;
+                Style: (FontSize: 15, TextColor: #ffb3a6, RenderBold: true);
+              }
+              $C.@SecondaryTextButton #E3Info { @Text = "?"; Anchor: (Width: 26, Height: 24); }
             }
-            Group { Anchor: (Width: 6); }
-            Label #E3Hp {
-              Text: "";
+            Group {
               Anchor: (Height: 14);
-              FlexWeight: 1;
-              Style: (FontSize: 12, TextColor: #b4c2d6);
+              LayoutMode: Left;
+
+              Group #E3HpBack {
+                Anchor: (Width: 150, Height: 7);
+                LayoutMode: Left;
+                Background: (TexturePath: "jr_bar_back.png");
+                Group #E3HpFill { Anchor: (Width: 150, Height: 7); Background: (TexturePath: "jr_bar_ehp.png"); }
+              }
+              Group { Anchor: (Width: 6); }
+              Label #E3Hp {
+                Text: "";
+                Anchor: (Height: 14);
+                FlexWeight: 1;
+                Style: (FontSize: 12, TextColor: #b4c2d6);
+              }
             }
-          }
-          Group { Anchor: (Height: 2); }
-          Group #E3Status {
-            Anchor: (Height: 22);
-            LayoutMode: Left;
+            Group { Anchor: (Height: 2); }
+            Group #E3Status {
+              Anchor: (Height: 22);
+              LayoutMode: Left;
+            }
           }
         }
       }
@@ -307,52 +323,56 @@ Group {
       Group #E4 {
         Anchor: (Width: 214, Height: 84);
 
-        Group #E4Glow {
+        Group #E4Move {
           Anchor: (Left: 0, Top: 0, Width: 214, Height: 84);
-          Background: (TexturePath: "jr_panel_gold.png", Border: 22);
-        }
-        Group #E4Bg { Anchor: (Left: 2, Top: 2, Width: 210, Height: 80); Background: (TexturePath: "jr_panel_enemy.png", Border: 22); }
-        Group {
-          Anchor: (Left: 0, Top: 0, Width: 214, Height: 84);
-          LayoutMode: Top;
-          Padding: (Left: 11, Right: 9, Top: 9, Bottom: 7);
 
-          Group {
-            Anchor: (Height: 28);
-            LayoutMode: Left;
-
-            Group #E4Icon { Anchor: (Width: 26, Height: 26); }
-            Group { Anchor: (Width: 6); }
-            Label #E4Name {
-              Text: "";
-              Anchor: (Height: 26);
-              FlexWeight: 1;
-              Style: (FontSize: 15, TextColor: #ffb3a6, RenderBold: true);
-            }
-            $C.@SecondaryTextButton #E4Info { @Text = "?"; Anchor: (Width: 26, Height: 24); }
+          Group #E4Glow {
+            Anchor: (Left: 0, Top: 0, Width: 214, Height: 84);
+            Background: (TexturePath: "jr_panel_gold.png", Border: 22);
           }
+          Group #E4Bg { Anchor: (Left: 2, Top: 2, Width: 210, Height: 80); Background: (TexturePath: "jr_panel_enemy.png", Border: 22); }
           Group {
-            Anchor: (Height: 14);
-            LayoutMode: Left;
+            Anchor: (Left: 0, Top: 0, Width: 214, Height: 84);
+            LayoutMode: Top;
+            Padding: (Left: 11, Right: 9, Top: 9, Bottom: 7);
 
-            Group #E4HpBack {
-              Anchor: (Width: 150, Height: 7);
+            Group {
+              Anchor: (Height: 28);
               LayoutMode: Left;
-              Background: (TexturePath: "jr_bar_back.png");
-              Group #E4HpFill { Anchor: (Width: 150, Height: 7); Background: (TexturePath: "jr_bar_ehp.png"); }
+
+              Group #E4Icon { Anchor: (Width: 26, Height: 26); }
+              Group { Anchor: (Width: 6); }
+              Label #E4Name {
+                Text: "";
+                Anchor: (Height: 26);
+                FlexWeight: 1;
+                Style: (FontSize: 15, TextColor: #ffb3a6, RenderBold: true);
+              }
+              $C.@SecondaryTextButton #E4Info { @Text = "?"; Anchor: (Width: 26, Height: 24); }
             }
-            Group { Anchor: (Width: 6); }
-            Label #E4Hp {
-              Text: "";
+            Group {
               Anchor: (Height: 14);
-              FlexWeight: 1;
-              Style: (FontSize: 12, TextColor: #b4c2d6);
+              LayoutMode: Left;
+
+              Group #E4HpBack {
+                Anchor: (Width: 150, Height: 7);
+                LayoutMode: Left;
+                Background: (TexturePath: "jr_bar_back.png");
+                Group #E4HpFill { Anchor: (Width: 150, Height: 7); Background: (TexturePath: "jr_bar_ehp.png"); }
+              }
+              Group { Anchor: (Width: 6); }
+              Label #E4Hp {
+                Text: "";
+                Anchor: (Height: 14);
+                FlexWeight: 1;
+                Style: (FontSize: 12, TextColor: #b4c2d6);
+              }
             }
-          }
-          Group { Anchor: (Height: 2); }
-          Group #E4Status {
-            Anchor: (Height: 22);
-            LayoutMode: Left;
+            Group { Anchor: (Height: 2); }
+            Group #E4Status {
+              Anchor: (Height: 22);
+              LayoutMode: Left;
+            }
           }
         }
       }
@@ -362,27 +382,31 @@ Group {
     Group { Anchor: (Height: 6); }
     Group #BannerRow {
       Anchor: (Height: 62);
-      LayoutMode: Left;
 
-      Group { FlexWeight: 1; }
-      Group #BannerBox {
-        Anchor: (Width: 600, Height: 60);
-        LayoutMode: Top;
-        Background: (TexturePath: "jr_banner.png");
-        Padding: (Top: 9);
+      Group #BannerSlide {
+        Anchor: (Left: 0, Right: 0, Top: 0, Height: 62);
+        LayoutMode: Left;
 
-        Label #Banner {
-          Text: "";
-          Anchor: (Height: 26);
-          Style: (FontSize: 22, TextColor: #e8c46a, RenderBold: true, HorizontalAlignment: Center);
+        Group { FlexWeight: 1; }
+        Group #BannerBox {
+          Anchor: (Width: 600, Height: 60);
+          LayoutMode: Top;
+          Background: (TexturePath: "jr_banner.png");
+          Padding: (Top: 9);
+
+          Label #Banner {
+            Text: "";
+            Anchor: (Height: 26);
+            Style: (FontSize: 22, TextColor: #e8c46a, RenderBold: true, HorizontalAlignment: Center);
+          }
+          Label #BannerSub {
+            Text: "";
+            Anchor: (Height: 18);
+            Style: (FontSize: 13, TextColor: #e9eef6, HorizontalAlignment: Center);
+          }
         }
-        Label #BannerSub {
-          Text: "";
-          Anchor: (Height: 18);
-          Style: (FontSize: 13, TextColor: #e9eef6, HorizontalAlignment: Center);
-        }
+        Group { FlexWeight: 1; }
       }
-      Group { FlexWeight: 1; }
     }
     Group #Middle {
       FlexWeight: 1;
@@ -392,218 +416,207 @@ Group {
         Anchor: (Width: 236);
         LayoutMode: Top;
 
-        Group #QueuePanel {
-          Anchor: (Width: 236);
-          LayoutMode: Top;
-          Background: (TexturePath: "jr_panel.png", Border: 22);
-          Padding: (Full: 12);
+        Group #QueueSlot {
+          Anchor: (Height: 353);
 
-          Label #QueueTitle {
-            Text: "ОЧЕРЕДЬ ХОДОВ";
-            Anchor: (Height: 20);
-            Style: (FontSize: 13, TextColor: #e8c46a, RenderBold: true);
-          }
-          Group { Anchor: (Height: 4); }
-          Group #Q0 {
-            Anchor: (Height: 46);
-            LayoutMode: Left;
-            Background: (TexturePath: "jr_panel_gold.png", Border: 22);
-            Padding: (Left: 8, Right: 6, Top: 4, Bottom: 4);
-
-            Group #Q0Icon { Anchor: (Width: 38, Height: 38); }
-            Group { Anchor: (Width: 8); }
-            Group {
-              FlexWeight: 1;
-              LayoutMode: Top;
-
-              Label #Q0Name {
-                Text: "";
-                Anchor: (Height: 20);
-                Style: (FontSize: 15, TextColor: #e9eef6, RenderBold: true);
-              }
-              Label #Q0Sub {
-                Text: "";
-                Anchor: (Height: 16);
-                Style: (FontSize: 12, TextColor: #e8c46a);
-              }
-            }
-          }
-          Group { Anchor: (Height: 3); }
-          Group #Q1 {
-            Anchor: (Height: 34);
-            LayoutMode: Left;
+          Group #QueuePanel {
+            Anchor: (Left: 0, Top: 0, Width: 236, Height: 353);
             Background: (TexturePath: "jr_panel.png", Border: 22);
-            Padding: (Left: 8, Right: 6, Top: 4, Bottom: 4);
 
-            Group #Q1Icon { Anchor: (Width: 24, Height: 24); }
-            Group { Anchor: (Width: 8); }
-            Group {
-              FlexWeight: 1;
-              LayoutMode: Top;
+            Label #QueueTitle { Text: "ОЧЕРЕДЬ ХОДОВ"; Anchor: (Left: 13, Top: 11, Width: 200, Height: 20); Style: (FontSize: 13, TextColor: #e8c46a, RenderBold: true); }
+            Group #Q0 {
+              Anchor: (Left: 11, Top: 36, Width: 214, Height: 46);
+              LayoutMode: Left;
+              Background: (TexturePath: "jr_panel_gold.png", Border: 22);
+              Padding: (Left: 8, Right: 6, Top: 4, Bottom: 4);
 
-              Label #Q1Name {
-                Text: "";
-                Anchor: (Height: 16);
-                Style: (FontSize: 13, TextColor: #e9eef6, RenderBold: true);
+              Group #Q0Icon { Anchor: (Width: 38, Height: 38); }
+              Group { Anchor: (Width: 8); }
+              Group {
+                FlexWeight: 1;
+                LayoutMode: Top;
+
+                Label #Q0Name {
+                  Text: "";
+                  Anchor: (Height: 20);
+                  Style: (FontSize: 15, TextColor: #e9eef6, RenderBold: true);
+                }
+                Label #Q0Sub {
+                  Text: "";
+                  Anchor: (Height: 16);
+                  Style: (FontSize: 12, TextColor: #e8c46a);
+                }
               }
-              Label #Q1Sub {
-                Text: "";
-                Anchor: (Height: 12);
-                Style: (FontSize: 12, TextColor: #b4c2d6);
+            }
+            Group #Q1 {
+              Anchor: (Left: 11, Top: 85, Width: 214, Height: 34);
+              LayoutMode: Left;
+              Background: (TexturePath: "jr_panel.png", Border: 22);
+              Padding: (Left: 8, Right: 6, Top: 4, Bottom: 4);
+
+              Group #Q1Icon { Anchor: (Width: 24, Height: 24); }
+              Group { Anchor: (Width: 8); }
+              Group {
+                FlexWeight: 1;
+                LayoutMode: Top;
+
+                Label #Q1Name {
+                  Text: "";
+                  Anchor: (Height: 16);
+                  Style: (FontSize: 13, TextColor: #e9eef6, RenderBold: true);
+                }
+                Label #Q1Sub {
+                  Text: "";
+                  Anchor: (Height: 12);
+                  Style: (FontSize: 12, TextColor: #b4c2d6);
+                }
+              }
+            }
+            Group #Q2 {
+              Anchor: (Left: 11, Top: 122, Width: 214, Height: 34);
+              LayoutMode: Left;
+              Background: (TexturePath: "jr_panel.png", Border: 22);
+              Padding: (Left: 8, Right: 6, Top: 4, Bottom: 4);
+
+              Group #Q2Icon { Anchor: (Width: 24, Height: 24); }
+              Group { Anchor: (Width: 8); }
+              Group {
+                FlexWeight: 1;
+                LayoutMode: Top;
+
+                Label #Q2Name {
+                  Text: "";
+                  Anchor: (Height: 16);
+                  Style: (FontSize: 13, TextColor: #e9eef6, RenderBold: true);
+                }
+                Label #Q2Sub {
+                  Text: "";
+                  Anchor: (Height: 12);
+                  Style: (FontSize: 12, TextColor: #b4c2d6);
+                }
+              }
+            }
+            Group #Q3 {
+              Anchor: (Left: 11, Top: 159, Width: 214, Height: 34);
+              LayoutMode: Left;
+              Background: (TexturePath: "jr_panel.png", Border: 22);
+              Padding: (Left: 8, Right: 6, Top: 4, Bottom: 4);
+
+              Group #Q3Icon { Anchor: (Width: 24, Height: 24); }
+              Group { Anchor: (Width: 8); }
+              Group {
+                FlexWeight: 1;
+                LayoutMode: Top;
+
+                Label #Q3Name {
+                  Text: "";
+                  Anchor: (Height: 16);
+                  Style: (FontSize: 13, TextColor: #e9eef6, RenderBold: true);
+                }
+                Label #Q3Sub {
+                  Text: "";
+                  Anchor: (Height: 12);
+                  Style: (FontSize: 12, TextColor: #b4c2d6);
+                }
+              }
+            }
+            Group #Q4 {
+              Anchor: (Left: 11, Top: 196, Width: 214, Height: 34);
+              LayoutMode: Left;
+              Background: (TexturePath: "jr_panel.png", Border: 22);
+              Padding: (Left: 8, Right: 6, Top: 4, Bottom: 4);
+
+              Group #Q4Icon { Anchor: (Width: 24, Height: 24); }
+              Group { Anchor: (Width: 8); }
+              Group {
+                FlexWeight: 1;
+                LayoutMode: Top;
+
+                Label #Q4Name {
+                  Text: "";
+                  Anchor: (Height: 16);
+                  Style: (FontSize: 13, TextColor: #e9eef6, RenderBold: true);
+                }
+                Label #Q4Sub {
+                  Text: "";
+                  Anchor: (Height: 12);
+                  Style: (FontSize: 12, TextColor: #b4c2d6);
+                }
+              }
+            }
+            Group #Q5 {
+              Anchor: (Left: 11, Top: 233, Width: 214, Height: 34);
+              LayoutMode: Left;
+              Background: (TexturePath: "jr_panel.png", Border: 22);
+              Padding: (Left: 8, Right: 6, Top: 4, Bottom: 4);
+
+              Group #Q5Icon { Anchor: (Width: 24, Height: 24); }
+              Group { Anchor: (Width: 8); }
+              Group {
+                FlexWeight: 1;
+                LayoutMode: Top;
+
+                Label #Q5Name {
+                  Text: "";
+                  Anchor: (Height: 16);
+                  Style: (FontSize: 13, TextColor: #e9eef6, RenderBold: true);
+                }
+                Label #Q5Sub {
+                  Text: "";
+                  Anchor: (Height: 12);
+                  Style: (FontSize: 12, TextColor: #b4c2d6);
+                }
+              }
+            }
+            Group #Q6 {
+              Anchor: (Left: 11, Top: 270, Width: 214, Height: 34);
+              LayoutMode: Left;
+              Background: (TexturePath: "jr_panel.png", Border: 22);
+              Padding: (Left: 8, Right: 6, Top: 4, Bottom: 4);
+
+              Group #Q6Icon { Anchor: (Width: 24, Height: 24); }
+              Group { Anchor: (Width: 8); }
+              Group {
+                FlexWeight: 1;
+                LayoutMode: Top;
+
+                Label #Q6Name {
+                  Text: "";
+                  Anchor: (Height: 16);
+                  Style: (FontSize: 13, TextColor: #e9eef6, RenderBold: true);
+                }
+                Label #Q6Sub {
+                  Text: "";
+                  Anchor: (Height: 12);
+                  Style: (FontSize: 12, TextColor: #b4c2d6);
+                }
+              }
+            }
+            Group #Q7 {
+              Anchor: (Left: 11, Top: 307, Width: 214, Height: 34);
+              LayoutMode: Left;
+              Background: (TexturePath: "jr_panel.png", Border: 22);
+              Padding: (Left: 8, Right: 6, Top: 4, Bottom: 4);
+
+              Group #Q7Icon { Anchor: (Width: 24, Height: 24); }
+              Group { Anchor: (Width: 8); }
+              Group {
+                FlexWeight: 1;
+                LayoutMode: Top;
+
+                Label #Q7Name {
+                  Text: "";
+                  Anchor: (Height: 16);
+                  Style: (FontSize: 13, TextColor: #e9eef6, RenderBold: true);
+                }
+                Label #Q7Sub {
+                  Text: "";
+                  Anchor: (Height: 12);
+                  Style: (FontSize: 12, TextColor: #b4c2d6);
+                }
               }
             }
           }
-          Group { Anchor: (Height: 3); }
-          Group #Q2 {
-            Anchor: (Height: 34);
-            LayoutMode: Left;
-            Background: (TexturePath: "jr_panel.png", Border: 22);
-            Padding: (Left: 8, Right: 6, Top: 4, Bottom: 4);
-
-            Group #Q2Icon { Anchor: (Width: 24, Height: 24); }
-            Group { Anchor: (Width: 8); }
-            Group {
-              FlexWeight: 1;
-              LayoutMode: Top;
-
-              Label #Q2Name {
-                Text: "";
-                Anchor: (Height: 16);
-                Style: (FontSize: 13, TextColor: #e9eef6, RenderBold: true);
-              }
-              Label #Q2Sub {
-                Text: "";
-                Anchor: (Height: 12);
-                Style: (FontSize: 12, TextColor: #b4c2d6);
-              }
-            }
-          }
-          Group { Anchor: (Height: 3); }
-          Group #Q3 {
-            Anchor: (Height: 34);
-            LayoutMode: Left;
-            Background: (TexturePath: "jr_panel.png", Border: 22);
-            Padding: (Left: 8, Right: 6, Top: 4, Bottom: 4);
-
-            Group #Q3Icon { Anchor: (Width: 24, Height: 24); }
-            Group { Anchor: (Width: 8); }
-            Group {
-              FlexWeight: 1;
-              LayoutMode: Top;
-
-              Label #Q3Name {
-                Text: "";
-                Anchor: (Height: 16);
-                Style: (FontSize: 13, TextColor: #e9eef6, RenderBold: true);
-              }
-              Label #Q3Sub {
-                Text: "";
-                Anchor: (Height: 12);
-                Style: (FontSize: 12, TextColor: #b4c2d6);
-              }
-            }
-          }
-          Group { Anchor: (Height: 3); }
-          Group #Q4 {
-            Anchor: (Height: 34);
-            LayoutMode: Left;
-            Background: (TexturePath: "jr_panel.png", Border: 22);
-            Padding: (Left: 8, Right: 6, Top: 4, Bottom: 4);
-
-            Group #Q4Icon { Anchor: (Width: 24, Height: 24); }
-            Group { Anchor: (Width: 8); }
-            Group {
-              FlexWeight: 1;
-              LayoutMode: Top;
-
-              Label #Q4Name {
-                Text: "";
-                Anchor: (Height: 16);
-                Style: (FontSize: 13, TextColor: #e9eef6, RenderBold: true);
-              }
-              Label #Q4Sub {
-                Text: "";
-                Anchor: (Height: 12);
-                Style: (FontSize: 12, TextColor: #b4c2d6);
-              }
-            }
-          }
-          Group { Anchor: (Height: 3); }
-          Group #Q5 {
-            Anchor: (Height: 34);
-            LayoutMode: Left;
-            Background: (TexturePath: "jr_panel.png", Border: 22);
-            Padding: (Left: 8, Right: 6, Top: 4, Bottom: 4);
-
-            Group #Q5Icon { Anchor: (Width: 24, Height: 24); }
-            Group { Anchor: (Width: 8); }
-            Group {
-              FlexWeight: 1;
-              LayoutMode: Top;
-
-              Label #Q5Name {
-                Text: "";
-                Anchor: (Height: 16);
-                Style: (FontSize: 13, TextColor: #e9eef6, RenderBold: true);
-              }
-              Label #Q5Sub {
-                Text: "";
-                Anchor: (Height: 12);
-                Style: (FontSize: 12, TextColor: #b4c2d6);
-              }
-            }
-          }
-          Group { Anchor: (Height: 3); }
-          Group #Q6 {
-            Anchor: (Height: 34);
-            LayoutMode: Left;
-            Background: (TexturePath: "jr_panel.png", Border: 22);
-            Padding: (Left: 8, Right: 6, Top: 4, Bottom: 4);
-
-            Group #Q6Icon { Anchor: (Width: 24, Height: 24); }
-            Group { Anchor: (Width: 8); }
-            Group {
-              FlexWeight: 1;
-              LayoutMode: Top;
-
-              Label #Q6Name {
-                Text: "";
-                Anchor: (Height: 16);
-                Style: (FontSize: 13, TextColor: #e9eef6, RenderBold: true);
-              }
-              Label #Q6Sub {
-                Text: "";
-                Anchor: (Height: 12);
-                Style: (FontSize: 12, TextColor: #b4c2d6);
-              }
-            }
-          }
-          Group { Anchor: (Height: 3); }
-          Group #Q7 {
-            Anchor: (Height: 34);
-            LayoutMode: Left;
-            Background: (TexturePath: "jr_panel.png", Border: 22);
-            Padding: (Left: 8, Right: 6, Top: 4, Bottom: 4);
-
-            Group #Q7Icon { Anchor: (Width: 24, Height: 24); }
-            Group { Anchor: (Width: 8); }
-            Group {
-              FlexWeight: 1;
-              LayoutMode: Top;
-
-              Label #Q7Name {
-                Text: "";
-                Anchor: (Height: 16);
-                Style: (FontSize: 13, TextColor: #e9eef6, RenderBold: true);
-              }
-              Label #Q7Sub {
-                Text: "";
-                Anchor: (Height: 12);
-                Style: (FontSize: 12, TextColor: #b4c2d6);
-              }
-            }
-          }
-          Group { Anchor: (Height: 3); }
         }
         Group { FlexWeight: 1; }
       }
@@ -771,352 +784,368 @@ Group {
         Group #P0 {
           Anchor: (Width: 448, Height: 72);
 
-          Group #P0Glow {
+          Group #P0Move {
             Anchor: (Left: 0, Top: 0, Width: 448, Height: 72);
-            Background: (TexturePath: "jr_panel_gold.png", Border: 22);
-          }
-          Group #P0Bg { Anchor: (Left: 2, Top: 2, Width: 444, Height: 68); Background: (TexturePath: "jr_panel_party.png", Border: 22); }
-          Group #P0Turn { Anchor: (Left: 0, Top: 0, Width: 448, Height: 72); Background: (TexturePath: "jr_panel_gold.png", Border: 22); }
-          Group {
-            Anchor: (Left: 0, Top: 0, Width: 448, Height: 72);
-            LayoutMode: Left;
-            Padding: (Left: 10, Right: 9, Top: 8, Bottom: 6);
 
-            Group #P0Icon { Anchor: (Width: 44, Height: 44); }
-            Group { Anchor: (Width: 8); }
-            Group {
-              FlexWeight: 1;
-              LayoutMode: Top;
-
-              Group {
-                Anchor: (Height: 20);
-                LayoutMode: Left;
-
-                Label #P0Name {
-                  Text: "";
-                  Anchor: (Width: 120, Height: 20);
-                  Style: (FontSize: 16, TextColor: #a9d8ff, RenderBold: true);
-                }
-                Label #P0Nums {
-                  Text: "";
-                  Anchor: (Height: 20);
-                  FlexWeight: 1;
-                  Style: (FontSize: 12, TextColor: #b4c2d6);
-                }
-              }
-              Group { Anchor: (Height: 2); }
-              Group #P0HpBack {
-                Anchor: (Width: 220, Height: 8);
-                LayoutMode: Left;
-                Background: (TexturePath: "jr_bar_back.png");
-                Group #P0HpFill { Anchor: (Width: 220, Height: 8); Background: (TexturePath: "jr_bar_hp.png"); }
-              }
-              Group { Anchor: (Height: 2); }
-              Group #P0MpBack {
-                Anchor: (Width: 220, Height: 5);
-                LayoutMode: Left;
-                Background: (TexturePath: "jr_bar_back.png");
-                Group #P0MpFill { Anchor: (Width: 220, Height: 5); Background: (TexturePath: "jr_bar_mp.png"); }
-              }
-              Group { Anchor: (Height: 2); }
-              Group #P0Status {
-                Anchor: (Height: 22);
-                LayoutMode: Left;
-              }
+            Group #P0Glow {
+              Anchor: (Left: 0, Top: 0, Width: 448, Height: 72);
+              Background: (TexturePath: "jr_panel_gold.png", Border: 22);
             }
-            $C.@SecondaryTextButton #P0Info { @Text = "?"; Anchor: (Width: 26, Height: 24); }
+            Group #P0Bg { Anchor: (Left: 2, Top: 2, Width: 444, Height: 68); Background: (TexturePath: "jr_panel_party.png", Border: 22); }
+            Group #P0Turn { Anchor: (Left: 0, Top: 0, Width: 448, Height: 72); Background: (TexturePath: "jr_panel_gold.png", Border: 22); }
+            Group {
+              Anchor: (Left: 0, Top: 0, Width: 448, Height: 72);
+              LayoutMode: Left;
+              Padding: (Left: 10, Right: 9, Top: 8, Bottom: 6);
+
+              Group #P0Icon { Anchor: (Width: 44, Height: 44); }
+              Group { Anchor: (Width: 8); }
+              Group {
+                FlexWeight: 1;
+                LayoutMode: Top;
+
+                Group {
+                  Anchor: (Height: 20);
+                  LayoutMode: Left;
+
+                  Label #P0Name {
+                    Text: "";
+                    Anchor: (Width: 120, Height: 20);
+                    Style: (FontSize: 16, TextColor: #a9d8ff, RenderBold: true);
+                  }
+                  Label #P0Nums {
+                    Text: "";
+                    Anchor: (Height: 20);
+                    FlexWeight: 1;
+                    Style: (FontSize: 12, TextColor: #b4c2d6);
+                  }
+                }
+                Group { Anchor: (Height: 2); }
+                Group #P0HpBack {
+                  Anchor: (Width: 220, Height: 8);
+                  LayoutMode: Left;
+                  Background: (TexturePath: "jr_bar_back.png");
+                  Group #P0HpFill { Anchor: (Width: 220, Height: 8); Background: (TexturePath: "jr_bar_hp.png"); }
+                }
+                Group { Anchor: (Height: 2); }
+                Group #P0MpBack {
+                  Anchor: (Width: 220, Height: 5);
+                  LayoutMode: Left;
+                  Background: (TexturePath: "jr_bar_back.png");
+                  Group #P0MpFill { Anchor: (Width: 220, Height: 5); Background: (TexturePath: "jr_bar_mp.png"); }
+                }
+                Group { Anchor: (Height: 2); }
+                Group #P0Status {
+                  Anchor: (Height: 22);
+                  LayoutMode: Left;
+                }
+              }
+              $C.@SecondaryTextButton #P0Info { @Text = "?"; Anchor: (Width: 26, Height: 24); }
+            }
           }
         }
         Group { Anchor: (Height: 4); }
         Group #P1 {
           Anchor: (Width: 448, Height: 72);
 
-          Group #P1Glow {
+          Group #P1Move {
             Anchor: (Left: 0, Top: 0, Width: 448, Height: 72);
-            Background: (TexturePath: "jr_panel_gold.png", Border: 22);
-          }
-          Group #P1Bg { Anchor: (Left: 2, Top: 2, Width: 444, Height: 68); Background: (TexturePath: "jr_panel_party.png", Border: 22); }
-          Group #P1Turn { Anchor: (Left: 0, Top: 0, Width: 448, Height: 72); Background: (TexturePath: "jr_panel_gold.png", Border: 22); }
-          Group {
-            Anchor: (Left: 0, Top: 0, Width: 448, Height: 72);
-            LayoutMode: Left;
-            Padding: (Left: 10, Right: 9, Top: 8, Bottom: 6);
 
-            Group #P1Icon { Anchor: (Width: 44, Height: 44); }
-            Group { Anchor: (Width: 8); }
-            Group {
-              FlexWeight: 1;
-              LayoutMode: Top;
-
-              Group {
-                Anchor: (Height: 20);
-                LayoutMode: Left;
-
-                Label #P1Name {
-                  Text: "";
-                  Anchor: (Width: 120, Height: 20);
-                  Style: (FontSize: 16, TextColor: #a9d8ff, RenderBold: true);
-                }
-                Label #P1Nums {
-                  Text: "";
-                  Anchor: (Height: 20);
-                  FlexWeight: 1;
-                  Style: (FontSize: 12, TextColor: #b4c2d6);
-                }
-              }
-              Group { Anchor: (Height: 2); }
-              Group #P1HpBack {
-                Anchor: (Width: 220, Height: 8);
-                LayoutMode: Left;
-                Background: (TexturePath: "jr_bar_back.png");
-                Group #P1HpFill { Anchor: (Width: 220, Height: 8); Background: (TexturePath: "jr_bar_hp.png"); }
-              }
-              Group { Anchor: (Height: 2); }
-              Group #P1MpBack {
-                Anchor: (Width: 220, Height: 5);
-                LayoutMode: Left;
-                Background: (TexturePath: "jr_bar_back.png");
-                Group #P1MpFill { Anchor: (Width: 220, Height: 5); Background: (TexturePath: "jr_bar_mp.png"); }
-              }
-              Group { Anchor: (Height: 2); }
-              Group #P1Status {
-                Anchor: (Height: 22);
-                LayoutMode: Left;
-              }
+            Group #P1Glow {
+              Anchor: (Left: 0, Top: 0, Width: 448, Height: 72);
+              Background: (TexturePath: "jr_panel_gold.png", Border: 22);
             }
-            $C.@SecondaryTextButton #P1Info { @Text = "?"; Anchor: (Width: 26, Height: 24); }
+            Group #P1Bg { Anchor: (Left: 2, Top: 2, Width: 444, Height: 68); Background: (TexturePath: "jr_panel_party.png", Border: 22); }
+            Group #P1Turn { Anchor: (Left: 0, Top: 0, Width: 448, Height: 72); Background: (TexturePath: "jr_panel_gold.png", Border: 22); }
+            Group {
+              Anchor: (Left: 0, Top: 0, Width: 448, Height: 72);
+              LayoutMode: Left;
+              Padding: (Left: 10, Right: 9, Top: 8, Bottom: 6);
+
+              Group #P1Icon { Anchor: (Width: 44, Height: 44); }
+              Group { Anchor: (Width: 8); }
+              Group {
+                FlexWeight: 1;
+                LayoutMode: Top;
+
+                Group {
+                  Anchor: (Height: 20);
+                  LayoutMode: Left;
+
+                  Label #P1Name {
+                    Text: "";
+                    Anchor: (Width: 120, Height: 20);
+                    Style: (FontSize: 16, TextColor: #a9d8ff, RenderBold: true);
+                  }
+                  Label #P1Nums {
+                    Text: "";
+                    Anchor: (Height: 20);
+                    FlexWeight: 1;
+                    Style: (FontSize: 12, TextColor: #b4c2d6);
+                  }
+                }
+                Group { Anchor: (Height: 2); }
+                Group #P1HpBack {
+                  Anchor: (Width: 220, Height: 8);
+                  LayoutMode: Left;
+                  Background: (TexturePath: "jr_bar_back.png");
+                  Group #P1HpFill { Anchor: (Width: 220, Height: 8); Background: (TexturePath: "jr_bar_hp.png"); }
+                }
+                Group { Anchor: (Height: 2); }
+                Group #P1MpBack {
+                  Anchor: (Width: 220, Height: 5);
+                  LayoutMode: Left;
+                  Background: (TexturePath: "jr_bar_back.png");
+                  Group #P1MpFill { Anchor: (Width: 220, Height: 5); Background: (TexturePath: "jr_bar_mp.png"); }
+                }
+                Group { Anchor: (Height: 2); }
+                Group #P1Status {
+                  Anchor: (Height: 22);
+                  LayoutMode: Left;
+                }
+              }
+              $C.@SecondaryTextButton #P1Info { @Text = "?"; Anchor: (Width: 26, Height: 24); }
+            }
           }
         }
         Group { Anchor: (Height: 4); }
         Group #P2 {
           Anchor: (Width: 448, Height: 72);
 
-          Group #P2Glow {
+          Group #P2Move {
             Anchor: (Left: 0, Top: 0, Width: 448, Height: 72);
-            Background: (TexturePath: "jr_panel_gold.png", Border: 22);
-          }
-          Group #P2Bg { Anchor: (Left: 2, Top: 2, Width: 444, Height: 68); Background: (TexturePath: "jr_panel_party.png", Border: 22); }
-          Group #P2Turn { Anchor: (Left: 0, Top: 0, Width: 448, Height: 72); Background: (TexturePath: "jr_panel_gold.png", Border: 22); }
-          Group {
-            Anchor: (Left: 0, Top: 0, Width: 448, Height: 72);
-            LayoutMode: Left;
-            Padding: (Left: 10, Right: 9, Top: 8, Bottom: 6);
 
-            Group #P2Icon { Anchor: (Width: 44, Height: 44); }
-            Group { Anchor: (Width: 8); }
-            Group {
-              FlexWeight: 1;
-              LayoutMode: Top;
-
-              Group {
-                Anchor: (Height: 20);
-                LayoutMode: Left;
-
-                Label #P2Name {
-                  Text: "";
-                  Anchor: (Width: 120, Height: 20);
-                  Style: (FontSize: 16, TextColor: #a9d8ff, RenderBold: true);
-                }
-                Label #P2Nums {
-                  Text: "";
-                  Anchor: (Height: 20);
-                  FlexWeight: 1;
-                  Style: (FontSize: 12, TextColor: #b4c2d6);
-                }
-              }
-              Group { Anchor: (Height: 2); }
-              Group #P2HpBack {
-                Anchor: (Width: 220, Height: 8);
-                LayoutMode: Left;
-                Background: (TexturePath: "jr_bar_back.png");
-                Group #P2HpFill { Anchor: (Width: 220, Height: 8); Background: (TexturePath: "jr_bar_hp.png"); }
-              }
-              Group { Anchor: (Height: 2); }
-              Group #P2MpBack {
-                Anchor: (Width: 220, Height: 5);
-                LayoutMode: Left;
-                Background: (TexturePath: "jr_bar_back.png");
-                Group #P2MpFill { Anchor: (Width: 220, Height: 5); Background: (TexturePath: "jr_bar_mp.png"); }
-              }
-              Group { Anchor: (Height: 2); }
-              Group #P2Status {
-                Anchor: (Height: 22);
-                LayoutMode: Left;
-              }
+            Group #P2Glow {
+              Anchor: (Left: 0, Top: 0, Width: 448, Height: 72);
+              Background: (TexturePath: "jr_panel_gold.png", Border: 22);
             }
-            $C.@SecondaryTextButton #P2Info { @Text = "?"; Anchor: (Width: 26, Height: 24); }
+            Group #P2Bg { Anchor: (Left: 2, Top: 2, Width: 444, Height: 68); Background: (TexturePath: "jr_panel_party.png", Border: 22); }
+            Group #P2Turn { Anchor: (Left: 0, Top: 0, Width: 448, Height: 72); Background: (TexturePath: "jr_panel_gold.png", Border: 22); }
+            Group {
+              Anchor: (Left: 0, Top: 0, Width: 448, Height: 72);
+              LayoutMode: Left;
+              Padding: (Left: 10, Right: 9, Top: 8, Bottom: 6);
+
+              Group #P2Icon { Anchor: (Width: 44, Height: 44); }
+              Group { Anchor: (Width: 8); }
+              Group {
+                FlexWeight: 1;
+                LayoutMode: Top;
+
+                Group {
+                  Anchor: (Height: 20);
+                  LayoutMode: Left;
+
+                  Label #P2Name {
+                    Text: "";
+                    Anchor: (Width: 120, Height: 20);
+                    Style: (FontSize: 16, TextColor: #a9d8ff, RenderBold: true);
+                  }
+                  Label #P2Nums {
+                    Text: "";
+                    Anchor: (Height: 20);
+                    FlexWeight: 1;
+                    Style: (FontSize: 12, TextColor: #b4c2d6);
+                  }
+                }
+                Group { Anchor: (Height: 2); }
+                Group #P2HpBack {
+                  Anchor: (Width: 220, Height: 8);
+                  LayoutMode: Left;
+                  Background: (TexturePath: "jr_bar_back.png");
+                  Group #P2HpFill { Anchor: (Width: 220, Height: 8); Background: (TexturePath: "jr_bar_hp.png"); }
+                }
+                Group { Anchor: (Height: 2); }
+                Group #P2MpBack {
+                  Anchor: (Width: 220, Height: 5);
+                  LayoutMode: Left;
+                  Background: (TexturePath: "jr_bar_back.png");
+                  Group #P2MpFill { Anchor: (Width: 220, Height: 5); Background: (TexturePath: "jr_bar_mp.png"); }
+                }
+                Group { Anchor: (Height: 2); }
+                Group #P2Status {
+                  Anchor: (Height: 22);
+                  LayoutMode: Left;
+                }
+              }
+              $C.@SecondaryTextButton #P2Info { @Text = "?"; Anchor: (Width: 26, Height: 24); }
+            }
           }
         }
         Group { Anchor: (Height: 4); }
       }
       Group { Anchor: (Width: 8); }
-      Group #MenuPanel {
+      Group #MenuSlot {
         Anchor: (Width: 350);
-        LayoutMode: Top;
-        Background: (TexturePath: "jr_panel.png", Border: 22);
-        Padding: (Left: 13, Right: 13, Top: 11, Bottom: 10);
 
-        Group {
-          Anchor: (Height: 28);
-          LayoutMode: Left;
+        Group #MenuPanel {
+          Anchor: (Left: 0, Top: 0, Width: 350, Height: 280);
+          LayoutMode: Top;
+          Background: (TexturePath: "jr_panel.png", Border: 22);
+          Padding: (Left: 13, Right: 13, Top: 11, Bottom: 10);
 
-          Label #MenuTitle {
+          Group {
+            Anchor: (Height: 28);
+            LayoutMode: Left;
+
+            Label #MenuTitle {
+              Text: "";
+              Anchor: (Height: 26);
+              FlexWeight: 1;
+              Style: (FontSize: 15, TextColor: #e8c46a, RenderBold: true);
+            }
+            $C.@CancelTextButton #Back { @Text = "Назад"; Anchor: (Width: 84, Height: 26); }
+          }
+          Group { Anchor: (Height: 2); }
+          Group #Row0 {
+            Anchor: (Width: 324, Height: 36);
+
+            Group #Row0Glow {
+              Anchor: (Left: 0, Top: 0, Width: 324, Height: 36);
+              Background: #e8c46a(0.22);
+              Group { Anchor: (Left: 1, Top: 1, Width: 322, Height: 34); Background: #fff0b0(0.22); }
+            }
+            Group #Row0Body {
+              Anchor: (Left: 2, Top: 2, Width: 320, Height: 32);
+              LayoutMode: Left;
+
+              Group #Opt0Icon { Anchor: (Width: 26, Height: 26); }
+              Group { Anchor: (Width: 6); }
+              $C.@SecondaryTextButton #Opt0 { @Text = ""; Anchor: (Width: 206, Height: 30); }
+              Group { Anchor: (Width: 6); }
+              Label #Opt0Hint {
+                Text: "";
+                Anchor: (Height: 30);
+                FlexWeight: 1;
+                Style: (FontSize: 12, TextColor: #e8c46a);
+              }
+            }
+          }
+          Group #Row1 {
+            Anchor: (Width: 324, Height: 36);
+
+            Group #Row1Glow {
+              Anchor: (Left: 0, Top: 0, Width: 324, Height: 36);
+              Background: #e8c46a(0.22);
+              Group { Anchor: (Left: 1, Top: 1, Width: 322, Height: 34); Background: #fff0b0(0.22); }
+            }
+            Group #Row1Body {
+              Anchor: (Left: 2, Top: 2, Width: 320, Height: 32);
+              LayoutMode: Left;
+
+              Group #Opt1Icon { Anchor: (Width: 26, Height: 26); }
+              Group { Anchor: (Width: 6); }
+              $C.@SecondaryTextButton #Opt1 { @Text = ""; Anchor: (Width: 206, Height: 30); }
+              Group { Anchor: (Width: 6); }
+              Label #Opt1Hint {
+                Text: "";
+                Anchor: (Height: 30);
+                FlexWeight: 1;
+                Style: (FontSize: 12, TextColor: #e8c46a);
+              }
+            }
+          }
+          Group #Row2 {
+            Anchor: (Width: 324, Height: 36);
+
+            Group #Row2Glow {
+              Anchor: (Left: 0, Top: 0, Width: 324, Height: 36);
+              Background: #e8c46a(0.22);
+              Group { Anchor: (Left: 1, Top: 1, Width: 322, Height: 34); Background: #fff0b0(0.22); }
+            }
+            Group #Row2Body {
+              Anchor: (Left: 2, Top: 2, Width: 320, Height: 32);
+              LayoutMode: Left;
+
+              Group #Opt2Icon { Anchor: (Width: 26, Height: 26); }
+              Group { Anchor: (Width: 6); }
+              $C.@SecondaryTextButton #Opt2 { @Text = ""; Anchor: (Width: 206, Height: 30); }
+              Group { Anchor: (Width: 6); }
+              Label #Opt2Hint {
+                Text: "";
+                Anchor: (Height: 30);
+                FlexWeight: 1;
+                Style: (FontSize: 12, TextColor: #e8c46a);
+              }
+            }
+          }
+          Group #Row3 {
+            Anchor: (Width: 324, Height: 36);
+
+            Group #Row3Glow {
+              Anchor: (Left: 0, Top: 0, Width: 324, Height: 36);
+              Background: #e8c46a(0.22);
+              Group { Anchor: (Left: 1, Top: 1, Width: 322, Height: 34); Background: #fff0b0(0.22); }
+            }
+            Group #Row3Body {
+              Anchor: (Left: 2, Top: 2, Width: 320, Height: 32);
+              LayoutMode: Left;
+
+              Group #Opt3Icon { Anchor: (Width: 26, Height: 26); }
+              Group { Anchor: (Width: 6); }
+              $C.@SecondaryTextButton #Opt3 { @Text = ""; Anchor: (Width: 206, Height: 30); }
+              Group { Anchor: (Width: 6); }
+              Label #Opt3Hint {
+                Text: "";
+                Anchor: (Height: 30);
+                FlexWeight: 1;
+                Style: (FontSize: 12, TextColor: #e8c46a);
+              }
+            }
+          }
+          Group #Row4 {
+            Anchor: (Width: 324, Height: 36);
+
+            Group #Row4Glow {
+              Anchor: (Left: 0, Top: 0, Width: 324, Height: 36);
+              Background: #e8c46a(0.22);
+              Group { Anchor: (Left: 1, Top: 1, Width: 322, Height: 34); Background: #fff0b0(0.22); }
+            }
+            Group #Row4Body {
+              Anchor: (Left: 2, Top: 2, Width: 320, Height: 32);
+              LayoutMode: Left;
+
+              Group #Opt4Icon { Anchor: (Width: 26, Height: 26); }
+              Group { Anchor: (Width: 6); }
+              $C.@SecondaryTextButton #Opt4 { @Text = ""; Anchor: (Width: 206, Height: 30); }
+              Group { Anchor: (Width: 6); }
+              Label #Opt4Hint {
+                Text: "";
+                Anchor: (Height: 30);
+                FlexWeight: 1;
+                Style: (FontSize: 12, TextColor: #e8c46a);
+              }
+            }
+          }
+          Group #Row5 {
+            Anchor: (Width: 324, Height: 36);
+
+            Group #Row5Glow {
+              Anchor: (Left: 0, Top: 0, Width: 324, Height: 36);
+              Background: #e8c46a(0.22);
+              Group { Anchor: (Left: 1, Top: 1, Width: 322, Height: 34); Background: #fff0b0(0.22); }
+            }
+            Group #Row5Body {
+              Anchor: (Left: 2, Top: 2, Width: 320, Height: 32);
+              LayoutMode: Left;
+
+              Group #Opt5Icon { Anchor: (Width: 26, Height: 26); }
+              Group { Anchor: (Width: 6); }
+              $C.@SecondaryTextButton #Opt5 { @Text = ""; Anchor: (Width: 206, Height: 30); }
+              Group { Anchor: (Width: 6); }
+              Label #Opt5Hint {
+                Text: "";
+                Anchor: (Height: 30);
+                FlexWeight: 1;
+                Style: (FontSize: 12, TextColor: #e8c46a);
+              }
+            }
+          }
+          Label #Error {
             Text: "";
-            Anchor: (Height: 26);
-            FlexWeight: 1;
-            Style: (FontSize: 15, TextColor: #e8c46a, RenderBold: true);
+            Anchor: (Height: 16);
+            Style: (FontSize: 12, TextColor: #ff8070);
           }
-          $C.@CancelTextButton #Back { @Text = "Назад"; Anchor: (Width: 84, Height: 26); }
-        }
-        Group { Anchor: (Height: 2); }
-        Group #Row0 {
-          Anchor: (Width: 324, Height: 36);
-
-          Group #Row0Glow {
-            Anchor: (Left: 0, Top: 0, Width: 324, Height: 36);
-            Background: #e8c46a(0.22);
-            Group { Anchor: (Left: 1, Top: 1, Width: 322, Height: 34); Background: #fff0b0(0.22); }
-          }
-          Group {
-            Anchor: (Left: 2, Top: 2, Width: 320, Height: 32);
-            LayoutMode: Left;
-
-            Group #Opt0Icon { Anchor: (Width: 26, Height: 26); }
-            Group { Anchor: (Width: 6); }
-            $C.@SecondaryTextButton #Opt0 { @Text = ""; Anchor: (Width: 206, Height: 30); }
-            Group { Anchor: (Width: 6); }
-            Label #Opt0Hint {
-              Text: "";
-              Anchor: (Height: 30);
-              FlexWeight: 1;
-              Style: (FontSize: 12, TextColor: #e8c46a);
-            }
-          }
-        }
-        Group #Row1 {
-          Anchor: (Width: 324, Height: 36);
-
-          Group #Row1Glow {
-            Anchor: (Left: 0, Top: 0, Width: 324, Height: 36);
-            Background: #e8c46a(0.22);
-            Group { Anchor: (Left: 1, Top: 1, Width: 322, Height: 34); Background: #fff0b0(0.22); }
-          }
-          Group {
-            Anchor: (Left: 2, Top: 2, Width: 320, Height: 32);
-            LayoutMode: Left;
-
-            Group #Opt1Icon { Anchor: (Width: 26, Height: 26); }
-            Group { Anchor: (Width: 6); }
-            $C.@SecondaryTextButton #Opt1 { @Text = ""; Anchor: (Width: 206, Height: 30); }
-            Group { Anchor: (Width: 6); }
-            Label #Opt1Hint {
-              Text: "";
-              Anchor: (Height: 30);
-              FlexWeight: 1;
-              Style: (FontSize: 12, TextColor: #e8c46a);
-            }
-          }
-        }
-        Group #Row2 {
-          Anchor: (Width: 324, Height: 36);
-
-          Group #Row2Glow {
-            Anchor: (Left: 0, Top: 0, Width: 324, Height: 36);
-            Background: #e8c46a(0.22);
-            Group { Anchor: (Left: 1, Top: 1, Width: 322, Height: 34); Background: #fff0b0(0.22); }
-          }
-          Group {
-            Anchor: (Left: 2, Top: 2, Width: 320, Height: 32);
-            LayoutMode: Left;
-
-            Group #Opt2Icon { Anchor: (Width: 26, Height: 26); }
-            Group { Anchor: (Width: 6); }
-            $C.@SecondaryTextButton #Opt2 { @Text = ""; Anchor: (Width: 206, Height: 30); }
-            Group { Anchor: (Width: 6); }
-            Label #Opt2Hint {
-              Text: "";
-              Anchor: (Height: 30);
-              FlexWeight: 1;
-              Style: (FontSize: 12, TextColor: #e8c46a);
-            }
-          }
-        }
-        Group #Row3 {
-          Anchor: (Width: 324, Height: 36);
-
-          Group #Row3Glow {
-            Anchor: (Left: 0, Top: 0, Width: 324, Height: 36);
-            Background: #e8c46a(0.22);
-            Group { Anchor: (Left: 1, Top: 1, Width: 322, Height: 34); Background: #fff0b0(0.22); }
-          }
-          Group {
-            Anchor: (Left: 2, Top: 2, Width: 320, Height: 32);
-            LayoutMode: Left;
-
-            Group #Opt3Icon { Anchor: (Width: 26, Height: 26); }
-            Group { Anchor: (Width: 6); }
-            $C.@SecondaryTextButton #Opt3 { @Text = ""; Anchor: (Width: 206, Height: 30); }
-            Group { Anchor: (Width: 6); }
-            Label #Opt3Hint {
-              Text: "";
-              Anchor: (Height: 30);
-              FlexWeight: 1;
-              Style: (FontSize: 12, TextColor: #e8c46a);
-            }
-          }
-        }
-        Group #Row4 {
-          Anchor: (Width: 324, Height: 36);
-
-          Group #Row4Glow {
-            Anchor: (Left: 0, Top: 0, Width: 324, Height: 36);
-            Background: #e8c46a(0.22);
-            Group { Anchor: (Left: 1, Top: 1, Width: 322, Height: 34); Background: #fff0b0(0.22); }
-          }
-          Group {
-            Anchor: (Left: 2, Top: 2, Width: 320, Height: 32);
-            LayoutMode: Left;
-
-            Group #Opt4Icon { Anchor: (Width: 26, Height: 26); }
-            Group { Anchor: (Width: 6); }
-            $C.@SecondaryTextButton #Opt4 { @Text = ""; Anchor: (Width: 206, Height: 30); }
-            Group { Anchor: (Width: 6); }
-            Label #Opt4Hint {
-              Text: "";
-              Anchor: (Height: 30);
-              FlexWeight: 1;
-              Style: (FontSize: 12, TextColor: #e8c46a);
-            }
-          }
-        }
-        Group #Row5 {
-          Anchor: (Width: 324, Height: 36);
-
-          Group #Row5Glow {
-            Anchor: (Left: 0, Top: 0, Width: 324, Height: 36);
-            Background: #e8c46a(0.22);
-            Group { Anchor: (Left: 1, Top: 1, Width: 322, Height: 34); Background: #fff0b0(0.22); }
-          }
-          Group {
-            Anchor: (Left: 2, Top: 2, Width: 320, Height: 32);
-            LayoutMode: Left;
-
-            Group #Opt5Icon { Anchor: (Width: 26, Height: 26); }
-            Group { Anchor: (Width: 6); }
-            $C.@SecondaryTextButton #Opt5 { @Text = ""; Anchor: (Width: 206, Height: 30); }
-            Group { Anchor: (Width: 6); }
-            Label #Opt5Hint {
-              Text: "";
-              Anchor: (Height: 30);
-              FlexWeight: 1;
-              Style: (FontSize: 12, TextColor: #e8c46a);
-            }
-          }
-        }
-        Label #Error {
-          Text: "";
-          Anchor: (Height: 16);
-          Style: (FontSize: 12, TextColor: #ff8070);
         }
       }
       Group { Anchor: (Width: 8); }

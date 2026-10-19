@@ -48,3 +48,4 @@ taunt
 warcry
 bag
 bomb
+antidote

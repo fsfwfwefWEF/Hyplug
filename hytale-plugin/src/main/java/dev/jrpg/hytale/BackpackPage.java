@@ -63,6 +63,7 @@ public final class BackpackPage extends InteractiveCustomUIPage<BattleMenuPage.C
         bind(evt, "#Drop", "drop", -1);
         bind(evt, "#Close", "close", -1);
         fill(cmd);
+        WindowIntro.play(this, playerRef, plugin, store, cmd, LAYOUT);
     }
 
     private static void bind(UIEventBuilder evt, String selector, String action, int index) {

@@ -72,6 +72,7 @@ public final class ProgressionPage extends InteractiveCustomUIPage<BattleMenuPag
         bind(evt, CustomUIEventBindingType.Activating, "#Respec", "respec", -1);
         bind(evt, CustomUIEventBindingType.Activating, "#Close", "close", -1);
         fill(cmd);
+        WindowIntro.play(this, playerRef, plugin, store, cmd, LAYOUT);
     }
 
     private static void bind(UIEventBuilder evt, CustomUIEventBindingType type, String selector, String action, int index) {

@@ -57,6 +57,7 @@ public final class PreBattlePage extends InteractiveCustomUIPage<BattleMenuPage.
         bind(evt, CustomUIEventBindingType.MouseExited, "#Fight", "unhover", 0);
         bind(evt, CustomUIEventBindingType.MouseExited, "#Flee", "unhover", 1);
         fill(cmd);
+        WindowIntro.play(this, playerRef, plugin, store, cmd, LAYOUT);
     }
 
     private static void bind(UIEventBuilder evt, CustomUIEventBindingType type, String selector, String action, int index) {

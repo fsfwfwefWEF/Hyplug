@@ -11,245 +11,249 @@ Group {
     LayoutMode: Left;
 
     Group { FlexWeight: 1; }
-    Group #Window {
+    Group #WindowSlot {
       Anchor: (Width: 680);
-      LayoutMode: Top;
-      Background: (TexturePath: "jr_window.png", Border: 86);
-      Padding: (Left: 24, Right: 24, Top: 16, Bottom: 24);
 
-      Group {
-        Anchor: (Height: 56);
-        LayoutMode: Left;
-
-        Group { FlexWeight: 1; }
-        Group {
-          Anchor: (Width: 600, Height: 56);
-          LayoutMode: Top;
-          Background: (TexturePath: "jr_banner.png");
-          Padding: (Top: 6);
-
-          Label #Title {
-            Text: "";
-            Anchor: (Height: 26);
-            Style: (FontSize: 21, TextColor: #e8c46a, RenderBold: true, HorizontalAlignment: Center);
-          }
-          Label #Sub {
-            Text: "";
-            Anchor: (Height: 18);
-            Style: (FontSize: 12, TextColor: #e9eef6, HorizontalAlignment: Center);
-          }
-        }
-        Group { FlexWeight: 1; }
-      }
-      Group { Anchor: (Height: 6); }
-      Group {
+      Group #Window {
+        Anchor: (Left: 0, Top: 0, Width: 680, Height: 346);
         LayoutMode: Top;
-        Background: (TexturePath: "jr_panel.png", Border: 22);
-        Padding: (Full: 8);
-        Anchor: (Height: 104);
+        Background: (TexturePath: "jr_window.png", Border: 86);
+        Padding: (Left: 24, Right: 24, Top: 16, Bottom: 24);
 
-        Group #Enemies {
-          Anchor: (Height: 86);
+        Group {
+          Anchor: (Height: 56);
           LayoutMode: Left;
 
           Group { FlexWeight: 1; }
-          Group #En0 {
-            Anchor: (Width: 112);
+          Group {
+            Anchor: (Width: 600, Height: 56);
             LayoutMode: Top;
+            Background: (TexturePath: "jr_banner.png");
+            Padding: (Top: 6);
 
-            Group {
-              Anchor: (Height: 52);
-              LayoutMode: Left;
-
-              Group { FlexWeight: 1; }
-              Group {
-                Anchor: (Width: 52, Height: 52);
-                Background: (TexturePath: "jr_slot.png", Border: 8);
-
-                Group #En0Icon { Anchor: (Left: 6, Top: 6, Width: 40, Height: 40); }
-              }
-              Group { FlexWeight: 1; }
-            }
-            Group { Anchor: (Height: 2); }
-            Label #En0Name {
+            Label #Title {
               Text: "";
-              Anchor: (Height: 16);
-              Style: (FontSize: 12, TextColor: #ffb3a6, RenderBold: true, HorizontalAlignment: Center);
+              Anchor: (Height: 26);
+              Style: (FontSize: 21, TextColor: #e8c46a, RenderBold: true, HorizontalAlignment: Center);
             }
-            Label #En0Hp {
+            Label #Sub {
               Text: "";
-              Anchor: (Height: 14);
-              Style: (FontSize: 11, TextColor: #b4c2d6, HorizontalAlignment: Center);
+              Anchor: (Height: 18);
+              Style: (FontSize: 12, TextColor: #e9eef6, HorizontalAlignment: Center);
             }
           }
-          Group { Anchor: (Width: 4); }
-          Group #En1 {
-            Anchor: (Width: 112);
-            LayoutMode: Top;
-
-            Group {
-              Anchor: (Height: 52);
-              LayoutMode: Left;
-
-              Group { FlexWeight: 1; }
-              Group {
-                Anchor: (Width: 52, Height: 52);
-                Background: (TexturePath: "jr_slot.png", Border: 8);
-
-                Group #En1Icon { Anchor: (Left: 6, Top: 6, Width: 40, Height: 40); }
-              }
-              Group { FlexWeight: 1; }
-            }
-            Group { Anchor: (Height: 2); }
-            Label #En1Name {
-              Text: "";
-              Anchor: (Height: 16);
-              Style: (FontSize: 12, TextColor: #ffb3a6, RenderBold: true, HorizontalAlignment: Center);
-            }
-            Label #En1Hp {
-              Text: "";
-              Anchor: (Height: 14);
-              Style: (FontSize: 11, TextColor: #b4c2d6, HorizontalAlignment: Center);
-            }
-          }
-          Group { Anchor: (Width: 4); }
-          Group #En2 {
-            Anchor: (Width: 112);
-            LayoutMode: Top;
-
-            Group {
-              Anchor: (Height: 52);
-              LayoutMode: Left;
-
-              Group { FlexWeight: 1; }
-              Group {
-                Anchor: (Width: 52, Height: 52);
-                Background: (TexturePath: "jr_slot.png", Border: 8);
-
-                Group #En2Icon { Anchor: (Left: 6, Top: 6, Width: 40, Height: 40); }
-              }
-              Group { FlexWeight: 1; }
-            }
-            Group { Anchor: (Height: 2); }
-            Label #En2Name {
-              Text: "";
-              Anchor: (Height: 16);
-              Style: (FontSize: 12, TextColor: #ffb3a6, RenderBold: true, HorizontalAlignment: Center);
-            }
-            Label #En2Hp {
-              Text: "";
-              Anchor: (Height: 14);
-              Style: (FontSize: 11, TextColor: #b4c2d6, HorizontalAlignment: Center);
-            }
-          }
-          Group { Anchor: (Width: 4); }
-          Group #En3 {
-            Anchor: (Width: 112);
-            LayoutMode: Top;
-
-            Group {
-              Anchor: (Height: 52);
-              LayoutMode: Left;
-
-              Group { FlexWeight: 1; }
-              Group {
-                Anchor: (Width: 52, Height: 52);
-                Background: (TexturePath: "jr_slot.png", Border: 8);
-
-                Group #En3Icon { Anchor: (Left: 6, Top: 6, Width: 40, Height: 40); }
-              }
-              Group { FlexWeight: 1; }
-            }
-            Group { Anchor: (Height: 2); }
-            Label #En3Name {
-              Text: "";
-              Anchor: (Height: 16);
-              Style: (FontSize: 12, TextColor: #ffb3a6, RenderBold: true, HorizontalAlignment: Center);
-            }
-            Label #En3Hp {
-              Text: "";
-              Anchor: (Height: 14);
-              Style: (FontSize: 11, TextColor: #b4c2d6, HorizontalAlignment: Center);
-            }
-          }
-          Group { Anchor: (Width: 4); }
-          Group #En4 {
-            Anchor: (Width: 112);
-            LayoutMode: Top;
-
-            Group {
-              Anchor: (Height: 52);
-              LayoutMode: Left;
-
-              Group { FlexWeight: 1; }
-              Group {
-                Anchor: (Width: 52, Height: 52);
-                Background: (TexturePath: "jr_slot.png", Border: 8);
-
-                Group #En4Icon { Anchor: (Left: 6, Top: 6, Width: 40, Height: 40); }
-              }
-              Group { FlexWeight: 1; }
-            }
-            Group { Anchor: (Height: 2); }
-            Label #En4Name {
-              Text: "";
-              Anchor: (Height: 16);
-              Style: (FontSize: 12, TextColor: #ffb3a6, RenderBold: true, HorizontalAlignment: Center);
-            }
-            Label #En4Hp {
-              Text: "";
-              Anchor: (Height: 14);
-              Style: (FontSize: 11, TextColor: #b4c2d6, HorizontalAlignment: Center);
-            }
-          }
-          Group { Anchor: (Width: 4); }
           Group { FlexWeight: 1; }
         }
-      }
-      Group { Anchor: (Height: 8); }
-      Label #Chance {
-        Text: "";
-        Anchor: (Height: 38);
-        Style: (FontSize: 13, TextColor: #e9eef6, Wrap: true, HorizontalAlignment: Center);
-      }
-      Group { Anchor: (Height: 6); }
-      Group {
-        Anchor: (Height: 50);
-        LayoutMode: Left;
+        Group { Anchor: (Height: 6); }
+        Group {
+          LayoutMode: Top;
+          Background: (TexturePath: "jr_panel.png", Border: 22);
+          Padding: (Full: 8);
+          Anchor: (Height: 104);
 
-        Group { FlexWeight: 1; }
-        Group #FightBox {
-          Anchor: (Width: 244, Height: 48);
-
-          Group #FightBoxGlow {
-            Anchor: (Left: 0, Top: 0, Width: 244, Height: 48);
-            Background: #e8c46a(0.22);
-            Group { Anchor: (Left: 1, Top: 1, Width: 242, Height: 46); Background: #fff0b0(0.22); }
-          }
-          Group {
-            Anchor: (Left: 4, Top: 4, Width: 236, Height: 40);
+          Group #Enemies {
+            Anchor: (Height: 86);
             LayoutMode: Left;
 
-            $C.@SecondaryTextButton #Fight { @Text = "Сражаться"; Anchor: (Width: 236, Height: 40); }
+            Group { FlexWeight: 1; }
+            Group #En0 {
+              Anchor: (Width: 112);
+              LayoutMode: Top;
+
+              Group {
+                Anchor: (Height: 52);
+                LayoutMode: Left;
+
+                Group { FlexWeight: 1; }
+                Group {
+                  Anchor: (Width: 52, Height: 52);
+                  Background: (TexturePath: "jr_slot.png", Border: 8);
+
+                  Group #En0Icon { Anchor: (Left: 6, Top: 6, Width: 40, Height: 40); }
+                }
+                Group { FlexWeight: 1; }
+              }
+              Group { Anchor: (Height: 2); }
+              Label #En0Name {
+                Text: "";
+                Anchor: (Height: 16);
+                Style: (FontSize: 12, TextColor: #ffb3a6, RenderBold: true, HorizontalAlignment: Center);
+              }
+              Label #En0Hp {
+                Text: "";
+                Anchor: (Height: 14);
+                Style: (FontSize: 11, TextColor: #b4c2d6, HorizontalAlignment: Center);
+              }
+            }
+            Group { Anchor: (Width: 4); }
+            Group #En1 {
+              Anchor: (Width: 112);
+              LayoutMode: Top;
+
+              Group {
+                Anchor: (Height: 52);
+                LayoutMode: Left;
+
+                Group { FlexWeight: 1; }
+                Group {
+                  Anchor: (Width: 52, Height: 52);
+                  Background: (TexturePath: "jr_slot.png", Border: 8);
+
+                  Group #En1Icon { Anchor: (Left: 6, Top: 6, Width: 40, Height: 40); }
+                }
+                Group { FlexWeight: 1; }
+              }
+              Group { Anchor: (Height: 2); }
+              Label #En1Name {
+                Text: "";
+                Anchor: (Height: 16);
+                Style: (FontSize: 12, TextColor: #ffb3a6, RenderBold: true, HorizontalAlignment: Center);
+              }
+              Label #En1Hp {
+                Text: "";
+                Anchor: (Height: 14);
+                Style: (FontSize: 11, TextColor: #b4c2d6, HorizontalAlignment: Center);
+              }
+            }
+            Group { Anchor: (Width: 4); }
+            Group #En2 {
+              Anchor: (Width: 112);
+              LayoutMode: Top;
+
+              Group {
+                Anchor: (Height: 52);
+                LayoutMode: Left;
+
+                Group { FlexWeight: 1; }
+                Group {
+                  Anchor: (Width: 52, Height: 52);
+                  Background: (TexturePath: "jr_slot.png", Border: 8);
+
+                  Group #En2Icon { Anchor: (Left: 6, Top: 6, Width: 40, Height: 40); }
+                }
+                Group { FlexWeight: 1; }
+              }
+              Group { Anchor: (Height: 2); }
+              Label #En2Name {
+                Text: "";
+                Anchor: (Height: 16);
+                Style: (FontSize: 12, TextColor: #ffb3a6, RenderBold: true, HorizontalAlignment: Center);
+              }
+              Label #En2Hp {
+                Text: "";
+                Anchor: (Height: 14);
+                Style: (FontSize: 11, TextColor: #b4c2d6, HorizontalAlignment: Center);
+              }
+            }
+            Group { Anchor: (Width: 4); }
+            Group #En3 {
+              Anchor: (Width: 112);
+              LayoutMode: Top;
+
+              Group {
+                Anchor: (Height: 52);
+                LayoutMode: Left;
+
+                Group { FlexWeight: 1; }
+                Group {
+                  Anchor: (Width: 52, Height: 52);
+                  Background: (TexturePath: "jr_slot.png", Border: 8);
+
+                  Group #En3Icon { Anchor: (Left: 6, Top: 6, Width: 40, Height: 40); }
+                }
+                Group { FlexWeight: 1; }
+              }
+              Group { Anchor: (Height: 2); }
+              Label #En3Name {
+                Text: "";
+                Anchor: (Height: 16);
+                Style: (FontSize: 12, TextColor: #ffb3a6, RenderBold: true, HorizontalAlignment: Center);
+              }
+              Label #En3Hp {
+                Text: "";
+                Anchor: (Height: 14);
+                Style: (FontSize: 11, TextColor: #b4c2d6, HorizontalAlignment: Center);
+              }
+            }
+            Group { Anchor: (Width: 4); }
+            Group #En4 {
+              Anchor: (Width: 112);
+              LayoutMode: Top;
+
+              Group {
+                Anchor: (Height: 52);
+                LayoutMode: Left;
+
+                Group { FlexWeight: 1; }
+                Group {
+                  Anchor: (Width: 52, Height: 52);
+                  Background: (TexturePath: "jr_slot.png", Border: 8);
+
+                  Group #En4Icon { Anchor: (Left: 6, Top: 6, Width: 40, Height: 40); }
+                }
+                Group { FlexWeight: 1; }
+              }
+              Group { Anchor: (Height: 2); }
+              Label #En4Name {
+                Text: "";
+                Anchor: (Height: 16);
+                Style: (FontSize: 12, TextColor: #ffb3a6, RenderBold: true, HorizontalAlignment: Center);
+              }
+              Label #En4Hp {
+                Text: "";
+                Anchor: (Height: 14);
+                Style: (FontSize: 11, TextColor: #b4c2d6, HorizontalAlignment: Center);
+              }
+            }
+            Group { Anchor: (Width: 4); }
+            Group { FlexWeight: 1; }
           }
         }
-        Group { Anchor: (Width: 18); }
-        Group #FleeBox {
-          Anchor: (Width: 244, Height: 48);
-
-          Group #FleeBoxGlow {
-            Anchor: (Left: 0, Top: 0, Width: 244, Height: 48);
-            Background: #e8c46a(0.22);
-            Group { Anchor: (Left: 1, Top: 1, Width: 242, Height: 46); Background: #fff0b0(0.22); }
-          }
-          Group {
-            Anchor: (Left: 4, Top: 4, Width: 236, Height: 40);
-            LayoutMode: Left;
-
-            $C.@CancelTextButton #Flee { @Text = "Сбежать"; Anchor: (Width: 236, Height: 40); }
-          }
+        Group { Anchor: (Height: 8); }
+        Label #Chance {
+          Text: "";
+          Anchor: (Height: 38);
+          Style: (FontSize: 13, TextColor: #e9eef6, Wrap: true, HorizontalAlignment: Center);
         }
-        Group { FlexWeight: 1; }
+        Group { Anchor: (Height: 6); }
+        Group {
+          Anchor: (Height: 50);
+          LayoutMode: Left;
+
+          Group { FlexWeight: 1; }
+          Group #FightBox {
+            Anchor: (Width: 244, Height: 48);
+
+            Group #FightBoxGlow {
+              Anchor: (Left: 0, Top: 0, Width: 244, Height: 48);
+              Background: #e8c46a(0.22);
+              Group { Anchor: (Left: 1, Top: 1, Width: 242, Height: 46); Background: #fff0b0(0.22); }
+            }
+            Group #FightBoxBody {
+              Anchor: (Left: 4, Top: 4, Width: 236, Height: 40);
+              LayoutMode: Left;
+
+              $C.@SecondaryTextButton #Fight { @Text = "Сражаться"; Anchor: (Width: 236, Height: 40); }
+            }
+          }
+          Group { Anchor: (Width: 18); }
+          Group #FleeBox {
+            Anchor: (Width: 244, Height: 48);
+
+            Group #FleeBoxGlow {
+              Anchor: (Left: 0, Top: 0, Width: 244, Height: 48);
+              Background: #e8c46a(0.22);
+              Group { Anchor: (Left: 1, Top: 1, Width: 242, Height: 46); Background: #fff0b0(0.22); }
+            }
+            Group #FleeBoxBody {
+              Anchor: (Left: 4, Top: 4, Width: 236, Height: 40);
+              LayoutMode: Left;
+
+              $C.@CancelTextButton #Flee { @Text = "Сбежать"; Anchor: (Width: 236, Height: 40); }
+            }
+          }
+          Group { FlexWeight: 1; }
+        }
       }
     }
     Group { FlexWeight: 1; }

@@ -6,6 +6,7 @@ $C.@CancelTextButton, Anchor (Width/Height/Left/Top), LayoutMode Top/Left, FlexW
 """
 import math
 import os
+import re
 
 OUT_DIR = os.path.join(os.path.dirname(__file__), "..", "hytale-plugin", "src", "main", "resources",
                        "Common", "UI", "Custom", "JrpgBattle")
@@ -90,7 +91,7 @@ def aura(id_, w, h, props, children, inset=2):
     glow = (f"Group #{id_}Glow {{\n"
             f"  Anchor: (Left: 0, Top: 0, Width: {w}, Height: {h});\n  Background: #e8c46a(0.22);\n"
             f"  Group {{ Anchor: (Left: 1, Top: 1, Width: {w - 2}, Height: {h - 2}); Background: #fff0b0(0.22); }}\n}}")
-    content = group("", [f"Anchor: (Left: {inset}, Top: {inset}, Width: {w - 2 * inset}, Height: {h - 2 * inset});"]
+    content = group(f"{id_}Body", [f"Anchor: (Left: {inset}, Top: {inset}, Width: {w - 2 * inset}, Height: {h - 2 * inset});"]
                     + props, children)
     return group(id_, [f"Anchor: (Width: {w}, Height: {h});"], [glow, content])
 
@@ -163,18 +164,27 @@ def layered(id_, w, h, layers, content_props, children, inset=0):
                     f"Width: {w - (4 if lid.endswith('Bg') else 0)}, Height: {h - (4 if lid.endswith('Bg') else 0)}); {skin(texture)} }}")
     kids.append(group("", [f"Anchor: (Left: {inset}, Top: {inset}, Width: {w - 2 * inset}, Height: {h - 2 * inset});"]
                       + content_props, children))
-    return group(id_, [f"Anchor: (Width: {w}, Height: {h});"], kids)
+    move = group(f"{id_}Move", [f"Anchor: (Left: 0, Top: 0, Width: {w}, Height: {h});"], kids)
+    return group(id_, [f"Anchor: (Width: {w}, Height: {h});"], [move])
 
 
 def panel_title(text, id_=None, color=INK_TITLE):
     return label(id_ or "", text, 13, color, True, height=20)
 
 
+QW_LEFT, QW_W, QW_CUR_H, QW_H, QW_GAP, QW_TOP = 11, 214, 46, 34, 3, 36
+
+
+def qw_top(i):
+    return QW_TOP if i == 0 else QW_TOP + QW_CUR_H + QW_GAP + (i - 1) * (QW_H + QW_GAP)
+
+
 def queue_slot(i):
-    """Запасная очередь в окне (если HUD выключен в settings.json → ui.hud)."""
+    """Строка очереди в окне. Стоит по абсолютным координатам: плагин двигает её (Anchor) при смене хода —
+    ходивший уезжает влево, остальные поднимаются (BattleMenuPage, геометрия QW_* там же)."""
     big = i == 0
     return group(f"Q{i}", [
-        f"Anchor: (Height: {46 if big else 34});",
+        f"Anchor: (Left: {QW_LEFT}, Top: {qw_top(i)}, Width: {QW_W}, Height: {QW_CUR_H if big else QW_H});",
         "LayoutMode: Left;",
         skin("jr_panel_gold" if big else "jr_panel", 22),
         "Padding: (Left: 8, Right: 6, Top: 4, Bottom: 4);",
@@ -302,7 +312,9 @@ def battle():
                       [spacer(flex=True)] + sum(([enemy_card(i), spacer(w=6)] for i in range(ENEMIES)), [])
                       + [spacer(flex=True)])
     # Баннер хода, очередь и журнал в окне — запасной вид; обычно они в HUD (BattleHud.ui) и анимированы.
-    banner = group("BannerRow", ["Anchor: (Height: 62);", "LayoutMode: Left;"], [
+    # #BannerSlide выезжает сверху при смене хода (плагин двигает его Anchor.Top).
+    banner = group("BannerRow", ["Anchor: (Height: 62);"], [group("BannerSlide", [
+        "Anchor: (Left: 0, Right: 0, Top: 0, Height: 62);", "LayoutMode: Left;"], [
         spacer(flex=True),
         group("BannerBox", ["Anchor: (Width: 600, Height: 60);", "LayoutMode: Top;", tex("jr_banner"),
                             "Padding: (Top: 9);"], [
@@ -310,11 +322,13 @@ def battle():
             label("BannerSub", "", 13, TEXT, height=18, center=True),
         ]),
         spacer(flex=True),
-    ])
-    queue = group("QueuePanel", ["Anchor: (Width: 236);", "LayoutMode: Top;", skin("jr_panel"),
-                                 "Padding: (Full: 12);"],
-                  [panel_title("ОЧЕРЕДЬ ХОДОВ", "QueueTitle"), spacer(h=4)]
-                  + sum(([queue_slot(i), spacer(h=3)] for i in range(QUEUE)), []))
+    ])])
+    q_h = qw_top(QUEUE - 1) + QW_H + 12
+    queue = group("QueueSlot", [f"Anchor: (Height: {q_h});"], [group("QueuePanel", [
+        f"Anchor: (Left: 0, Top: 0, Width: 236, Height: {q_h});", skin("jr_panel")], [
+        f'Label #QueueTitle {{ Text: "ОЧЕРЕДЬ ХОДОВ"; Anchor: (Left: 13, Top: 11, Width: 200, Height: 20); '
+        f"Style: (FontSize: 13, TextColor: {INK_TITLE}, RenderBold: true); }}",
+    ] + [queue_slot(i) for i in range(QUEUE)])])
     # Журнал — тёмная панель в стиле остального окна (jr_panel): заголовок, золотая черта, строки журнала
     # цветом события; старые строки тусклее (BattleMenuPage.fillLog). Книга-пергамент выбивалась из стиля.
     bh = BOOK_H - 10
@@ -345,7 +359,7 @@ def battle():
     ])
     party = group("PartyPanel", [f"Anchor: (Width: {PARTY_W + 2});", "LayoutMode: Top;"],
                   sum(([party_row(i), spacer(h=4)] for i in range(PARTY)), []))
-    menu = group("MenuPanel", ["Anchor: (Width: 350);", "LayoutMode: Top;", skin("jr_panel"),
+    menu = group("MenuPanel", [f"Anchor: (Left: 0, Top: 0, Width: 350, Height: {BOOK_H - 10});", "LayoutMode: Top;", skin("jr_panel"),
                                "Padding: (Left: 13, Right: 13, Top: 11, Bottom: 10);"], [
         group("", ["Anchor: (Height: 28);", "LayoutMode: Left;"], [
             label("MenuTitle", "", 15, GOLD, True, height=26, flex=True, font=TITLE_FONT),
@@ -353,6 +367,8 @@ def battle():
         ]),
         spacer(h=2),
     ] + [option_row(i) for i in range(OPTIONS)] + [label("Error", "", 12, "#ff8070", height=16)])
+    # #MenuSlot держит место, #MenuPanel внутри уезжает вниз, когда команды не нужны, и выезжает в ход героя.
+    menu = group("MenuSlot", ["Anchor: (Width: 350);"], [menu])
     info = group("InfoPanel", ["Anchor: (Width: 470);", "LayoutMode: Top;", skin("jr_panel"),
                                "Padding: (Left: 14, Right: 14, Top: 12, Bottom: 10);"], [
         group("", ["Anchor: (Height: 32);", "LayoutMode: Left;"], [
@@ -473,10 +489,16 @@ def menu_window(width, children, pad=24):
 
 
 def centered(height, window):
+    # Окно стоит в #WindowSlot по абсолютным координатам: при открытии плагин опускает его сверху
+    # (WindowIntro, Anchor.Top). Ширину берём из Anchor окна (menu_window).
+    m = re.search(r"Group #Window \{\n  Anchor: \(Width: (\d+)\);", window)
+    w = int(m.group(1))
+    h = height + 16  # +16: поля окна jr_window шире, чем были у jr_panel_gold
+    window = window.replace(m.group(0), f"Group #Window {{\n  Anchor: (Left: 0, Top: 0, Width: {w}, Height: {h});", 1)
     return group("", ["LayoutMode: Top;"], [
         spacer(flex=True),
-        # +16: поля окна jr_window шире, чем были у jr_panel_gold
-        group("", [f"Anchor: (Height: {height + 16});", "LayoutMode: Left;"], [spacer(flex=True), window, spacer(flex=True)]),
+        group("", [f"Anchor: (Height: {h});", "LayoutMode: Left;"], [
+            spacer(flex=True), group("WindowSlot", [f"Anchor: (Width: {w});"], [window]), spacer(flex=True)]),
         spacer(flex=True),
     ])
 
