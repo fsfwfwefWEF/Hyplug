@@ -251,7 +251,7 @@ public final class ProgressionPage extends InteractiveCustomUIPage<BattleMenuPag
         }
         List<int[]> want = pulseFor(h, selected);
         if (!samePulse(want)) {
-            for (int[] p : pulse) for (int ph = 0; ph < PULSE; ph++) cmd.set("#EdgeP" + p[0] + "_" + ph + ".Visible", false);
+            for (int[] p : pulse) for (int ph = 0; ph < PULSE; ph++) cmd.set("#EdgeP" + p[0] + "x" + ph + ".Visible", false);
             pulse = want;
             pulseUntil = System.currentTimeMillis() + PULSE_FOR_MS;
             int seq = ++pulseSeq;
@@ -287,7 +287,7 @@ public final class ProgressionPage extends InteractiveCustomUIPage<BattleMenuPag
     private void putPulse(UICommandBuilder cmd, boolean steady) {
         for (int[] p : pulse) {
             int lit = p[1] > 0 ? phase : PULSE - 1 - phase;
-            for (int ph = 0; ph < PULSE; ph++) cmd.set("#EdgeP" + p[0] + "_" + ph + ".Visible", steady || ph == lit);
+            for (int ph = 0; ph < PULSE; ph++) cmd.set("#EdgeP" + p[0] + "x" + ph + ".Visible", steady || ph == lit);
         }
     }
 

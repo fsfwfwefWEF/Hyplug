@@ -737,13 +737,13 @@ def progression():
     ])
     edge_list = edges()
     # Рёбра: закрытые — серые точки; к доступному узлу — голубые; между открытыми — золотые крупнее;
-    # у выбранного узла по рёбрам бежит яркий сигнал (#EdgeP<k>_<фаза>, фазы переключает плагин).
+    # у выбранного узла по рёбрам бежит яркий сигнал (#EdgeP<k>x<фаза>, фазы переключает плагин).
     off = full("EdgesOff", sum((edge_dots(a, b, "#5a6c90(0.85)") for a, b in edge_list), []))
     on = []
     for k, (a, b) in enumerate(edge_list):
         on.append(full(f"EdgeA{k}", edge_dots(a, b, "#7fb6ff(0.95)", size=5)))
         on.append(full(f"Edge{k}", edge_dots(a, b, GOLD, size=6)))
-    pulse = [full(f"EdgeP{k}_{ph}", edge_dots(a, b, "#fff6d0", size=8, every=PULSE, phase=ph))
+    pulse = [full(f"EdgeP{k}x{ph}", edge_dots(a, b, "#fff6d0", size=8, every=PULSE, phase=ph))
              for k, (a, b) in enumerate(edge_list) for ph in range(PULSE)]
     on += pulse
     rings = full("Rings", sum((ring_dots(r) for r in (1, 2, 3, 4)), []))

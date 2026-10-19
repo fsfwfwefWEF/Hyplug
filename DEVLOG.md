@@ -538,3 +538,8 @@ jrpg-mod/
 - Экипировка: строки сравнения `#Cmp<i>Box` = подложки `#Cmp<i>Good/Bad` + таблица `#Cmp<i>Row` (Name, Was, Arrow, Now, Delta) или одна строка `#Cmp<i>` (навыки/иммунитеты, описание надетой). `#CmpHead` — шапка, `#CmpSum` — «Лучше/Хуже». EQ_CMP 11.
 - Сетка: рёбра `#EdgeA<k>` (голубые, к доступному), `#Edge<k>` (золотые 6px), `#EdgeP<k>_<0..2>` — бегущий сигнал (каждая 3-я точка). ProgressionPage.pulseFor: от открытых соседей к выбранному узлу, у открытого — к доступным; кадры раз в 150 мс 9 с, потом ровно. ProgressionPage реализует AnimatedPage → ClickBuffer передаёт клики. Очки — `#PointsBox` (`#PointsNum`, `#Points`).
 - Награды: BattleSession.Rewards/HeroGain/LootLine собираются в onBattleEnd (уровень/опыт до и после addExp), окно показывается через 1.8 с после начала празднования (`rewardsShown`). BattleMenu.ui `#RewardLayer` → `#RewardWin` (опускается), `#Rw<i>` (герой, полоска `#Rw<i>Bar` заполняется, при новом уровне — до конца и заново), `#Loot<i>` (8 ячеек), кнопки `#RewardOk`/`#RewardGrid` → `session.onReward`.
+
+## 0.10.12 (2026-10-19) — фикс входа в мир
+- 0.10.11 не пускала в мир: клиент отключал на GameLoading «Failed to parse file JrpgBattle/Progression.ui (1776:26) – Expected {, found _».
+- Причина: id групп бегущего сигнала `#EdgeP<k>_<фаза>`. Подчёркивание в id элемента .ui клиент не разбирает.
+- Переименовано в `#EdgeP<k>x<фаза>` (tools/gen_battle_ui.py, ProgressionPage). Правило: id элементов .ui только буквы и цифры.
