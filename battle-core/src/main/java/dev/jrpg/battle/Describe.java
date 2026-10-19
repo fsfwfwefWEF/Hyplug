@@ -191,7 +191,7 @@ public final class Describe {
             case WEAPON, OFFHAND -> switch (g.type() == null ? "" : g.type()) {
                 case "shield" -> "shield";
                 case "axe", "mace", "spear", "staff", "daggers" -> "gear_" + g.type();
-                default -> "sword";
+                default -> "gear_sword";
             };
             case HEAD -> "gear_helm";
             case CHEST -> "gear_chest";

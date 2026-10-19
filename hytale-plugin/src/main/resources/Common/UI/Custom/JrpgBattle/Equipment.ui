@@ -9,15 +9,15 @@ Group {
 
   Group { FlexWeight: 1; }
   Group {
-    Anchor: (Height: 598);
+    Anchor: (Height: 614);
     LayoutMode: Left;
 
     Group { FlexWeight: 1; }
     Group #Window {
       Anchor: (Width: 1150);
       LayoutMode: Top;
-      Background: (TexturePath: "jr_panel_gold.png", Border: 22);
-      Padding: (Left: 16, Right: 16, Top: 10, Bottom: 16);
+      Background: (TexturePath: "jr_window.png", Border: 86);
+      Padding: (Left: 24, Right: 24, Top: 16, Bottom: 24);
 
       Group {
         Anchor: (Height: 52);

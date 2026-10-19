@@ -12,6 +12,7 @@ class IconTiersTest {
         GameData d = GameData.load(Content.demo(), null);
         Content c = d.content();
         assertEquals("gear_axe", Describe.gearIcon(c.gear("iron_battleaxe")));
+        assertEquals("gear_sword", Describe.gearIcon(c.gear("iron_sword")));
         assertEquals("gear_helm", Describe.gearIcon(c.gear("iron_helm")));
         assertEquals("gear_ring", Describe.gearIcon(c.gear("sage_ring")));
         assertEquals("gear_amulet", Describe.gearIcon(c.gear("wind_amulet")));

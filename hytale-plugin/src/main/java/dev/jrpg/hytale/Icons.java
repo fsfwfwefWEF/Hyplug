@@ -9,7 +9,9 @@ import java.util.Set;
 
 /** Какие иконки есть в asset pack мода (список data/icons.txt пишет tools/gen_icons.py). */
 final class Icons {
-    private static final Set<String> KNOWN = load();
+    private static final Set<String> KNOWN = load("/data/icons.txt");
+    /** Круглые иконки-медальоны (им нужна круглая рамка уровня); список пишет tools/gen_icons.py. */
+    private static final Set<String> ROUND = load("/data/icons_round.txt");
 
     private Icons() {
     }
@@ -18,9 +20,13 @@ final class Icons {
         return KNOWN.contains(key);
     }
 
-    private static Set<String> load() {
+    static boolean round(String key) {
+        return ROUND.contains(key);
+    }
+
+    private static Set<String> load(String path) {
         Set<String> out = new HashSet<>();
-        try (InputStream in = Icons.class.getResourceAsStream("/data/icons.txt")) {
+        try (InputStream in = Icons.class.getResourceAsStream(path)) {
             if (in == null) return out;
             BufferedReader r = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8));
             for (String line; (line = r.readLine()) != null; ) {

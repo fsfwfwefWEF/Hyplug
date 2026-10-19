@@ -463,7 +463,7 @@ public final class BattleMenuPage extends InteractiveCustomUIPage<BattleMenuPage
         cmd.clear(slot);
         if (!has) return;
         cmd.append(slot, ICONS + key + "_" + size + ".ui");
-        if (t > 0) cmd.append(slot, ICONS + "tier_t" + t + "_" + size + ".ui");
+        if (t > 0) cmd.append(slot, ICONS + (Icons.round(key) ? "tier_c" : "tier_t") + t + "_" + size + ".ui");
     }
 
     private void statusIcons(UICommandBuilder cmd, String slot, Combatant c) {

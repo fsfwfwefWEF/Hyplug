@@ -780,13 +780,14 @@ def render(key, size=128):
     return art.downsample(art.img_of(tile), (size, size))
 
 
-def render_tier(tier, size=96):
-    """Прозрачная рамка уровня: цветная металлическая кайма поверх золотой и ромбики-«звёзды» внизу."""
+def render_tier(tier, size=96, round_=False):
+    """Прозрачная рамка уровня: цветная металлическая кайма поверх золотой и ромбики-«звёзды» внизу.
+    round_ — круглая, для иконок-медальонов."""
     color, pips = TIERS[tier]
     S = size * SS
     dim = (S, S)
     pad = int(S * 0.02)
-    shape = art.rounded_mask(dim, pad, int(S * 0.2))
+    shape = art.ellipse_mask(dim, pad) if round_ else art.rounded_mask(dim, pad, int(S * 0.2))
     ring, _ = art.bevel_ring(dim, shape, max(4, int(S * 0.075)), base=color)
     glow = np.clip(art.blur_mask(art.erode(shape, S * 0.075), S * 0.04) - art.erode(shape, S * 0.14), 0, 1)
     out = art.with_alpha(art.solid(dim, color), glow * 0.55)
@@ -811,35 +812,68 @@ UI = """Group {{
 """
 
 
+# Иконки, нарисованные отдельно (Kling, 2026-10-19): их PNG лежат в Icons/ готовыми, скрипт их не перерисовывает,
+# только пишет обёртки .ui. Список — tools/external_icons.txt.
+EXTERNAL_LIST = os.path.join(os.path.dirname(__file__), "external_icons.txt")
+
+
+def external():
+    if not os.path.exists(EXTERNAL_LIST):
+        return []
+    with open(EXTERNAL_LIST, encoding="utf-8") as f:
+        return [l.strip() for l in f if l.strip()]
+
+
+def is_round(path):
+    """Круглая иконка (медальон): угол прозрачный. У квадратных со скруглением угол (10,10) закрашен."""
+    im = Image.open(path).convert("RGBA")
+    k = max(1, im.width * 10 // 96)
+    return im.getpixel((k, k))[3] < 40
+
+
 def main():
     os.makedirs(OUT, exist_ok=True)
-    for key in ICONS:
-        size = 128 if key.startswith("pt_") else 96
-        render(key, size).save(os.path.join(OUT, key + ".png"))
+    ext = external()
+    keys_all = list(ICONS) + [k for k in ext if k not in ICONS]
+    for key in keys_all:
+        if key not in ext:
+            size = 128 if key.startswith("pt_") else 96
+            render(key, size).save(os.path.join(OUT, key + ".png"))
         for suffix, n in SIZES.items():
             with open(os.path.join(OUT, f"{key}_{suffix}.ui"), "w", encoding="utf-8") as f:
                 f.write(UI.format(n=n, key=key))
+    # рамки уровня: квадратные tier_t1..3 и круглые tier_c1..3 (для медальонов)
     for tier in TIERS:
-        render_tier(tier).save(os.path.join(OUT, f"tier_{tier}.png"))
-        for suffix, n in SIZES.items():
-            with open(os.path.join(OUT, f"tier_{tier}_{suffix}.ui"), "w", encoding="utf-8") as f:
-                f.write(UI.format(n=n, key=f"tier_{tier}"))
+        for shape, name in ((False, f"tier_{tier}"), (True, f"tier_c{tier[1:]}")):
+            render_tier(tier, round_=shape).save(os.path.join(OUT, name + ".png"))
+            for suffix, n in SIZES.items():
+                with open(os.path.join(OUT, f"{name}_{suffix}.ui"), "w", encoding="utf-8") as f:
+                    f.write(UI.format(n=n, key=name))
+    rounds = [k for k in keys_all if is_round(os.path.join(OUT, k + ".png"))]
+    with open(os.path.join(os.path.dirname(__file__), "..", "hytale-plugin", "src", "main", "resources", "data",
+                           "icons_round.txt"), "w", encoding="utf-8") as f:
+        f.write("\n".join(rounds) + "\n")
     # список ключей для плагина (какие иконки существуют)
     idx = os.path.join(os.path.dirname(__file__), "..", "hytale-plugin", "src", "main", "resources", "data", "icons.txt")
     os.makedirs(os.path.dirname(idx), exist_ok=True)
     with open(idx, "w", encoding="utf-8") as f:
-        f.write("\n".join(ICONS) + "\n")
+        f.write("\n".join(keys_all) + "\n")
     # лист-превью для просмотра всех иконок разом
-    keys = list(ICONS)
+    keys = keys_all
     cols = 10
     rows = (len(keys) + cols - 1) // cols
     sheet = Image.new("RGBA", (cols * 72, rows * 72), (18, 16, 26, 255))
     for i, k in enumerate(keys):
-        sheet.alpha_composite(render(k, 64), ((i % cols) * 72 + 4, (i // cols) * 72 + 4))
-    tiers = Image.new("RGBA", (len(TIERS) * 72 + 4, 72), (18, 16, 26, 255))
+        sheet.alpha_composite(Image.open(os.path.join(OUT, k + ".png")).convert("RGBA").resize((64, 64), Image.LANCZOS),
+                              ((i % cols) * 72 + 4, (i // cols) * 72 + 4))
+    tiers = Image.new("RGBA", (len(TIERS) * 144 + 4, 72), (18, 16, 26, 255))
+    def icon64(k):
+        return Image.open(os.path.join(OUT, k + ".png")).convert("RGBA").resize((64, 64), Image.LANCZOS)
     for i, t in enumerate(TIERS):
-        tiers.alpha_composite(render("gear_helm", 64), (i * 72 + 4, 4))
-        tiers.alpha_composite(render_tier(t, 64), (i * 72 + 4, 4))
+        tiers.alpha_composite(icon64("gear_chest"), (i * 144 + 4, 4))
+        tiers.alpha_composite(render_tier(t, 64), (i * 144 + 4, 4))
+        tiers.alpha_composite(icon64("gear_sword"), (i * 144 + 76, 4))
+        tiers.alpha_composite(render_tier(t, 64, round_=True), (i * 144 + 76, 4))
     big = Image.new("RGBA", (sheet.width, sheet.height + 72), (18, 16, 26, 255))
     big.alpha_composite(sheet, (0, 0))
     big.alpha_composite(tiers, (0, sheet.height))

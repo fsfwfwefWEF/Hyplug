@@ -466,15 +466,17 @@ def menu_title(text, sub_id=None, sub="", width=560):
     ])
 
 
-def menu_window(width, children, pad=16):
-    return group("Window", [f"Anchor: (Width: {width});", "LayoutMode: Top;", skin("jr_panel_gold"),
-                            f"Padding: (Left: {pad}, Right: {pad}, Top: 10, Bottom: {pad});"], children)
+def menu_window(width, children, pad=24):
+    # jr_window.png — окно с резными золотыми углами (Kling, panel_bg), углы по 86 px не растягиваются
+    return group("Window", [f"Anchor: (Width: {width});", "LayoutMode: Top;", skin("jr_window", 86),
+                            f"Padding: (Left: {pad}, Right: {pad}, Top: 16, Bottom: {pad});"], children)
 
 
 def centered(height, window):
     return group("", ["LayoutMode: Top;"], [
         spacer(flex=True),
-        group("", [f"Anchor: (Height: {height});", "LayoutMode: Left;"], [spacer(flex=True), window, spacer(flex=True)]),
+        # +16: поля окна jr_window шире, чем были у jr_panel_gold
+        group("", [f"Anchor: (Height: {height + 16});", "LayoutMode: Left;"], [spacer(flex=True), window, spacer(flex=True)]),
         spacer(flex=True),
     ])
 
@@ -734,7 +736,7 @@ BAG_SORTS = [("SortKind", "Тип"), ("SortName", "Имя"), ("SortCount", "Ко
 def bag_cell(i):
     left, top = (i % BAG_COLS) * CELL, (i // BAG_COLS) * CELL
     return group(f"S{i}", [f"Anchor: (Left: {left}, Top: {top}, Width: {CELL - 6}, Height: {CELL - 6});"], [
-        f"Group #S{i}Back {{ Anchor: (Left: 2, Top: 2, Width: 76, Height: 76); {skin('jr_slot', 8)} }}",
+        f"Group #S{i}Back {{ Anchor: (Left: 2, Top: 2, Width: 76, Height: 76); {skin('jr_cell', 28)} }}",
         sel_frame(f"S{i}Sel", 80, 80, 16),
         button(f"S{i}Btn", "", 64, 64, left=8, top=8),
         f"Group #S{i}Icon {{ Anchor: (Left: 16, Top: 14, Width: 48, Height: 48); }}",
@@ -762,7 +764,7 @@ def backpack():
     ])
     detail = column("DetailCol", ["FlexWeight: 1;"], [
         group("", ["Anchor: (Height: 68);", "LayoutMode: Left;"], [
-            group("", ["Anchor: (Width: 68, Height: 68);", skin("jr_slot", 8)], [
+            group("", ["Anchor: (Width: 68, Height: 68);", skin("jr_cell", 26)], [
                 "Group #SelIcon { Anchor: (Left: 10, Top: 10, Width: 48, Height: 48); }"]),
             spacer(w=10),
             group("", ["FlexWeight: 1;", "LayoutMode: Top;"], [

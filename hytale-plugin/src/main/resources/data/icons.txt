@@ -82,3 +82,4 @@ wall
 roar
 claw
 split
+gear_sword

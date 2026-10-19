@@ -496,3 +496,9 @@ jrpg-mod/
 - Финал победы: `onBattleEnd` приходит сразу после удара, до возврата. Флаг `presenting` (ставится в `onActionExecuted`, снимается, когда боец вернулся) и `whenPresented(...)`: облёт `outro()` и эмоции `celebrate()` запускаются после возврата (страховка 6 с).
 - Осмотр врага: «?» у врага в `AWAIT_COMMAND` → `enemyView`, `inspectId`, `BattleCamera.profile(pos, yaw, scale)` (scale 1.9 у босса — дальше и выше). Снимается повторным кликом, «Назад», выбором действия (`onActionExecuted`) и в начале хода.
 - Из лога 0.10.3: эмоции в игре (21): BlowKiss, Chicken, DabLeft/Right, DanceBoogie, DancePop, Dance_Dwarf/Orc/Pandaren, HighFive, Kill, Laugh, PonderDismissive, Punch, Refuse, Salute, Shrug, Tongue, Wave, WaveDouble, Yawn. Частицы стихий теперь находятся сами: Impact_Fire, Impact_Ice, Impact_Poison, Splash, Magic_Hit, Buff_Windstrikes.
+
+## Сессия 27 — 0.10.5: иконки Kling, круглые рамки уровня, окна меню
+
+- Иконки-медальоны Kling (`/mnt/project-files/jrpg-gemini/kling/out/`, HANDOFF.md): 39 PNG заменили одноимённые в `Icons/`, новая `gear_sword` (оружие типа sword; `Describe.gearIcon` по умолчанию). Список внешних иконок — `tools/external_icons.txt`: `gen_icons.py` их не перерисовывает, только пишет обёртки `.ui` и `data/icons.txt`. Когда придут остальные 11 (water, haste, nova, quake, tempest, shadow, taunt, warcry, antidote, bomb, bag), положить PNG в `Icons/`, дописать имена в `external_icons.txt` и запустить `gen_icons.py`.
+- Круглые рамки уровня `tier_c1..3` для медальонов; какие иконки круглые, `gen_icons.py` определяет по прозрачному углу и пишет в `data/icons_round.txt` (`Icons.round`); `BattleMenuPage.putIcon` берёт `tier_c` или `tier_t`.
+- `jr_window.png` — panel_bg Kling без ромбиков посередине краёв (9-slice, Border 86): фон всех окон меню (`menu_window`). `jr_cell.png` — slot_frame Kling (Border 28): ячейки рюкзака и рамка выбранного предмета. panel_bg2 не подключён.

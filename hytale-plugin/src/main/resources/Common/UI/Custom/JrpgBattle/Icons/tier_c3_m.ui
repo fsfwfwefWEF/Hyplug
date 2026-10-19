@@ -1,0 +1,4 @@
+Group {
+  Anchor: (Width: 40, Height: 40);
+  Background: (TexturePath: "tier_c3.png");
+}
