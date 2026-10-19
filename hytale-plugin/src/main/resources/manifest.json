@@ -1,7 +1,7 @@
 {
   "Group": "Hveien",
   "Name": "JrpgBattles",
-  "Version": "0.10.7",
+  "Version": "0.10.8",
   "Description": "Пошаговые JRPG-бои: партия из 3 героев, меню действий, способности, предметы, статусы, боссы.",
   "Authors": [ { "Name": "Hveien" } ],
   "Website": "",

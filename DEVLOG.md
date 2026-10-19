@@ -510,3 +510,4 @@ jrpg-mod/
 ## Сессия 29 — 0.10.7: остальные иконки Kling
 
 - В `Icons/` поставлены water, nova, shadow, quake, taunt, warcry, bag, bomb (новые версии bag и bomb приняты), все в `tools/external_icons.txt`. Старой квадратной осталась только antidote. В 40 px bag читается хорошо, bomb тёмная на тёмном фоне, в 22 px читается слабо.
+- 0.10.8: bomb.png осветлена скриптом `tools/brighten_bomb.py` (фон светлее, корпус со светлым контуром). Если Kling пришлёт новую бомбу — прогнать скрипт на ней.
