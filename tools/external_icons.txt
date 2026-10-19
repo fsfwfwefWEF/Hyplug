@@ -40,3 +40,11 @@ wall
 web
 tempest
 haste
+water
+nova
+shadow
+quake
+taunt
+warcry
+bag
+bomb

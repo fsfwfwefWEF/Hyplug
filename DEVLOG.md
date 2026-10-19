@@ -506,3 +506,7 @@ jrpg-mod/
 ## Сессия 28 — 0.10.6: иконки «Буря» и «Ускорение»
 
 - tempest.png и haste.png от Kling поставлены в `Icons/` и дописаны в `tools/external_icons.txt`. bomb и bag не приняты, их не ставить. Без новых пока: water, nova, quake, shadow, taunt, warcry, antidote, bomb, bag.
+
+## Сессия 29 — 0.10.7: остальные иконки Kling
+
+- В `Icons/` поставлены water, nova, shadow, quake, taunt, warcry, bag, bomb (новые версии bag и bomb приняты), все в `tools/external_icons.txt`. Старой квадратной осталась только antidote. В 40 px bag читается хорошо, bomb тёмная на тёмном фоне, в 22 px читается слабо.
