@@ -941,7 +941,8 @@ public final class BattleSession implements BattleListener {
         Settings.Animations an = plugin.settings().anim;
         if (!an.enabled || ref == null) return;
         int seq = animSeq.merge(ref, 1, Integer::sum);
-        if (kind.equals("attack") || kind.equals("skill") || kind.equals("cast") || kind.equals("parry")) {
+        if (kind.equals("attack") || kind.equals("skill") || kind.equals("cast") || kind.equals("parry")
+                || kind.equals("victory")) {
             // Замах снимается через strikeMs, если сам не кончился (зацикленные «заряженные» и вращения),
             // и только если с тех пор боец не начал другую анимацию.
             later(an.strikeMs, () -> {
@@ -958,6 +959,7 @@ public final class BattleSession implements BattleListener {
             case "skill" -> an.weaponSkill;
             case "cast" -> an.weaponCast;
             case "parry" -> an.weaponParry;
+            case "victory" -> an.weaponVictory;
             default -> List.of();
         };
         List<String> weapon = ownAnims(c, "weapon");
@@ -1317,6 +1319,7 @@ public final class BattleSession implements BattleListener {
         });
         else camera.overview();
         if (outcome == Battle.Outcome.VICTORY) {
+            plugin.squads().forget(encounter.id());
             if (!encounter.id().startsWith(SquadSpawner.ID_PREFIX)) {
                 plugin.progress().markCleared(encounter, System.currentTimeMillis());
                 plugin.scheduler().execute(plugin::saveWorld);
@@ -1339,6 +1342,12 @@ public final class BattleSession implements BattleListener {
             bannerSub = "Награда: " + encounter.exp() + " опыта";
         } else {
             banner = outcome == Battle.Outcome.FLED ? "Партия сбежала" : "Поражение…";
+            // Те же враги ждут новой попытки: отряд вернётся на место, ручная встреча снова сработает.
+            int sec = plugin.settings().retrySeconds;
+            boolean squad = plugin.squads().returnLater(player, encounter.id(), sec * 1000L);
+            bannerSub = (squad ? "Враги вернутся на место" : "Встреча снова сработает") + " через " + sec
+                    + " с — подойди к ним ещё раз";
+            say(bannerSub + ".");
         }
         // Опыт, добыча и потраченные зелья — сразу в сохранение.
         plugin.savePlayer(player.getUuid());
@@ -1376,8 +1385,9 @@ public final class BattleSession implements BattleListener {
     }
 
     /**
-     * Герои празднуют: каждому своя эмоция игры (танец, аплодисменты…), а если эмоций нет —
-     * анимации победы из settings.json. Через ~4 с эмоция повторяется ещё раз, пока идёт облёт.
+     * Герои празднуют, когда каждый дошёл до своего места: поднимают оружие (анимация оружия, у модели
+     * игрока своих анимаций победы нет), потом эмоция игры (танец, смех…); через ~4 с ещё раз.
+     * Раньше куклу останавливали посреди возврата — она оставалась в позе бега (0.10.9).
      */
     private void celebrate() {
         Settings.Animations an = plugin.settings().anim;
@@ -1386,26 +1396,44 @@ public final class BattleSession implements BattleListener {
         for (Combatant c : battle.alive(Side.PARTY)) {
             Ref<EntityStore> ref = puppets.get(c.id);
             if (ref == null) continue;
-            plugin.mover().stop(ref);
-            Fx.stopAnimation(store, ref, com.hypixel.hytale.protocol.AnimationSlot.Action);
             // Каждому своё слово первым, чтобы не все танцевали одинаково.
             List<String> words = new java.util.ArrayList<>(an.victoryEmotes);
             if (!words.isEmpty()) java.util.Collections.rotate(words, -(i % words.size()));
             String emote = Fx.pickEmote(words, taken);
             if (emote == null) emote = Fx.pickEmote(words, java.util.Set.of());
-            i++;
+            if (emote != null) taken.add(emote);
             String em = emote;
-            long delay = 300L * i;
-            later(delay, () -> {
-                if (em == null || !Fx.emote(store, ref, em)) animateAs(c, ref, "victory");
-            });
-            if (em != null) {
-                taken.add(em);
-                later(delay + 4200, () -> {
-                    if (!closed) Fx.emote(store, ref, em);
+            long delay = 250L * i++;
+            whenStill(ref, 3000, () -> later(delay, () -> {
+                face(c, ref);
+                animateAs(c, ref, "victory");
+                if (em != null) later(1300, () -> Fx.emote(store, ref, em));
+                later(4200, () -> {
+                    animateAs(c, ref, "victory");
+                    if (em != null) later(1300, () -> Fx.emote(store, ref, em));
                 });
-            }
+            }));
         }
+    }
+
+    /** Выполнить, когда кукла дойдёт (NpcMover), но не позже maxMs — тогда остановить её. */
+    private void whenStill(Ref<EntityStore> ref, long maxMs, Runnable r) {
+        if (!plugin.mover().moving(ref)) {
+            r.run();
+            return;
+        }
+        if (maxMs <= 0) {
+            plugin.mover().stop(ref);
+            r.run();
+            return;
+        }
+        later(100, () -> whenStill(ref, maxMs - 100, r));
+    }
+
+    /** Повернуть бойца на его место лицом к врагам (как стоит в начале боя). */
+    private void face(Combatant c, Ref<EntityStore> ref) {
+        Vector3d home = homes.get(c.id);
+        if (home != null && ref != null && ref.isValid()) Fx.place(store, ref, home, yawOf(c));
     }
 
     // ---------- всплывающие надписи ----------

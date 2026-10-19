@@ -305,6 +305,8 @@ def hit_layer(i):
 
 
 BOOK_W, BOOK_H = 440, 290
+# текст журнала: ширина панели − поля 14+12, высота панели 280 − поля 10+8 − шапка 29
+LOG_TEXT_W, LOG_TEXT_H = BOOK_W - 26, BOOK_H - 10 - 18 - 29
 
 
 def battle():
@@ -343,7 +345,10 @@ def battle():
         "Group { Anchor: (Height: 1); Background: #e8c46a(0.45); }",
         "Group { Anchor: (Height: 1); Background: #000000(0.35); }",
         spacer(h=4),
-        label("LogText", "", 13, TEXT, flex=True, wrap=True),
+        # #LogText по абсолютным координатам в #LogBox: при новой строке плагин сдвигает его снизу вверх
+        group("LogBox", ["FlexWeight: 1;"], [
+            f'Label #LogText {{ Text: ""; Anchor: (Left: 0, Top: 0, Width: {LOG_TEXT_W}, Height: {LOG_TEXT_H}); '
+            f"Style: (FontSize: 13, TextColor: {TEXT}, Wrap: true); }}"]),
     ])
     inspect = group("InsPanel", [f"Anchor: (Width: {INS_W});", "LayoutMode: Top;", skin("jr_panel"),
                                  "Padding: (Full: 13);"], [
@@ -916,15 +921,17 @@ def mainmenu():
             group("", ["Anchor: (Width: 46, Height: 46);", skin("jr_slot", 8)], [
                 f'Group {{ Anchor: (Left: 5, Top: 5, Width: 36, Height: 36); Background: (TexturePath: "Icons/{icon}.png"); }}']),
             spacer(w=8),
-            f'$C.@SecondaryTextButton #{bid} {{ @Text = "{text}"; Anchor: (Width: 330, Height: 42); }}',
+            # окно 450 − поля 2×24 − колонка 2×14 = 374: иконка 46 + 8 + кнопка 316 влезают в рамку
+            f'$C.@SecondaryTextButton #{bid} {{ @Text = "{text}"; Anchor: (Width: 316, Height: 42); }}',
         ]), spacer(h=6)]
     body = column("", [f"Anchor: (Height: {len(MAIN_BUTTONS) * 52 + 56 + 28});"], rows + [
         spacer(h=4),
         divider(),
         spacer(h=8),
         group("", ["Anchor: (Height: 42);", "LayoutMode: Left;"], [
-            spacer(w=54),
-            '$C.@CancelTextButton #Close { @Text = "Закрыть"; Anchor: (Width: 330, Height: 42); }',
+            spacer(flex=True),
+            '$C.@CancelTextButton #Close { @Text = "Закрыть"; Anchor: (Width: 260, Height: 42); }',
+            spacer(flex=True),
         ]),
     ], pad=14)
     window = menu_window(450, [

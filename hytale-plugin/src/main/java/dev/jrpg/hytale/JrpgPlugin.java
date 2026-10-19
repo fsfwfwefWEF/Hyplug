@@ -349,14 +349,14 @@ public final class JrpgPlugin extends JavaPlugin {
     public ConcurrentHashMap<UUID, BattleSession> sessions() { return sessions; }
     public ScheduledExecutorService scheduler() { return scheduler; }
 
-    /** После боя автостарт встреч не срабатывает 30 с (иначе после бегства бой начнётся снова). */
+    /** После боя автостарт встреч не срабатывает settings.retrySeconds (иначе после бегства бой начнётся снова). */
     private final ConcurrentHashMap<UUID, Long> lastBattleEnd = new ConcurrentHashMap<>();
 
     public void markBattleEnded(UUID player) { lastBattleEnd.put(player, System.currentTimeMillis()); }
 
     public boolean onCooldown(UUID player) {
         Long t = lastBattleEnd.get(player);
-        return t != null && System.currentTimeMillis() - t < 30_000;
+        return t != null && System.currentTimeMillis() - t < settings.retrySeconds * 1000L;
     }
 
     public java.util.Map<String, Integer> inventoryOf(UUID player) {

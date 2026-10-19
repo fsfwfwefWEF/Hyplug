@@ -131,6 +131,7 @@
 
   // Автостарт боя, когда игрок подходит к встрече из encounters.json или к отряду из squads.json.
   "proximityTrigger": true,
+  "retrySeconds": 30,
   // Окно «Сражаться / Сбежать» перед боем (false — бой сразу).
   "preBattlePrompt": true,
   // Облёт камеры вокруг арены перед первым ходом.

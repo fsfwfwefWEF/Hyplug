@@ -165,7 +165,44 @@ final class SquadSpawner {
 
     /** Встреча для боя с отрядом: партия встаёт на месте игрока, враги — в сторону отряда. */
     Encounter encounterFor(Squad s, Vector3d playerPos) {
+        fought.put(s.id, new Fought(s.template, s.world, s.pos));
         return plugin.data().squads().encounter(s.template, s.id, s.world, playerPos.x, playerPos.y, playerPos.z);
+    }
+
+    /** С какими отрядами начинали бой: чтобы после поражения или бегства вернуть их на место. */
+    private record Fought(Squads.Template template, String world, Vector3d pos) {}
+
+    private final Map<String, Fought> fought = new ConcurrentHashMap<>();
+
+    /** Отряд побеждён — возвращать его не нужно. */
+    void forget(String encounterId) {
+        fought.remove(encounterId);
+    }
+
+    /**
+     * Поражение или бегство от отряда: через delayMs тот же отряд снова стоит на своём месте, и к нему
+     * можно подойти ещё раз. false — это не отряд (ручные встречи и так остаются на месте).
+     */
+    boolean returnLater(PlayerRef p, String encounterId, long delayMs) {
+        Fought f = fought.remove(encounterId);
+        if (f == null) return false;
+        plugin.scheduler().schedule(() -> {
+            Ref<EntityStore> ref = p.getReference();
+            if (!p.isValid() || ref == null || !ref.isValid()) return;
+            Store<EntityStore> store = ref.getStore();
+            World world = store.getExternalData().getWorld();
+            world.execute(() -> {
+                if (!ref.isValid() || !world.getName().equals(f.world())) return;
+                Squad s = new Squad(ID_PREFIX + (++counter) + ":" + f.template().id(), f.template(), f.world(), f.pos());
+                placeNpcs(s, store, world, Fx.position(store, ref));
+                if (s.npcs.isEmpty()) return;
+                byPlayer.computeIfAbsent(p.getUuid(), k -> new ArrayList<>()).add(s);
+                plugin.log("Отряд «" + f.template().name() + "» вернулся на место для новой попытки");
+                p.sendMessage(com.hypixel.hytale.server.core.Message.raw(
+                        "[JRPG] «" + f.template().name() + "» снова на месте — подойди, чтобы сразиться ещё раз."));
+            });
+        }, delayMs, java.util.concurrent.TimeUnit.MILLISECONDS);
+        return true;
     }
 
     void remove(UUID player, Squad s, Store<EntityStore> store) {

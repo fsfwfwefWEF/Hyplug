@@ -5,7 +5,6 @@ import com.hypixel.hytale.server.core.ui.Value;
 import com.hypixel.hytale.server.core.ui.builder.UICommandBuilder;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -18,7 +17,7 @@ import java.util.Map;
  * состояние (t = 0) — так элементы ждут своей очереди спрятанными.
  */
 final class UiAnim {
-    static final long FRAME_MS = 45;
+    static final long FRAME_MS = 35;
 
     interface Frame {
         void apply(UICommandBuilder cmd, double t);
@@ -63,25 +62,45 @@ final class UiAnim {
     /** Записать кадр на момент now; закончившиеся дорожки получают t = 1 и удаляются. */
     void tick(UICommandBuilder cmd, long now) {
         java.util.List<Runnable> done = new ArrayList<>();
-        for (Iterator<Track> it = tracks.values().iterator(); it.hasNext(); ) {
-            Track tr = it.next();
-            if (now < tr.start) {
-                if (!tr.primed) {
-                    tr.frame.apply(cmd, 0);
-                    tr.primed = true;
-                }
-                continue;
-            }
-            // после старта t > 0 (t = 0 — только ожидание своей очереди)
-            double t = Math.max(1e-3, Math.min(1, (now - tr.start) / (double) tr.dur));
-            tr.primed = true;
-            tr.frame.apply(cmd, t);
-            if (t >= 1) {
-                it.remove();
-                if (tr.done != null) done.add(tr.done);
+        // По копии: кадр дорожки может запустить новую (play/cue) — без копии это ConcurrentModificationException,
+        // кадры обрывались, и панели застревали на полпути до следующего обновления окна (0.10.9).
+        for (Map.Entry<String, Track> en : new ArrayList<>(tracks.entrySet())) {
+            Track tr = en.getValue();
+            try {
+                step(cmd, now, en.getKey(), tr, done);
+            } catch (RuntimeException e) {
+                tracks.remove(en.getKey(), tr); // сломанная дорожка не должна крутить кадры вечно
+                if (firstError == null) firstError = e;
             }
         }
         done.forEach(Runnable::run);
+    }
+
+    private RuntimeException firstError;
+
+    /** Ошибка дорожки с прошлых кадров (дорожка уже снята), или null. */
+    RuntimeException takeError() {
+        RuntimeException e = firstError;
+        firstError = null;
+        return e;
+    }
+
+    private void step(UICommandBuilder cmd, long now, String key, Track tr, java.util.List<Runnable> done) {
+        if (now < tr.start) {
+            if (!tr.primed) {
+                tr.frame.apply(cmd, 0);
+                tr.primed = true;
+            }
+            return;
+        }
+        // после старта t > 0 (t = 0 — только ожидание своей очереди)
+        double t = Math.max(1e-3, Math.min(1, (now - tr.start) / (double) tr.dur));
+        tr.primed = true;
+        tr.frame.apply(cmd, t);
+        if (t >= 1) {
+            tracks.remove(key, tr);
+            if (tr.done != null) done.add(tr.done);
+        }
     }
 
     // ---------- помощники ----------

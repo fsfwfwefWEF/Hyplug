@@ -76,6 +76,8 @@ public final class Settings {
     /** Всплывающие цифры урона и названия эффектов над бойцами. */
     public boolean combatText = true;
     public boolean proximityTrigger = true;
+    /** После поражения или бегства враги возвращаются (и встречи снова срабатывают) через столько секунд. */
+    public int retrySeconds = 30;
     /** Окно «Сражаться / Сбежать» перед боем (false — бой начинается сразу, как в 0.5). */
     public boolean preBattlePrompt = true;
     /** Облёт камеры вокруг арены перед первым ходом. */
@@ -131,6 +133,8 @@ public final class Settings {
                 "Sweep", "SwingUpLeft", "SwingUpRight", "GuardBash", "SwingDown", "Stab");
         public java.util.List<String> weaponCast = java.util.List.of("CastLeft", "CastEnchant");
         public java.util.List<String> weaponParry = java.util.List.of("GuardBash");
+        /** Победа: поднять оружие (у модели игрока своих анимаций победы нет). */
+        public java.util.List<String> weaponVictory = java.util.List.of("CastEnrage", "CastSummon", "CastEnchant", "CastLeft");
         /** Сколько мс длится удар: потом его анимация снимается (если сама не кончилась). */
         public long strikeMs = 1100;
         /** Рывок самого игрока к цели и обратно (его двигает телепорт, поэтому — рывок, а не бег). */
@@ -272,6 +276,7 @@ public final class Settings {
         s.battleSpeed = Math.max(0.1, Json.num(m, "battleSpeed", s.battleSpeed));
         s.combatText = Json.bool(m, "combatText", s.combatText);
         s.proximityTrigger = Json.bool(m, "proximityTrigger", true);
+        s.retrySeconds = (int) Math.max(3, Json.num(m, "retrySeconds", s.retrySeconds));
         s.preBattlePrompt = Json.bool(m, "preBattlePrompt", s.preBattlePrompt);
         s.introFlyby = Json.bool(m, "introFlyby", s.introFlyby);
         s.heroDouble = Json.bool(m, "heroDouble", s.heroDouble);
@@ -320,6 +325,7 @@ public final class Settings {
             if (a.containsKey("weaponSkill")) k.weaponSkill = Json.strings(a, "weaponSkill");
             if (a.containsKey("weaponCast")) k.weaponCast = Json.strings(a, "weaponCast");
             if (a.containsKey("weaponParry")) k.weaponParry = Json.strings(a, "weaponParry");
+            if (a.containsKey("weaponVictory")) k.weaponVictory = Json.strings(a, "weaponVictory");
             k.strikeMs = (long) Math.max(300, Json.num(a, "strikeMs", k.strikeMs));
             if (a.containsKey("dashForward")) k.dashForward = Json.strings(a, "dashForward");
             if (a.containsKey("dashBack")) k.dashBack = Json.strings(a, "dashBack");

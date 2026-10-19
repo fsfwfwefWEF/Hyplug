@@ -770,10 +770,10 @@ Group {
         Group { Anchor: (Height: 1); Background: #e8c46a(0.45); }
         Group { Anchor: (Height: 1); Background: #000000(0.35); }
         Group { Anchor: (Height: 4); }
-        Label #LogText {
-          Text: "";
+        Group #LogBox {
           FlexWeight: 1;
-          Style: (FontSize: 13, TextColor: #e9eef6, Wrap: true);
+
+          Label #LogText { Text: ""; Anchor: (Left: 0, Top: 0, Width: 414, Height: 233); Style: (FontSize: 13, TextColor: #e9eef6, Wrap: true); }
         }
       }
       Group { FlexWeight: 1; }

@@ -73,7 +73,6 @@ public final class BattleMenuPage extends InteractiveCustomUIPage<BattleMenuPage
     /** Ширина полосок HP/MP на экране и куда она едет. */
     private final Map<String, Integer> barShown = new HashMap<>(), barTarget = new HashMap<>();
     private int logSeen = -1, logFlashFrom = Integer.MAX_VALUE;
-    private long logFlashAt;
 
     public BattleMenuPage(@Nonnull PlayerRef playerRef, BattleSession session) {
         super(playerRef, CustomPageLifetime.CanDismiss, Click.CODEC);
@@ -119,6 +118,9 @@ public final class BattleMenuPage extends InteractiveCustomUIPage<BattleMenuPage
         barShown.clear();
         barTarget.clear();
         logSeen = -1;
+        logFlashFrom = Integer.MAX_VALUE;
+        logTyped = Integer.MAX_VALUE;
+        logHot = false;
         builtAt = System.currentTimeMillis();
         fill(cmd);
         if (animated()) opening();
@@ -182,13 +184,18 @@ public final class BattleMenuPage extends InteractiveCustomUIPage<BattleMenuPage
             queueAnimating = false;
             return;
         }
-        UICommandBuilder cmd = new UICommandBuilder();
-        anim.tick(cmd, System.currentTimeMillis());
-        if (cmd.getCommands().length > 0) {
-            lastFrameAt = System.currentTimeMillis();
-            if (Pages.update(this, playerRef, cmd)) note("кадры анимации уходят клиенту");
+        try {
+            UICommandBuilder cmd = new UICommandBuilder();
+            anim.tick(cmd, System.currentTimeMillis());
+            RuntimeException err = anim.takeError();
+            if (err != null) session.plugin().warn("Анимация окна боя сломалась и снята", err);
+            if (cmd.getCommands().length > 0) {
+                lastFrameAt = System.currentTimeMillis();
+                if (Pages.update(this, playerRef, cmd)) note("кадры анимации уходят клиенту");
+            }
+        } finally {
+            kick();
         }
-        kick();
     }
 
     /** Окно сейчас анимируется (кадры шли недавно) и собрано не только что — для ClickBuffer. */
@@ -478,7 +485,7 @@ public final class BattleMenuPage extends InteractiveCustomUIPage<BattleMenuPage
                 UiAnim.box(cmd, "#MenuPanel", 0, to, MENU_W, MENU_H);
             } else {
                 anim.play("menu", want ? 80 : 0, want ? 360 : 260, (c, t) -> UiAnim.box(c, "#MenuPanel", 0,
-                        UiAnim.ilerp(from, to, want ? UiAnim.easeOutBack(t) : UiAnim.easeIn(t)), MENU_W, MENU_H));
+                        UiAnim.ilerp(from, to, want ? UiAnim.easeOut(t) : UiAnim.easeIn(t)), MENU_W, MENU_H));
             }
             if (want) {
                 menuSig = newSig;
@@ -581,35 +588,79 @@ public final class BattleMenuPage extends InteractiveCustomUIPage<BattleMenuPage
 
     private static final int INS_LINES = 16;
 
-    /** Журнал боя слева внизу: последние строки, свежие (этот и прошлый ход) яркие, старые тусклее. */
+    /**
+     * Журнал боя слева внизу: последние строки, свежие (этот и прошлый ход) яркие, старые тусклее.
+     * Новые строки печатаются по буквам золотым цветом, журнал при этом подъезжает снизу на строку;
+     * через полсекунды после печати строки остывают до своего цвета.
+     */
     private void fillLog(UICommandBuilder cmd) {
         List<BattleSession.LogEntry> all = session.journal();
-        int start = Math.max(0, all.size() - LOG_LINES);
-        List<BattleSession.LogEntry> tail = all.subList(start, all.size());
         int now = session.turnNo();
-        long ms = System.currentTimeMillis();
-        if (animated() && logSeen >= 0 && all.size() > logSeen) {
-            // свежие строки вспыхивают светлым и за ~0.7 с остывают до своего цвета
-            note("свежие строки журнала вспыхивают");
-            logFlashFrom = logSeen;
-            logFlashAt = ms;
-            anim.cue("logFade1", 280, this::fillLog);
-            anim.cue("logFade2", 620, this::fillLog);
-        }
-        logSeen = all.size();
-        long age = ms - logFlashAt;
-        double flash = age < 270 ? 0.65 : age < 610 ? 0.3 : 0;
-        List<Message> lines = new ArrayList<>();
-        for (int j = 0; j < tail.size(); j++) {
-            BattleSession.LogEntry e = tail.get(j);
-            String base = e.color() == null ? RichText.DARK.text() : e.color();
-            if (e.turn() < now - 1) base = dim(base);
-            if (flash > 0 && start + j >= logFlashFrom) base = UiAnim.brighten(base, flash);
-            lines.add(RichText.line(e.text(), RichText.DARK, base, names(true), names(false)));
-        }
-        cmd.set("#LogText.TextSpans", RichText.lines(lines));
         cmd.set("#LogSub.Text", session.encounterName());
         cmd.set("#LogTurn.Text", now > 0 ? "Ход " + now : "");
+        if (animated() && logSeen >= 0 && all.size() > logSeen) {
+            note("новые строки журнала печатаются, журнал подъезжает");
+            if (!anim.has("logType")) {
+                logFlashFrom = logSeen;
+                logTyped = 0;
+            }
+            logSeen = all.size();
+            logHot = true;
+            int total = freshChars(all);
+            int from = Math.min(logTyped, total);
+            long dur = Math.max(250, Math.min(1100, (total - from) * 14L));
+            anim.play("logType", 0, dur, (c, t) -> {
+                logTyped = UiAnim.ilerp(from, total, t);
+                renderLog(c);
+            });
+            anim.play("logScroll", 0, 300, (c, t) -> UiAnim.box(c, "#LogText", 0,
+                    UiAnim.ilerp(18, 0, UiAnim.easeOut(t)), LOG_TEXT_W, LOG_TEXT_H));
+            anim.play("logCool", dur + 500, 1, (c, t) -> {
+                if (t < 1) return;
+                logHot = false;
+                renderLog(c);
+            });
+            return;
+        }
+        logSeen = all.size();
+        if (anim.has("logType")) return; // строку сейчас печатают кадры
+        renderLog(cmd);
+    }
+
+    private static final int LOG_TEXT_W = 414, LOG_TEXT_H = 233;
+    private static final String LOG_HOT = "#ffd98a";
+    /** Сколько букв свежих строк уже напечатано; свежие строки ещё горят золотым. */
+    private int logTyped = Integer.MAX_VALUE;
+    private boolean logHot;
+
+    private int freshChars(List<BattleSession.LogEntry> all) {
+        int n = 0;
+        for (int k = Math.max(0, logFlashFrom); k < all.size(); k++) n += all.get(k).text().length();
+        return n;
+    }
+
+    private void renderLog(UICommandBuilder cmd) {
+        List<BattleSession.LogEntry> all = session.journal();
+        int start = Math.max(0, all.size() - LOG_LINES);
+        int now = session.turnNo();
+        int budget = logTyped;
+        // буквы свежих строк до первой показанной в окне тоже считаются напечатанными
+        for (int k = Math.max(0, logFlashFrom); k < start && k < all.size(); k++) budget -= all.get(k).text().length();
+        List<Message> lines = new ArrayList<>();
+        for (int k = start; k < all.size(); k++) {
+            BattleSession.LogEntry e = all.get(k);
+            String base = e.color() == null ? RichText.DARK.text() : e.color();
+            if (e.turn() < now - 1) base = dim(base);
+            String text = e.text();
+            if (k >= logFlashFrom) {
+                if (budget <= 0) break;
+                if (budget < text.length()) text = text.substring(0, budget);
+                budget -= e.text().length();
+                if (logHot) base = LOG_HOT;
+            }
+            lines.add(RichText.line(text, RichText.DARK, base, names(true), names(false)));
+        }
+        cmd.set("#LogText.TextSpans", RichText.lines(lines));
     }
 
     /** Строк в журнале (высота панели 280, шрифт 13). */

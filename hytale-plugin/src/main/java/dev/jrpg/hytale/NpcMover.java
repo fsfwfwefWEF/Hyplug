@@ -104,7 +104,10 @@ final class NpcMover {
 
     /** Остановить, не доводя до цели (кукла остаётся, где была). */
     void stop(Ref<EntityStore> ref) {
-        if (ref != null) moves.remove(ref);
+        if (ref == null) return;
+        Move m = moves.remove(ref);
+        // Без этого кукла остаётся в позе бега и «бежит на месте» (финал победы 0.10.9).
+        if (m != null && m.state != null && ref.isValid()) Fx.setMovement(m.store, ref, "idle");
     }
 
     /** Забыть куклу (исчезла): чтобы карта поворотов не росла. */
