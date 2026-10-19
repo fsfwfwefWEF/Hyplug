@@ -1322,4 +1322,397 @@ Group {
     }
     Group #Sp2Bottom { FlexWeight: 1; }
   }
+  Group #RewardLayer {
+    Anchor: (Full: 0);
+    LayoutMode: Top;
+
+    Group { FlexWeight: 1; }
+    Group {
+      Anchor: (Height: 560);
+      LayoutMode: Left;
+
+      Group { FlexWeight: 1; }
+      Group #RewardSlot {
+        Anchor: (Width: 660);
+
+        Group #RewardWin {
+          Anchor: (Left: 0, Top: 0, Width: 660, Height: 560);
+          LayoutMode: Top;
+          Background: (TexturePath: "jr_window.png", Border: 86);
+          Padding: (Left: 26, Right: 26, Top: 14, Bottom: 22);
+
+          Group {
+            Anchor: (Height: 52);
+            LayoutMode: Left;
+
+            Group { FlexWeight: 1; }
+            Group {
+              Anchor: (Width: 520, Height: 52);
+              LayoutMode: Top;
+              Background: (TexturePath: "jr_banner.png");
+              Padding: (Top: 6);
+
+              Label #RewardTitle {
+                Text: "ПОБЕДА!";
+                Anchor: (Height: 26);
+                Style: (FontSize: 22, TextColor: #e8c46a, RenderBold: true, HorizontalAlignment: Center);
+              }
+              Label #RewardSub {
+                Text: "";
+                Anchor: (Height: 16);
+                Style: (FontSize: 12, TextColor: #b4c2d6, HorizontalAlignment: Center);
+              }
+            }
+            Group { FlexWeight: 1; }
+          }
+          Group { Anchor: (Height: 4); }
+          Label #RewardExp {
+            Text: "";
+            Anchor: (Height: 22);
+            Style: (FontSize: 15, TextColor: #9fe6a8, RenderBold: true, HorizontalAlignment: Center);
+          }
+          Group { Anchor: (Height: 4); }
+          Group #Rw0 {
+            Anchor: (Height: 56);
+            LayoutMode: Left;
+            Background: (TexturePath: "jr_panel_party.png", Border: 16);
+            Padding: (Left: 8, Right: 10, Top: 5, Bottom: 5);
+
+            Group #Rw0Icon { Anchor: (Width: 44, Height: 44); }
+            Group { Anchor: (Width: 10); }
+            Group {
+              Anchor: (Width: 230);
+              LayoutMode: Top;
+
+              Label #Rw0Name {
+                Text: "";
+                Anchor: (Height: 22);
+                Style: (FontSize: 16, TextColor: #a9d8ff, RenderBold: true);
+              }
+              Label #Rw0Lvl {
+                Text: "";
+                Anchor: (Height: 18);
+                Style: (FontSize: 12, TextColor: #e8c46a, RenderBold: true);
+              }
+            }
+            Group {
+              FlexWeight: 1;
+              LayoutMode: Top;
+
+              Label #Rw0Exp {
+                Text: "";
+                Anchor: (Height: 20);
+                Style: (FontSize: 13, TextColor: #9fe6a8, RenderBold: true);
+              }
+              Group { Anchor: (Height: 4); }
+              Group #Rw0BarBack {
+                Anchor: (Width: 300, Height: 8);
+                LayoutMode: Left;
+                Background: (TexturePath: "jr_bar_back.png");
+                Group #Rw0BarFill { Anchor: (Width: 300, Height: 8); Background: (TexturePath: "jr_bar_ap.png"); }
+              }
+              Label #Rw0Next {
+                Text: "";
+                Anchor: (Height: 14);
+                Style: (FontSize: 11, TextColor: #b4c2d6);
+              }
+            }
+          }
+          Group { Anchor: (Height: 4); }
+          Group #Rw1 {
+            Anchor: (Height: 56);
+            LayoutMode: Left;
+            Background: (TexturePath: "jr_panel_party.png", Border: 16);
+            Padding: (Left: 8, Right: 10, Top: 5, Bottom: 5);
+
+            Group #Rw1Icon { Anchor: (Width: 44, Height: 44); }
+            Group { Anchor: (Width: 10); }
+            Group {
+              Anchor: (Width: 230);
+              LayoutMode: Top;
+
+              Label #Rw1Name {
+                Text: "";
+                Anchor: (Height: 22);
+                Style: (FontSize: 16, TextColor: #a9d8ff, RenderBold: true);
+              }
+              Label #Rw1Lvl {
+                Text: "";
+                Anchor: (Height: 18);
+                Style: (FontSize: 12, TextColor: #e8c46a, RenderBold: true);
+              }
+            }
+            Group {
+              FlexWeight: 1;
+              LayoutMode: Top;
+
+              Label #Rw1Exp {
+                Text: "";
+                Anchor: (Height: 20);
+                Style: (FontSize: 13, TextColor: #9fe6a8, RenderBold: true);
+              }
+              Group { Anchor: (Height: 4); }
+              Group #Rw1BarBack {
+                Anchor: (Width: 300, Height: 8);
+                LayoutMode: Left;
+                Background: (TexturePath: "jr_bar_back.png");
+                Group #Rw1BarFill { Anchor: (Width: 300, Height: 8); Background: (TexturePath: "jr_bar_ap.png"); }
+              }
+              Label #Rw1Next {
+                Text: "";
+                Anchor: (Height: 14);
+                Style: (FontSize: 11, TextColor: #b4c2d6);
+              }
+            }
+          }
+          Group { Anchor: (Height: 4); }
+          Group #Rw2 {
+            Anchor: (Height: 56);
+            LayoutMode: Left;
+            Background: (TexturePath: "jr_panel_party.png", Border: 16);
+            Padding: (Left: 8, Right: 10, Top: 5, Bottom: 5);
+
+            Group #Rw2Icon { Anchor: (Width: 44, Height: 44); }
+            Group { Anchor: (Width: 10); }
+            Group {
+              Anchor: (Width: 230);
+              LayoutMode: Top;
+
+              Label #Rw2Name {
+                Text: "";
+                Anchor: (Height: 22);
+                Style: (FontSize: 16, TextColor: #a9d8ff, RenderBold: true);
+              }
+              Label #Rw2Lvl {
+                Text: "";
+                Anchor: (Height: 18);
+                Style: (FontSize: 12, TextColor: #e8c46a, RenderBold: true);
+              }
+            }
+            Group {
+              FlexWeight: 1;
+              LayoutMode: Top;
+
+              Label #Rw2Exp {
+                Text: "";
+                Anchor: (Height: 20);
+                Style: (FontSize: 13, TextColor: #9fe6a8, RenderBold: true);
+              }
+              Group { Anchor: (Height: 4); }
+              Group #Rw2BarBack {
+                Anchor: (Width: 300, Height: 8);
+                LayoutMode: Left;
+                Background: (TexturePath: "jr_bar_back.png");
+                Group #Rw2BarFill { Anchor: (Width: 300, Height: 8); Background: (TexturePath: "jr_bar_ap.png"); }
+              }
+              Label #Rw2Next {
+                Text: "";
+                Anchor: (Height: 14);
+                Style: (FontSize: 11, TextColor: #b4c2d6);
+              }
+            }
+          }
+          Group { Anchor: (Height: 4); }
+          Group { Anchor: (Height: 1); Background: #e8c46a(0.40); }
+          Group { Anchor: (Height: 1); Background: #000000(0.35); }
+          Group { Anchor: (Height: 4); }
+          Label #RewardLootTitle {
+            Text: "ДОБЫЧА";
+            Anchor: (Height: 20);
+            Style: (FontSize: 13, TextColor: #e8c46a, RenderBold: true);
+          }
+          Group {
+            Anchor: (Height: 36);
+            LayoutMode: Left;
+
+            Group #Loot0 {
+              Anchor: (Width: 290, Height: 34);
+              LayoutMode: Left;
+
+              Group {
+                Anchor: (Width: 34, Height: 34);
+                Background: (TexturePath: "jr_slot.png", Border: 8);
+
+                Group #Loot0Icon { Anchor: (Left: 2, Top: 2, Width: 30, Height: 30); }
+              }
+              Group { Anchor: (Width: 8); }
+              Label #Loot0Name {
+                Text: "";
+                Anchor: (Height: 34);
+                FlexWeight: 1;
+                Style: (FontSize: 13, TextColor: #e9eef6);
+              }
+            }
+            Group { Anchor: (Width: 12); }
+            Group #Loot1 {
+              Anchor: (Width: 290, Height: 34);
+              LayoutMode: Left;
+
+              Group {
+                Anchor: (Width: 34, Height: 34);
+                Background: (TexturePath: "jr_slot.png", Border: 8);
+
+                Group #Loot1Icon { Anchor: (Left: 2, Top: 2, Width: 30, Height: 30); }
+              }
+              Group { Anchor: (Width: 8); }
+              Label #Loot1Name {
+                Text: "";
+                Anchor: (Height: 34);
+                FlexWeight: 1;
+                Style: (FontSize: 13, TextColor: #e9eef6);
+              }
+            }
+            Group { Anchor: (Width: 12); }
+          }
+          Group { Anchor: (Height: 2); }
+          Group {
+            Anchor: (Height: 36);
+            LayoutMode: Left;
+
+            Group #Loot2 {
+              Anchor: (Width: 290, Height: 34);
+              LayoutMode: Left;
+
+              Group {
+                Anchor: (Width: 34, Height: 34);
+                Background: (TexturePath: "jr_slot.png", Border: 8);
+
+                Group #Loot2Icon { Anchor: (Left: 2, Top: 2, Width: 30, Height: 30); }
+              }
+              Group { Anchor: (Width: 8); }
+              Label #Loot2Name {
+                Text: "";
+                Anchor: (Height: 34);
+                FlexWeight: 1;
+                Style: (FontSize: 13, TextColor: #e9eef6);
+              }
+            }
+            Group { Anchor: (Width: 12); }
+            Group #Loot3 {
+              Anchor: (Width: 290, Height: 34);
+              LayoutMode: Left;
+
+              Group {
+                Anchor: (Width: 34, Height: 34);
+                Background: (TexturePath: "jr_slot.png", Border: 8);
+
+                Group #Loot3Icon { Anchor: (Left: 2, Top: 2, Width: 30, Height: 30); }
+              }
+              Group { Anchor: (Width: 8); }
+              Label #Loot3Name {
+                Text: "";
+                Anchor: (Height: 34);
+                FlexWeight: 1;
+                Style: (FontSize: 13, TextColor: #e9eef6);
+              }
+            }
+            Group { Anchor: (Width: 12); }
+          }
+          Group { Anchor: (Height: 2); }
+          Group {
+            Anchor: (Height: 36);
+            LayoutMode: Left;
+
+            Group #Loot4 {
+              Anchor: (Width: 290, Height: 34);
+              LayoutMode: Left;
+
+              Group {
+                Anchor: (Width: 34, Height: 34);
+                Background: (TexturePath: "jr_slot.png", Border: 8);
+
+                Group #Loot4Icon { Anchor: (Left: 2, Top: 2, Width: 30, Height: 30); }
+              }
+              Group { Anchor: (Width: 8); }
+              Label #Loot4Name {
+                Text: "";
+                Anchor: (Height: 34);
+                FlexWeight: 1;
+                Style: (FontSize: 13, TextColor: #e9eef6);
+              }
+            }
+            Group { Anchor: (Width: 12); }
+            Group #Loot5 {
+              Anchor: (Width: 290, Height: 34);
+              LayoutMode: Left;
+
+              Group {
+                Anchor: (Width: 34, Height: 34);
+                Background: (TexturePath: "jr_slot.png", Border: 8);
+
+                Group #Loot5Icon { Anchor: (Left: 2, Top: 2, Width: 30, Height: 30); }
+              }
+              Group { Anchor: (Width: 8); }
+              Label #Loot5Name {
+                Text: "";
+                Anchor: (Height: 34);
+                FlexWeight: 1;
+                Style: (FontSize: 13, TextColor: #e9eef6);
+              }
+            }
+            Group { Anchor: (Width: 12); }
+          }
+          Group { Anchor: (Height: 2); }
+          Group {
+            Anchor: (Height: 36);
+            LayoutMode: Left;
+
+            Group #Loot6 {
+              Anchor: (Width: 290, Height: 34);
+              LayoutMode: Left;
+
+              Group {
+                Anchor: (Width: 34, Height: 34);
+                Background: (TexturePath: "jr_slot.png", Border: 8);
+
+                Group #Loot6Icon { Anchor: (Left: 2, Top: 2, Width: 30, Height: 30); }
+              }
+              Group { Anchor: (Width: 8); }
+              Label #Loot6Name {
+                Text: "";
+                Anchor: (Height: 34);
+                FlexWeight: 1;
+                Style: (FontSize: 13, TextColor: #e9eef6);
+              }
+            }
+            Group { Anchor: (Width: 12); }
+            Group #Loot7 {
+              Anchor: (Width: 290, Height: 34);
+              LayoutMode: Left;
+
+              Group {
+                Anchor: (Width: 34, Height: 34);
+                Background: (TexturePath: "jr_slot.png", Border: 8);
+
+                Group #Loot7Icon { Anchor: (Left: 2, Top: 2, Width: 30, Height: 30); }
+              }
+              Group { Anchor: (Width: 8); }
+              Label #Loot7Name {
+                Text: "";
+                Anchor: (Height: 34);
+                FlexWeight: 1;
+                Style: (FontSize: 13, TextColor: #e9eef6);
+              }
+            }
+            Group { Anchor: (Width: 12); }
+          }
+          Group { Anchor: (Height: 2); }
+          Group { FlexWeight: 1; }
+          Group {
+            Anchor: (Height: 40);
+            LayoutMode: Left;
+
+            Group { FlexWeight: 1; }
+            $C.@SecondaryTextButton #RewardOk { @Text = "Забрать награду"; Anchor: (Width: 240, Height: 38); }
+            Group { Anchor: (Width: 10); }
+            $C.@SecondaryTextButton #RewardGrid { @Text = "Сетка навыков"; Anchor: (Width: 200, Height: 38); }
+            Group { FlexWeight: 1; }
+          }
+        }
+      }
+      Group { FlexWeight: 1; }
+    }
+    Group { FlexWeight: 1; }
+    Group { Anchor: (Height: 120); }
+  }
 }

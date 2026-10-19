@@ -13,7 +13,7 @@ import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 
 /**
- * Клики во время анимаций окна боя.
+ * Клики во время анимаций окна (бой, сетка навыков).
  *
  * Каждый кадр анимации — пакет окну, и пока клиент на него не ответил, PageManager молча выбрасывает
  * нажатия (Pages). Чтобы кнопки не «залипали» в анимациях, нажатие на окно боя, пришедшее, пока сервер
@@ -50,7 +50,8 @@ final class ClickBuffer {
             if (ref == null || !ref.isValid()) return false;
             Store<EntityStore> store = ref.getStore();
             PageManager pm = Pages.manager(store, ref);
-            if (pm == null || !(pm.getCustomPage() instanceof BattleMenuPage page) || !page.animatingNow()) return false;
+            if (pm == null || !(pm.getCustomPage() instanceof AnimatedPage anim) || !anim.animatingNow()) return false;
+            var page = pm.getCustomPage();
             if (Pages.pendingAcks(pm) <= 0) return false;
             String data = e.data;
             store.getExternalData().getWorld().execute(() -> {
@@ -59,7 +60,7 @@ final class ClickBuffer {
                 if (now == null || now.getCustomPage() != page) return;
                 if (!logged) {
                     logged = true;
-                    plugin.log("Клик во время анимации окна боя передан окну напрямую (иначе сервер бы его выбросил)");
+                    plugin.log("Клик во время анимации окна передан окну напрямую (иначе сервер бы его выбросил)");
                 }
                 page.handleDataEvent(ref, store, data);
             });

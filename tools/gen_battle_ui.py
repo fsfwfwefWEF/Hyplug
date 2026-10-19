@@ -305,6 +305,71 @@ def hit_layer(i):
 
 
 BOOK_W, BOOK_H = 440, 290
+REWARD_W, REWARD_H, REWARD_HEROES, REWARD_LOOT = 660, 560, 3, 8
+
+
+def reward_layer():
+    """Окно наград после победы (#RewardLayer поверх всего): опыт каждому герою с полоской, повышения
+    уровня, добыча иконками; #RewardWin опускается сверху (плагин двигает Anchor)."""
+    heroes = []
+    for i in range(REWARD_HEROES):
+        heroes += [group(f"Rw{i}", ["Anchor: (Height: 56);", "LayoutMode: Left;", skin("jr_panel_party", 16),
+                                    "Padding: (Left: 8, Right: 10, Top: 5, Bottom: 5);"], [
+            slot(f"Rw{i}Icon", 44),
+            spacer(w=10),
+            group("", ["Anchor: (Width: 230);", "LayoutMode: Top;"], [
+                label(f"Rw{i}Name", "", 16, PARTY_NAME, True, height=22),
+                label(f"Rw{i}Lvl", "", 12, GOLD, True, height=18),
+            ]),
+            group("", ["FlexWeight: 1;", "LayoutMode: Top;"], [
+                label(f"Rw{i}Exp", "", 13, "#9fe6a8", True, height=20),
+                spacer(h=4),
+                tbar(f"Rw{i}Bar", 300, "jr_bar_ap", h=8),
+                label(f"Rw{i}Next", "", 11, SUB, height=14),
+            ]),
+        ]), spacer(h=4)]
+    loot_cells = []
+    for row in range(REWARD_LOOT // 2):
+        cells = []
+        for col in range(2):
+            i = row * 2 + col
+            cells += [group(f"Loot{i}", ["Anchor: (Width: 290, Height: 34);", "LayoutMode: Left;"], [
+                group("", ["Anchor: (Width: 34, Height: 34);", skin("jr_slot", 8)], [
+                    f"Group #Loot{i}Icon {{ Anchor: (Left: 2, Top: 2, Width: 30, Height: 30); }}"]),
+                spacer(w=8),
+                label(f"Loot{i}Name", "", 13, TEXT, height=34, flex=True),
+            ]), spacer(w=12)]
+        loot_cells += [group("", ["Anchor: (Height: 36);", "LayoutMode: Left;"], cells), spacer(h=2)]
+    win = group("RewardWin", [f"Anchor: (Left: 0, Top: 0, Width: {REWARD_W}, Height: {REWARD_H});", "LayoutMode: Top;",
+                              skin("jr_window", 86), "Padding: (Left: 26, Right: 26, Top: 14, Bottom: 22);"], [
+        group("", ["Anchor: (Height: 52);", "LayoutMode: Left;"], [
+            spacer(flex=True),
+            group("", ["Anchor: (Width: 520, Height: 52);", "LayoutMode: Top;", tex("jr_banner"), "Padding: (Top: 6);"], [
+                label("RewardTitle", "ПОБЕДА!", 22, GOLD, True, height=26, center=True),
+                label("RewardSub", "", 12, SUB, height=16, center=True),
+            ]),
+            spacer(flex=True),
+        ]),
+        spacer(h=4),
+        label("RewardExp", "", 15, "#9fe6a8", True, height=22, center=True),
+        spacer(h=4),
+    ] + heroes + [
+        divider(),
+        spacer(h=4),
+        label("RewardLootTitle", "ДОБЫЧА", 13, INK_TITLE, True, height=20),
+    ] + loot_cells + [
+        spacer(flex=True),
+        group("", ["Anchor: (Height: 40);", "LayoutMode: Left;"], [
+            spacer(flex=True), button("RewardOk", "Забрать награду", 240, 38), spacer(w=10),
+            button("RewardGrid", "Сетка навыков", 200, 38), spacer(flex=True)]),
+    ])
+    return group("RewardLayer", ["Anchor: (Full: 0);", "LayoutMode: Top;"], [
+        spacer(flex=True),
+        group("", [f"Anchor: (Height: {REWARD_H});", "LayoutMode: Left;"], [
+            spacer(flex=True), group("RewardSlot", [f"Anchor: (Width: {REWARD_W});"], [win]), spacer(flex=True)]),
+        spacer(flex=True),
+        spacer(h=120),
+    ])
 # текст журнала: ширина панели − поля 14+12, высота панели 280 − поля 10+8 − шапка 29
 LOG_TEXT_W, LOG_TEXT_H = BOOK_W - 26, BOOK_H - 10 - 18 - 29
 
@@ -392,7 +457,8 @@ def battle():
     main = group("", ["Anchor: (Full: 0);", "LayoutMode: Top;", "Padding: (Full: 10);"],
                  [enemy_row, spacer(h=6), banner, middle, bottom])
     # Кнопки над врагами — первыми, под всем остальным: панели окна перекрывают их и забирают клик.
-    root = group("", [], [hit_layer(i) for i in range(ENEMIES)] + [main] + [speech_layer(i) for i in range(SPEECH)])
+    root = group("", [], [hit_layer(i) for i in range(ENEMIES)] + [main] + [speech_layer(i) for i in range(SPEECH)]
+                 + [reward_layer()])
     text = ('$C = "../Common.ui";\n\n'
             "// Боевое меню JRPG. Файл собран скриптом tools/gen_battle_ui.py — правь скрипт, а не этот файл.\n"
             "// Сверху враги, справа осмотр бойца, внизу партия, команды и описание. Баннер хода, очередь и\n"
@@ -589,16 +655,26 @@ def edges():
     return out
 
 
-def edge_dots(a, b, color, step=11, gap=36):
+def edge_points(a, b, step=11, gap=36):
+    """Точки ребра от узла a к узлу b (по порядку от a)."""
     (x1, y1), (x2, y2) = pos(a), pos(b)
     length = math.hypot(x2 - x1, y2 - y1)
     n = max(1, int((length - 2 * gap) / step))
-    dots = []
+    out = []
     for k in range(n + 1):
         t = (gap + k * (length - 2 * gap) / max(1, n)) / length
-        x, y = x1 + (x2 - x1) * t, y1 + (y2 - y1) * t
-        dots.append(f"Group {{ Anchor: (Left: {int(x) - 2}, Top: {int(y) - 2}, Width: 4, Height: 4); Background: {color}; }}")
-    return dots
+        out.append((x1 + (x2 - x1) * t, y1 + (y2 - y1) * t))
+    return out
+
+
+def edge_dots(a, b, color, size=4, every=1, phase=0):
+    """Точки ребра; every/phase — только каждая every-я, начиная с phase (бегущий сигнал)."""
+    return [f"Group {{ Anchor: (Left: {int(x) - size // 2}, Top: {int(y) - size // 2}, Width: {size}, Height: {size}); "
+            f"Background: {color}; }}"
+            for k, (x, y) in enumerate(edge_points(a, b)) if k % every == phase]
+
+
+PULSE = 3  # фаз бегущего сигнала по ребру
 
 
 def full(id_, children):
@@ -632,7 +708,12 @@ def sector_label(text, color, left, top, width=170):
 def progression():
     tabs = group("Tabs", ["Anchor: (Height: 34);", "LayoutMode: Left;"],
                  sum(([button(f"Tab{i}", "", 190, 32), spacer(w=6)] for i in range(TABS)), [])
-                 + [spacer(flex=True), label("Points", "", 15, GOLD, True, width=260, height=32)])
+                 + [spacer(flex=True), group("PointsBox", ["Anchor: (Width: 270, Height: 34);", "LayoutMode: Left;",
+                                                         skin("jr_panel_gold", 12), "Padding: (Left: 8, Right: 8, Top: 4);"], [
+                     label("PointsNum", "0", 20, GOLD, True, width=46, height=26, center=True),
+                     spacer(w=6),
+                     label("Points", "", 13, TEXT, height=26, flex=True),
+                 ])])
     hero = column("HeroCol", ["Anchor: (Width: 290);"], [
         group("", ["Anchor: (Height: 92);", "LayoutMode: Left;"], [
             slot("HeroIcon", 88),
@@ -655,8 +736,16 @@ def progression():
         button("Respec", "Сбросить сетку", 266, 30),
     ])
     edge_list = edges()
-    off = full("EdgesOff", sum((edge_dots(a, b, "#4a5a78(0.8)") for a, b in edge_list), []))
-    on = [full(f"Edge{k}", edge_dots(a, b, GOLD)) for k, (a, b) in enumerate(edge_list)]
+    # Рёбра: закрытые — серые точки; к доступному узлу — голубые; между открытыми — золотые крупнее;
+    # у выбранного узла по рёбрам бежит яркий сигнал (#EdgeP<k>_<фаза>, фазы переключает плагин).
+    off = full("EdgesOff", sum((edge_dots(a, b, "#5a6c90(0.85)") for a, b in edge_list), []))
+    on = []
+    for k, (a, b) in enumerate(edge_list):
+        on.append(full(f"EdgeA{k}", edge_dots(a, b, "#7fb6ff(0.95)", size=5)))
+        on.append(full(f"Edge{k}", edge_dots(a, b, GOLD, size=6)))
+    pulse = [full(f"EdgeP{k}_{ph}", edge_dots(a, b, "#fff6d0", size=8, every=PULSE, phase=ph))
+             for k, (a, b) in enumerate(edge_list) for ph in range(PULSE)]
+    on += pulse
     rings = full("Rings", sum((ring_dots(r) for r in (1, 2, 3, 4)), []))
     labels = full("Sectors", [
         sector_label("ЗАЩИТНИК", "#8fbaff", GRID - 150, 10),
@@ -824,7 +913,31 @@ def backpack():
 
 EQ_SLOTS = 8
 EQ_ITEMS = 8
-EQ_CMP = 12
+EQ_CMP = 11
+CMP_W = 344  # ширина колонки сравнения внутри поля
+CMP_COLS = (("Name", 128, False), ("Was", 54, True), ("Arrow", 26, True), ("Now", 54, True), ("Delta", 82, True))
+
+
+def cmp_head():
+    """Шапка таблицы сравнения: что, сейчас, станет, итог."""
+    titles = {"Name": "", "Was": "сейчас", "Arrow": "", "Now": "станет", "Delta": "итог"}
+    return group("CmpHead", ["Anchor: (Height: 16);", "LayoutMode: Left;"],
+                 [label("", titles[k], 11, SUB, width=w, height=16, center=c) for k, w, c in CMP_COLS])
+
+
+def cmp_row(i):
+    """Строка сравнения: подложка лучше/хуже (#Cmp<i>Good/#Cmp<i>Bad), таблица #Cmp<i>Row
+    (Name, Was → Now, Delta) или одна строка текста #Cmp<i> (навыки, описание надетой вещи)."""
+    h = 20
+    return group(f"Cmp{i}Box", [f"Anchor: (Height: {h});"], [
+        f"Group #Cmp{i}Good {{ Anchor: (Left: 0, Top: 1, Width: {CMP_W}, Height: {h - 2}); Background: #3fae5a(0.20); }}",
+        f"Group #Cmp{i}Bad {{ Anchor: (Left: 0, Top: 1, Width: {CMP_W}, Height: {h - 2}); Background: #c8553a(0.22); }}",
+        f'Label #Cmp{i} {{ Text: ""; Anchor: (Left: 6, Top: 0, Width: {CMP_W - 6}, Height: {h}); '
+        f"Style: (FontSize: 13, TextColor: {TEXT}); }}",
+        group(f"Cmp{i}Row", [f"Anchor: (Left: 6, Top: 0, Width: {CMP_W - 6}, Height: {h});", "LayoutMode: Left;"],
+              [label(f"Cmp{i}{k}", "", 13, TEXT, bold=k in ("Now", "Delta"), width=w - (6 if k == "Name" else 0),
+                     height=h, center=c) for k, w, c in CMP_COLS]),
+    ])
 EQ_ROW = 40
 
 
@@ -885,8 +998,9 @@ def equipment():
         spacer(h=4),
         divider(),
         spacer(h=4),
-    ] + [label(f"Cmp{i}", "", 13, TEXT, height=19) for i in range(EQ_CMP)] + [
-        label("CmpDesc", "", 12, SUB, height=58, wrap=True),
+    ] + [cmp_head()] + [cmp_row(i) for i in range(EQ_CMP)] + [
+        label("CmpSum", "", 12, GOLD, True, height=18),
+        label("CmpDesc", "", 12, SUB, height=42, wrap=True),
         label("Message", "", 12, "#ffd27a", height=32, wrap=True),
         group("", ["Anchor: (Height: 34);", "LayoutMode: Left;"], [
             button("Equip", "Надеть", 168, 32), spacer(w=4), button("Unequip", "Снять", 168, 32)]),

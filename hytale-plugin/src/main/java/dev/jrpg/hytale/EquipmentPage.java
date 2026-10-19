@@ -27,7 +27,7 @@ import java.util.Map;
  */
 public final class EquipmentPage extends InteractiveCustomUIPage<BattleMenuPage.Click> {
     public static final String LAYOUT = "JrpgBattle/Equipment.ui";
-    private static final int TABS = 3, SLOTS = 8, ITEMS = 8, CMP = 12;
+    private static final int TABS = 3, SLOTS = 8, ITEMS = 8, CMP = 11;
     private static final String GOOD = "#7be38c", BAD = "#ffa060", SAME = "#d6dde8", GOLD = "#e8c46a";
 
     private final JrpgPlugin plugin;
@@ -227,23 +227,33 @@ public final class EquipmentPage extends InteractiveCustomUIPage<BattleMenuPage.
             String desc = show.description();
             cmd.set("#CmpDesc.Text", desc == null ? "" : desc);
         }
+        int better = 0, worse = 0;
         if (picked != null) {
             for (Equipment.Diff d : Equipment.compare(content, h, sel, picked)) {
                 if (line >= CMP) break;
                 if (d.better() == 0 && d.before().equals(d.after())) continue;
-                String text = d.before().isEmpty() ? d.label() + ": " + d.after()
-                        : d.after().isEmpty() ? d.label() + ": " + d.before()
-                        : d.label() + "  " + d.before() + " → " + d.after() + delta(d);
-                setLine(cmd, line++, text, d.better() > 0 ? GOOD : d.better() < 0 ? BAD : GOLD);
+                if (d.better() > 0) better++;
+                if (d.better() < 0) worse++;
+                if (d.before().isEmpty() || d.after().isEmpty()) {
+                    // навык или иммунитет появится / пропадёт
+                    String text = (d.better() > 0 ? "+ " : "− ") + d.label() + ": " + (d.after().isEmpty() ? d.before() : d.after());
+                    setLine(cmd, line++, text, d.better() > 0 ? GOOD : d.better() < 0 ? BAD : GOLD, d.better());
+                } else {
+                    setRow(cmd, line++, d);
+                }
             }
-            if (line == 0) setLine(cmd, line++, "Характеристики не изменятся", SAME);
+            if (line == 0) setLine(cmd, line++, "Характеристики не изменятся", SAME, 0);
         } else if (show != null) {
             for (String l : Describe.gear(content, show).split("\n")) {
                 if (line >= CMP) break;
-                setLine(cmd, line++, l, line == 1 ? "#9fb0c6" : SAME);
+                setLine(cmd, line++, l, line == 1 ? "#9fb0c6" : SAME, 0);
             }
         }
-        for (; line < CMP; line++) setLine(cmd, line, "", SAME);
+        for (; line < CMP; line++) setLine(cmd, line, "", SAME, 0);
+        cmd.set("#CmpHead.Visible", picked != null);
+        cmd.set("#CmpSum.Text", picked == null ? "" : better == 0 && worse == 0 ? "Без изменений"
+                : "Лучше: " + better + "    Хуже: " + worse + (worse == 0 ? "   — стоит надеть" : better == 0 ? "   — хуже надетого" : ""));
+        cmd.set("#CmpSum.Style.TextColor", worse == 0 && better > 0 ? GOOD : better == 0 && worse > 0 ? BAD : GOLD);
 
         boolean busy = plugin.sessions().containsKey(playerRef.getUuid());
         cmd.set("#Equip.Visible", picked != null && !busy);
@@ -258,16 +268,40 @@ public final class EquipmentPage extends InteractiveCustomUIPage<BattleMenuPage.
         BattleMenuPage.putIcon(cmd, shownIcons, slot, Icons.exists(key) ? key : "", size, tier);
     }
 
-    private static String delta(Equipment.Diff d) {
+    private static Integer num(String v) {
         try {
-            int v = Integer.parseInt(d.after()) - Integer.parseInt(d.before());
-            return v == 0 ? "" : "  (" + (v > 0 ? "+" : "") + v + ")";
+            return Integer.parseInt(v.trim());
         } catch (NumberFormatException e) {
-            return "";
+            return null;
         }
     }
 
-    private static void setLine(UICommandBuilder cmd, int i, String text, String color) {
+    /** Строка-таблица: характеристика, сейчас → станет, итог (+5 / −3) с подложкой лучше/хуже. */
+    private static void setRow(UICommandBuilder cmd, int i, Equipment.Diff d) {
+        String c = d.better() > 0 ? GOOD : d.better() < 0 ? BAD : GOLD;
+        cmd.set("#Cmp" + i + ".Visible", false);
+        cmd.set("#Cmp" + i + "Row.Visible", true);
+        cmd.set("#Cmp" + i + "Good.Visible", d.better() > 0);
+        cmd.set("#Cmp" + i + "Bad.Visible", d.better() < 0);
+        cmd.set("#Cmp" + i + "Name.Text", d.label());
+        cmd.set("#Cmp" + i + "Was.Text", d.before());
+        cmd.set("#Cmp" + i + "Was.Style.TextColor", "#9fb0c6");
+        cmd.set("#Cmp" + i + "Arrow.Text", "→");
+        cmd.set("#Cmp" + i + "Arrow.Style.TextColor", c);
+        cmd.set("#Cmp" + i + "Now.Text", d.after());
+        cmd.set("#Cmp" + i + "Now.Style.TextColor", c);
+        Integer a = num(d.before()), b = num(d.after());
+        String delta = a == null || b == null ? (d.better() > 0 ? "лучше" : d.better() < 0 ? "хуже" : "иначе")
+                : (b - a > 0 ? "+" : "−") + Math.abs(b - a) + (d.better() > 0 ? " лучше" : d.better() < 0 ? " хуже" : "");
+        cmd.set("#Cmp" + i + "Delta.Text", delta);
+        cmd.set("#Cmp" + i + "Delta.Style.TextColor", c);
+    }
+
+    private static void setLine(UICommandBuilder cmd, int i, String text, String color, int better) {
+        cmd.set("#Cmp" + i + "Row.Visible", false);
+        cmd.set("#Cmp" + i + ".Visible", true);
+        cmd.set("#Cmp" + i + "Good.Visible", better > 0);
+        cmd.set("#Cmp" + i + "Bad.Visible", better < 0);
         cmd.set("#Cmp" + i + ".Text", text);
         cmd.set("#Cmp" + i + ".Style.TextColor", color);
     }

@@ -118,6 +118,17 @@ public final class BattleSession implements BattleListener {
     private Windup answered;
     /** Добыча с поверженных врагов за этот бой (для итога победы). */
     private final Map<String, Integer> drops = new java.util.LinkedHashMap<>();
+
+    /** Окно наград после победы. */
+    record HeroGain(String id, String name, int levelBefore, int levelAfter, int expBefore, int nextBefore,
+                    int expAfter, int nextAfter, int gained, int points) {}
+    record LootLine(String name, int count, String icon, int tier, String color) {}
+    record Rewards(String encounter, int exp, List<HeroGain> heroes, List<LootLine> loot) {}
+    private Rewards rewards;
+    private boolean rewardsShown;
+
+    /** Награды, если окно наград пора показывать. */
+    Rewards shownRewards() { return rewardsShown ? rewards : null; }
     private final java.util.Random rnd = new java.util.Random();
 
     /** Замах врага: кто, чем, по кому, где стоит для удара и когда удар (System.currentTimeMillis). */
@@ -364,6 +375,18 @@ public final class BattleSession implements BattleListener {
     }
 
     // ---------- ввод из меню ----------
+
+    /** Кнопки окна наград: 0 — забрать и выйти, 1 — сразу в сетку навыков. */
+    void onReward(int index) {
+        if (closed || battle.phase() != Battle.Phase.ENDED) return;
+        if (index == 1) {
+            cleanup(false);
+            say("Бой окончен.");
+            plugin.openProgression(player, playerEntity, store, null);
+        } else {
+            finish();
+        }
+    }
 
     void onOption(int index) {
         if (closed) return;
@@ -1316,6 +1339,11 @@ public final class BattleSession implements BattleListener {
         if (outcome == Battle.Outcome.VICTORY) whenPresented(() -> {
             outro();
             celebrate();
+            // окно наград — когда герои уже празднуют
+            later(1800, () -> {
+                rewardsShown = rewards != null;
+                refresh();
+            });
         });
         else camera.overview();
         if (outcome == Battle.Outcome.VICTORY) {
@@ -1329,12 +1357,33 @@ public final class BattleSession implements BattleListener {
             loot.forEach((item, cnt) -> battle.inventory().merge(item, cnt, Integer::sum));
             Map<String, Integer> all = new java.util.LinkedHashMap<>(drops);
             loot.forEach((item, cnt) -> all.merge(item, cnt, Integer::sum));
+            List<LootLine> lootLines = new java.util.ArrayList<>();
+            all.forEach((item, cnt) -> {
+                dev.jrpg.battle.Item it = plugin.content().item(item);
+                boolean gear = it.kind() == dev.jrpg.battle.Item.Kind.GEAR && plugin.content().hasGear(item);
+                lootLines.add(new LootLine(it.name(), cnt, Describe.itemIcon(plugin.content(), it),
+                        gear ? Describe.gearTier(plugin.content().gear(item)) : 0,
+                        gear ? plugin.content().gear(item).quality().color : null));
+            });
             StringBuilder sb = new StringBuilder("Награда: " + encounter.exp() + " опыта");
             all.forEach((item, cnt) -> sb.append(", ").append(plugin.content().item(item).name()).append(" x").append(cnt));
             if (!all.isEmpty()) sb.append(" (всё в рюкзаке: /jrpg bag)");
             addLog(sb.toString(), LOG_LOOT);
             say(sb.toString());
-            for (String msg : plugin.partyOf(player.getUuid()).addExp(encounter.exp())) {
+            Progression.Party party = plugin.partyOf(player.getUuid());
+            List<int[]> before = new java.util.ArrayList<>();
+            for (Progression.Hero h : party.heroes()) before.add(new int[]{h.level, h.exp, Progression.expToNext(h.level)});
+            List<String> ups = party.addExp(encounter.exp());
+            List<HeroGain> gains = new java.util.ArrayList<>();
+            int each = party.heroes().isEmpty() ? 0 : Math.max(1, encounter.exp() / party.heroes().size());
+            for (int i = 0; i < party.heroes().size(); i++) {
+                Progression.Hero h = party.heroes().get(i);
+                int[] b = before.get(i);
+                gains.add(new HeroGain(h.def.id(), h.def.name(), b[0], h.level, b[1], b[2], h.exp,
+                        Progression.expToNext(h.level), each, h.points));
+            }
+            rewards = new Rewards(encounter.name(), encounter.exp(), gains, lootLines);
+            for (String msg : ups) {
                 addLog(msg, LOG_GOLD);
                 say(msg + " Открой прокачку: /jrpg party");
             }

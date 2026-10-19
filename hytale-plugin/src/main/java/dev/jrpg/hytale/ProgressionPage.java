@@ -32,7 +32,7 @@ import java.util.stream.Collectors;
  * справа описание выбранного узла и кнопка «Открыть узел». Наведение или клик по узлу выбирает его,
  * кнопки «&lt;» / «&gt;» перебирают узлы рядом с открытыми (если клик по иконке не доходит до кнопки).
  */
-public final class ProgressionPage extends InteractiveCustomUIPage<BattleMenuPage.Click> {
+public final class ProgressionPage extends InteractiveCustomUIPage<BattleMenuPage.Click> implements AnimatedPage {
     public static final String LAYOUT = "JrpgBattle/Progression.ui";
     private static final int TABS = 3, EXP_BAR = 266;
 
@@ -44,6 +44,16 @@ public final class ProgressionPage extends InteractiveCustomUIPage<BattleMenuPag
     private int selected;
     private String message = "";
     private final Map<String, String> shownIcons = new HashMap<>();
+
+    // ---------- бегущий сигнал по рёбрам выбранного узла ----------
+    private static final int PULSE = 3;
+    private static final long PULSE_MS = 150, PULSE_FOR_MS = 9000;
+    /** Рёбра с сигналом: {номер ребра, +1 — сигнал бежит от первого узла ко второму, −1 — обратно}. */
+    private List<int[]> pulse = List.of();
+    private int pulseSeq, phase;
+    private long pulseUntil;
+    private volatile long builtAt, lastFrameAt;
+    private com.hypixel.hytale.server.core.universe.world.World world;
 
     public ProgressionPage(@Nonnull PlayerRef playerRef, JrpgPlugin plugin, Progression.Party party, String heroId) {
         super(playerRef, CustomPageLifetime.CanDismiss, BattleMenuPage.Click.CODEC);
@@ -60,6 +70,9 @@ public final class ProgressionPage extends InteractiveCustomUIPage<BattleMenuPag
                       @Nonnull Store<EntityStore> store) {
         cmd.append(LAYOUT);
         shownIcons.clear();
+        world = store.getExternalData().getWorld();
+        builtAt = System.currentTimeMillis();
+        pulse = List.of();
         for (int i = 0; i < TABS; i++) bind(evt, CustomUIEventBindingType.Activating, "#Tab" + i, "tab", i);
         for (int i = 0; i < Grid.SIZE; i++) {
             bind(evt, CustomUIEventBindingType.Activating, "#G" + i + "Btn", "node", i);
@@ -193,7 +206,10 @@ public final class ProgressionPage extends InteractiveCustomUIPage<BattleMenuPag
         cmd.set("#HeroName.Text", h.def.name());
         cmd.set("#HeroTitle.Text", h.def.title() + " · роль: " + h.def.role().label);
         cmd.set("#HeroLevel.Text", "Уровень " + h.level + "   опыт " + h.exp + " / " + Progression.expToNext(h.level));
-        cmd.set("#Points.Text", "Очки сетки: " + h.points);
+        cmd.set("#PointsNum.Text", String.valueOf(h.points));
+        cmd.set("#PointsNum.Style.TextColor", h.points > 0 ? "#ffe08a" : "#8a93a3");
+        cmd.set("#Points.Text", h.points > 0 ? (h.points == 1 ? "очко навыка — открой узел" : "очков навыков — открывай узлы")
+                : "свободных очков нет");
         icon(cmd, "#HeroIcon", "pt_" + h.def.id(), "l", 0);
         if (plugin.settings().uiBars) {
             Anchor a = new Anchor();
@@ -227,8 +243,72 @@ public final class ProgressionPage extends InteractiveCustomUIPage<BattleMenuPag
         }
         for (int k = 0; k < edges.size(); k++) {
             int[] e = edges.get(k);
-            cmd.set("#Edge" + k + ".Visible", h.unlocked.contains(e[0]) && h.unlocked.contains(e[1]));
+            boolean oa = h.unlocked.contains(e[0]), ob = h.unlocked.contains(e[1]);
+            boolean gold = oa && ob;
+            boolean blue = !gold && ((oa && h.whyCantUnlock(e[1]) == null) || (ob && h.whyCantUnlock(e[0]) == null));
+            cmd.set("#Edge" + k + ".Visible", gold);
+            cmd.set("#EdgeA" + k + ".Visible", blue);
         }
+        List<int[]> want = pulseFor(h, selected);
+        if (!samePulse(want)) {
+            for (int[] p : pulse) for (int ph = 0; ph < PULSE; ph++) cmd.set("#EdgeP" + p[0] + "_" + ph + ".Visible", false);
+            pulse = want;
+            pulseUntil = System.currentTimeMillis() + PULSE_FOR_MS;
+            int seq = ++pulseSeq;
+            putPulse(cmd, false);
+            if (!want.isEmpty() && plugin.settings().uiAnimations) plugin.scheduler().schedule(() -> pulseFrame(seq),
+                    PULSE_MS, java.util.concurrent.TimeUnit.MILLISECONDS);
+        }
+    }
+
+    /**
+     * Сигнал по рёбрам узла: от открытых соседей к нему (путь, по которому до него дойти), а если узел
+     * открыт — от него к доступным соседям (куда качать дальше).
+     */
+    private List<int[]> pulseFor(Progression.Hero h, int f) {
+        List<int[]> out = new java.util.ArrayList<>();
+        for (int k = 0; k < edges.size(); k++) {
+            int a = edges.get(k)[0], b = edges.get(k)[1];
+            if (a != f && b != f) continue;
+            int other = a == f ? b : a;
+            if (h.unlocked.contains(other)) out.add(new int[]{k, other == a ? 1 : -1});
+            else if (h.unlocked.contains(f) && h.whyCantUnlock(other) == null) out.add(new int[]{k, f == a ? 1 : -1});
+        }
+        return out;
+    }
+
+    private boolean samePulse(List<int[]> want) {
+        if (want.size() != pulse.size()) return false;
+        for (int i = 0; i < want.size(); i++) if (!java.util.Arrays.equals(want.get(i), pulse.get(i))) return false;
+        return true;
+    }
+
+    /** steady — все фазы сразу (ровная яркая линия, когда сигнал отбегал своё). */
+    private void putPulse(UICommandBuilder cmd, boolean steady) {
+        for (int[] p : pulse) {
+            int lit = p[1] > 0 ? phase : PULSE - 1 - phase;
+            for (int ph = 0; ph < PULSE; ph++) cmd.set("#EdgeP" + p[0] + "_" + ph + ".Visible", steady || ph == lit);
+        }
+    }
+
+    private void pulseFrame(int seq) {
+        if (world == null) return;
+        world.execute(() -> {
+            if (seq != pulseSeq || !Pages.isOpen(this, playerRef)) return;
+            phase = (phase + 1) % PULSE;
+            boolean done = System.currentTimeMillis() > pulseUntil;
+            UICommandBuilder cmd = new UICommandBuilder();
+            putPulse(cmd, done);
+            lastFrameAt = System.currentTimeMillis();
+            Pages.update(this, playerRef, cmd);
+            if (!done) plugin.scheduler().schedule(() -> pulseFrame(seq), PULSE_MS, java.util.concurrent.TimeUnit.MILLISECONDS);
+        });
+    }
+
+    @Override
+    public boolean animatingNow() {
+        long now = System.currentTimeMillis();
+        return now - lastFrameAt < 400 && now - builtAt > 400;
     }
 
     private void fillDetail(UICommandBuilder cmd, Progression.Hero h) {

@@ -321,69 +321,451 @@ Group {
             Group { Anchor: (Height: 1); Background: #e8c46a(0.40); }
             Group { Anchor: (Height: 1); Background: #000000(0.35); }
             Group { Anchor: (Height: 4); }
-            Label #Cmp0 {
-              Text: "";
-              Anchor: (Height: 19);
-              Style: (FontSize: 13, TextColor: #e9eef6);
+            Group #CmpHead {
+              Anchor: (Height: 16);
+              LayoutMode: Left;
+
+              Label {
+                Text: "";
+                Anchor: (Width: 128, Height: 16);
+                Style: (FontSize: 11, TextColor: #b4c2d6);
+              }
+              Label {
+                Text: "сейчас";
+                Anchor: (Width: 54, Height: 16);
+                Style: (FontSize: 11, TextColor: #b4c2d6, HorizontalAlignment: Center);
+              }
+              Label {
+                Text: "";
+                Anchor: (Width: 26, Height: 16);
+                Style: (FontSize: 11, TextColor: #b4c2d6, HorizontalAlignment: Center);
+              }
+              Label {
+                Text: "станет";
+                Anchor: (Width: 54, Height: 16);
+                Style: (FontSize: 11, TextColor: #b4c2d6, HorizontalAlignment: Center);
+              }
+              Label {
+                Text: "итог";
+                Anchor: (Width: 82, Height: 16);
+                Style: (FontSize: 11, TextColor: #b4c2d6, HorizontalAlignment: Center);
+              }
             }
-            Label #Cmp1 {
-              Text: "";
-              Anchor: (Height: 19);
-              Style: (FontSize: 13, TextColor: #e9eef6);
+            Group #Cmp0Box {
+              Anchor: (Height: 20);
+
+              Group #Cmp0Good { Anchor: (Left: 0, Top: 1, Width: 344, Height: 18); Background: #3fae5a(0.20); }
+              Group #Cmp0Bad { Anchor: (Left: 0, Top: 1, Width: 344, Height: 18); Background: #c8553a(0.22); }
+              Label #Cmp0 { Text: ""; Anchor: (Left: 6, Top: 0, Width: 338, Height: 20); Style: (FontSize: 13, TextColor: #e9eef6); }
+              Group #Cmp0Row {
+                Anchor: (Left: 6, Top: 0, Width: 338, Height: 20);
+                LayoutMode: Left;
+
+                Label #Cmp0Name {
+                  Text: "";
+                  Anchor: (Width: 122, Height: 20);
+                  Style: (FontSize: 13, TextColor: #e9eef6);
+                }
+                Label #Cmp0Was {
+                  Text: "";
+                  Anchor: (Width: 54, Height: 20);
+                  Style: (FontSize: 13, TextColor: #e9eef6, HorizontalAlignment: Center);
+                }
+                Label #Cmp0Arrow {
+                  Text: "";
+                  Anchor: (Width: 26, Height: 20);
+                  Style: (FontSize: 13, TextColor: #e9eef6, HorizontalAlignment: Center);
+                }
+                Label #Cmp0Now {
+                  Text: "";
+                  Anchor: (Width: 54, Height: 20);
+                  Style: (FontSize: 13, TextColor: #e9eef6, RenderBold: true, HorizontalAlignment: Center);
+                }
+                Label #Cmp0Delta {
+                  Text: "";
+                  Anchor: (Width: 82, Height: 20);
+                  Style: (FontSize: 13, TextColor: #e9eef6, RenderBold: true, HorizontalAlignment: Center);
+                }
+              }
             }
-            Label #Cmp2 {
-              Text: "";
-              Anchor: (Height: 19);
-              Style: (FontSize: 13, TextColor: #e9eef6);
+            Group #Cmp1Box {
+              Anchor: (Height: 20);
+
+              Group #Cmp1Good { Anchor: (Left: 0, Top: 1, Width: 344, Height: 18); Background: #3fae5a(0.20); }
+              Group #Cmp1Bad { Anchor: (Left: 0, Top: 1, Width: 344, Height: 18); Background: #c8553a(0.22); }
+              Label #Cmp1 { Text: ""; Anchor: (Left: 6, Top: 0, Width: 338, Height: 20); Style: (FontSize: 13, TextColor: #e9eef6); }
+              Group #Cmp1Row {
+                Anchor: (Left: 6, Top: 0, Width: 338, Height: 20);
+                LayoutMode: Left;
+
+                Label #Cmp1Name {
+                  Text: "";
+                  Anchor: (Width: 122, Height: 20);
+                  Style: (FontSize: 13, TextColor: #e9eef6);
+                }
+                Label #Cmp1Was {
+                  Text: "";
+                  Anchor: (Width: 54, Height: 20);
+                  Style: (FontSize: 13, TextColor: #e9eef6, HorizontalAlignment: Center);
+                }
+                Label #Cmp1Arrow {
+                  Text: "";
+                  Anchor: (Width: 26, Height: 20);
+                  Style: (FontSize: 13, TextColor: #e9eef6, HorizontalAlignment: Center);
+                }
+                Label #Cmp1Now {
+                  Text: "";
+                  Anchor: (Width: 54, Height: 20);
+                  Style: (FontSize: 13, TextColor: #e9eef6, RenderBold: true, HorizontalAlignment: Center);
+                }
+                Label #Cmp1Delta {
+                  Text: "";
+                  Anchor: (Width: 82, Height: 20);
+                  Style: (FontSize: 13, TextColor: #e9eef6, RenderBold: true, HorizontalAlignment: Center);
+                }
+              }
             }
-            Label #Cmp3 {
-              Text: "";
-              Anchor: (Height: 19);
-              Style: (FontSize: 13, TextColor: #e9eef6);
+            Group #Cmp2Box {
+              Anchor: (Height: 20);
+
+              Group #Cmp2Good { Anchor: (Left: 0, Top: 1, Width: 344, Height: 18); Background: #3fae5a(0.20); }
+              Group #Cmp2Bad { Anchor: (Left: 0, Top: 1, Width: 344, Height: 18); Background: #c8553a(0.22); }
+              Label #Cmp2 { Text: ""; Anchor: (Left: 6, Top: 0, Width: 338, Height: 20); Style: (FontSize: 13, TextColor: #e9eef6); }
+              Group #Cmp2Row {
+                Anchor: (Left: 6, Top: 0, Width: 338, Height: 20);
+                LayoutMode: Left;
+
+                Label #Cmp2Name {
+                  Text: "";
+                  Anchor: (Width: 122, Height: 20);
+                  Style: (FontSize: 13, TextColor: #e9eef6);
+                }
+                Label #Cmp2Was {
+                  Text: "";
+                  Anchor: (Width: 54, Height: 20);
+                  Style: (FontSize: 13, TextColor: #e9eef6, HorizontalAlignment: Center);
+                }
+                Label #Cmp2Arrow {
+                  Text: "";
+                  Anchor: (Width: 26, Height: 20);
+                  Style: (FontSize: 13, TextColor: #e9eef6, HorizontalAlignment: Center);
+                }
+                Label #Cmp2Now {
+                  Text: "";
+                  Anchor: (Width: 54, Height: 20);
+                  Style: (FontSize: 13, TextColor: #e9eef6, RenderBold: true, HorizontalAlignment: Center);
+                }
+                Label #Cmp2Delta {
+                  Text: "";
+                  Anchor: (Width: 82, Height: 20);
+                  Style: (FontSize: 13, TextColor: #e9eef6, RenderBold: true, HorizontalAlignment: Center);
+                }
+              }
             }
-            Label #Cmp4 {
-              Text: "";
-              Anchor: (Height: 19);
-              Style: (FontSize: 13, TextColor: #e9eef6);
+            Group #Cmp3Box {
+              Anchor: (Height: 20);
+
+              Group #Cmp3Good { Anchor: (Left: 0, Top: 1, Width: 344, Height: 18); Background: #3fae5a(0.20); }
+              Group #Cmp3Bad { Anchor: (Left: 0, Top: 1, Width: 344, Height: 18); Background: #c8553a(0.22); }
+              Label #Cmp3 { Text: ""; Anchor: (Left: 6, Top: 0, Width: 338, Height: 20); Style: (FontSize: 13, TextColor: #e9eef6); }
+              Group #Cmp3Row {
+                Anchor: (Left: 6, Top: 0, Width: 338, Height: 20);
+                LayoutMode: Left;
+
+                Label #Cmp3Name {
+                  Text: "";
+                  Anchor: (Width: 122, Height: 20);
+                  Style: (FontSize: 13, TextColor: #e9eef6);
+                }
+                Label #Cmp3Was {
+                  Text: "";
+                  Anchor: (Width: 54, Height: 20);
+                  Style: (FontSize: 13, TextColor: #e9eef6, HorizontalAlignment: Center);
+                }
+                Label #Cmp3Arrow {
+                  Text: "";
+                  Anchor: (Width: 26, Height: 20);
+                  Style: (FontSize: 13, TextColor: #e9eef6, HorizontalAlignment: Center);
+                }
+                Label #Cmp3Now {
+                  Text: "";
+                  Anchor: (Width: 54, Height: 20);
+                  Style: (FontSize: 13, TextColor: #e9eef6, RenderBold: true, HorizontalAlignment: Center);
+                }
+                Label #Cmp3Delta {
+                  Text: "";
+                  Anchor: (Width: 82, Height: 20);
+                  Style: (FontSize: 13, TextColor: #e9eef6, RenderBold: true, HorizontalAlignment: Center);
+                }
+              }
             }
-            Label #Cmp5 {
-              Text: "";
-              Anchor: (Height: 19);
-              Style: (FontSize: 13, TextColor: #e9eef6);
+            Group #Cmp4Box {
+              Anchor: (Height: 20);
+
+              Group #Cmp4Good { Anchor: (Left: 0, Top: 1, Width: 344, Height: 18); Background: #3fae5a(0.20); }
+              Group #Cmp4Bad { Anchor: (Left: 0, Top: 1, Width: 344, Height: 18); Background: #c8553a(0.22); }
+              Label #Cmp4 { Text: ""; Anchor: (Left: 6, Top: 0, Width: 338, Height: 20); Style: (FontSize: 13, TextColor: #e9eef6); }
+              Group #Cmp4Row {
+                Anchor: (Left: 6, Top: 0, Width: 338, Height: 20);
+                LayoutMode: Left;
+
+                Label #Cmp4Name {
+                  Text: "";
+                  Anchor: (Width: 122, Height: 20);
+                  Style: (FontSize: 13, TextColor: #e9eef6);
+                }
+                Label #Cmp4Was {
+                  Text: "";
+                  Anchor: (Width: 54, Height: 20);
+                  Style: (FontSize: 13, TextColor: #e9eef6, HorizontalAlignment: Center);
+                }
+                Label #Cmp4Arrow {
+                  Text: "";
+                  Anchor: (Width: 26, Height: 20);
+                  Style: (FontSize: 13, TextColor: #e9eef6, HorizontalAlignment: Center);
+                }
+                Label #Cmp4Now {
+                  Text: "";
+                  Anchor: (Width: 54, Height: 20);
+                  Style: (FontSize: 13, TextColor: #e9eef6, RenderBold: true, HorizontalAlignment: Center);
+                }
+                Label #Cmp4Delta {
+                  Text: "";
+                  Anchor: (Width: 82, Height: 20);
+                  Style: (FontSize: 13, TextColor: #e9eef6, RenderBold: true, HorizontalAlignment: Center);
+                }
+              }
             }
-            Label #Cmp6 {
-              Text: "";
-              Anchor: (Height: 19);
-              Style: (FontSize: 13, TextColor: #e9eef6);
+            Group #Cmp5Box {
+              Anchor: (Height: 20);
+
+              Group #Cmp5Good { Anchor: (Left: 0, Top: 1, Width: 344, Height: 18); Background: #3fae5a(0.20); }
+              Group #Cmp5Bad { Anchor: (Left: 0, Top: 1, Width: 344, Height: 18); Background: #c8553a(0.22); }
+              Label #Cmp5 { Text: ""; Anchor: (Left: 6, Top: 0, Width: 338, Height: 20); Style: (FontSize: 13, TextColor: #e9eef6); }
+              Group #Cmp5Row {
+                Anchor: (Left: 6, Top: 0, Width: 338, Height: 20);
+                LayoutMode: Left;
+
+                Label #Cmp5Name {
+                  Text: "";
+                  Anchor: (Width: 122, Height: 20);
+                  Style: (FontSize: 13, TextColor: #e9eef6);
+                }
+                Label #Cmp5Was {
+                  Text: "";
+                  Anchor: (Width: 54, Height: 20);
+                  Style: (FontSize: 13, TextColor: #e9eef6, HorizontalAlignment: Center);
+                }
+                Label #Cmp5Arrow {
+                  Text: "";
+                  Anchor: (Width: 26, Height: 20);
+                  Style: (FontSize: 13, TextColor: #e9eef6, HorizontalAlignment: Center);
+                }
+                Label #Cmp5Now {
+                  Text: "";
+                  Anchor: (Width: 54, Height: 20);
+                  Style: (FontSize: 13, TextColor: #e9eef6, RenderBold: true, HorizontalAlignment: Center);
+                }
+                Label #Cmp5Delta {
+                  Text: "";
+                  Anchor: (Width: 82, Height: 20);
+                  Style: (FontSize: 13, TextColor: #e9eef6, RenderBold: true, HorizontalAlignment: Center);
+                }
+              }
             }
-            Label #Cmp7 {
-              Text: "";
-              Anchor: (Height: 19);
-              Style: (FontSize: 13, TextColor: #e9eef6);
+            Group #Cmp6Box {
+              Anchor: (Height: 20);
+
+              Group #Cmp6Good { Anchor: (Left: 0, Top: 1, Width: 344, Height: 18); Background: #3fae5a(0.20); }
+              Group #Cmp6Bad { Anchor: (Left: 0, Top: 1, Width: 344, Height: 18); Background: #c8553a(0.22); }
+              Label #Cmp6 { Text: ""; Anchor: (Left: 6, Top: 0, Width: 338, Height: 20); Style: (FontSize: 13, TextColor: #e9eef6); }
+              Group #Cmp6Row {
+                Anchor: (Left: 6, Top: 0, Width: 338, Height: 20);
+                LayoutMode: Left;
+
+                Label #Cmp6Name {
+                  Text: "";
+                  Anchor: (Width: 122, Height: 20);
+                  Style: (FontSize: 13, TextColor: #e9eef6);
+                }
+                Label #Cmp6Was {
+                  Text: "";
+                  Anchor: (Width: 54, Height: 20);
+                  Style: (FontSize: 13, TextColor: #e9eef6, HorizontalAlignment: Center);
+                }
+                Label #Cmp6Arrow {
+                  Text: "";
+                  Anchor: (Width: 26, Height: 20);
+                  Style: (FontSize: 13, TextColor: #e9eef6, HorizontalAlignment: Center);
+                }
+                Label #Cmp6Now {
+                  Text: "";
+                  Anchor: (Width: 54, Height: 20);
+                  Style: (FontSize: 13, TextColor: #e9eef6, RenderBold: true, HorizontalAlignment: Center);
+                }
+                Label #Cmp6Delta {
+                  Text: "";
+                  Anchor: (Width: 82, Height: 20);
+                  Style: (FontSize: 13, TextColor: #e9eef6, RenderBold: true, HorizontalAlignment: Center);
+                }
+              }
             }
-            Label #Cmp8 {
-              Text: "";
-              Anchor: (Height: 19);
-              Style: (FontSize: 13, TextColor: #e9eef6);
+            Group #Cmp7Box {
+              Anchor: (Height: 20);
+
+              Group #Cmp7Good { Anchor: (Left: 0, Top: 1, Width: 344, Height: 18); Background: #3fae5a(0.20); }
+              Group #Cmp7Bad { Anchor: (Left: 0, Top: 1, Width: 344, Height: 18); Background: #c8553a(0.22); }
+              Label #Cmp7 { Text: ""; Anchor: (Left: 6, Top: 0, Width: 338, Height: 20); Style: (FontSize: 13, TextColor: #e9eef6); }
+              Group #Cmp7Row {
+                Anchor: (Left: 6, Top: 0, Width: 338, Height: 20);
+                LayoutMode: Left;
+
+                Label #Cmp7Name {
+                  Text: "";
+                  Anchor: (Width: 122, Height: 20);
+                  Style: (FontSize: 13, TextColor: #e9eef6);
+                }
+                Label #Cmp7Was {
+                  Text: "";
+                  Anchor: (Width: 54, Height: 20);
+                  Style: (FontSize: 13, TextColor: #e9eef6, HorizontalAlignment: Center);
+                }
+                Label #Cmp7Arrow {
+                  Text: "";
+                  Anchor: (Width: 26, Height: 20);
+                  Style: (FontSize: 13, TextColor: #e9eef6, HorizontalAlignment: Center);
+                }
+                Label #Cmp7Now {
+                  Text: "";
+                  Anchor: (Width: 54, Height: 20);
+                  Style: (FontSize: 13, TextColor: #e9eef6, RenderBold: true, HorizontalAlignment: Center);
+                }
+                Label #Cmp7Delta {
+                  Text: "";
+                  Anchor: (Width: 82, Height: 20);
+                  Style: (FontSize: 13, TextColor: #e9eef6, RenderBold: true, HorizontalAlignment: Center);
+                }
+              }
             }
-            Label #Cmp9 {
-              Text: "";
-              Anchor: (Height: 19);
-              Style: (FontSize: 13, TextColor: #e9eef6);
+            Group #Cmp8Box {
+              Anchor: (Height: 20);
+
+              Group #Cmp8Good { Anchor: (Left: 0, Top: 1, Width: 344, Height: 18); Background: #3fae5a(0.20); }
+              Group #Cmp8Bad { Anchor: (Left: 0, Top: 1, Width: 344, Height: 18); Background: #c8553a(0.22); }
+              Label #Cmp8 { Text: ""; Anchor: (Left: 6, Top: 0, Width: 338, Height: 20); Style: (FontSize: 13, TextColor: #e9eef6); }
+              Group #Cmp8Row {
+                Anchor: (Left: 6, Top: 0, Width: 338, Height: 20);
+                LayoutMode: Left;
+
+                Label #Cmp8Name {
+                  Text: "";
+                  Anchor: (Width: 122, Height: 20);
+                  Style: (FontSize: 13, TextColor: #e9eef6);
+                }
+                Label #Cmp8Was {
+                  Text: "";
+                  Anchor: (Width: 54, Height: 20);
+                  Style: (FontSize: 13, TextColor: #e9eef6, HorizontalAlignment: Center);
+                }
+                Label #Cmp8Arrow {
+                  Text: "";
+                  Anchor: (Width: 26, Height: 20);
+                  Style: (FontSize: 13, TextColor: #e9eef6, HorizontalAlignment: Center);
+                }
+                Label #Cmp8Now {
+                  Text: "";
+                  Anchor: (Width: 54, Height: 20);
+                  Style: (FontSize: 13, TextColor: #e9eef6, RenderBold: true, HorizontalAlignment: Center);
+                }
+                Label #Cmp8Delta {
+                  Text: "";
+                  Anchor: (Width: 82, Height: 20);
+                  Style: (FontSize: 13, TextColor: #e9eef6, RenderBold: true, HorizontalAlignment: Center);
+                }
+              }
             }
-            Label #Cmp10 {
-              Text: "";
-              Anchor: (Height: 19);
-              Style: (FontSize: 13, TextColor: #e9eef6);
+            Group #Cmp9Box {
+              Anchor: (Height: 20);
+
+              Group #Cmp9Good { Anchor: (Left: 0, Top: 1, Width: 344, Height: 18); Background: #3fae5a(0.20); }
+              Group #Cmp9Bad { Anchor: (Left: 0, Top: 1, Width: 344, Height: 18); Background: #c8553a(0.22); }
+              Label #Cmp9 { Text: ""; Anchor: (Left: 6, Top: 0, Width: 338, Height: 20); Style: (FontSize: 13, TextColor: #e9eef6); }
+              Group #Cmp9Row {
+                Anchor: (Left: 6, Top: 0, Width: 338, Height: 20);
+                LayoutMode: Left;
+
+                Label #Cmp9Name {
+                  Text: "";
+                  Anchor: (Width: 122, Height: 20);
+                  Style: (FontSize: 13, TextColor: #e9eef6);
+                }
+                Label #Cmp9Was {
+                  Text: "";
+                  Anchor: (Width: 54, Height: 20);
+                  Style: (FontSize: 13, TextColor: #e9eef6, HorizontalAlignment: Center);
+                }
+                Label #Cmp9Arrow {
+                  Text: "";
+                  Anchor: (Width: 26, Height: 20);
+                  Style: (FontSize: 13, TextColor: #e9eef6, HorizontalAlignment: Center);
+                }
+                Label #Cmp9Now {
+                  Text: "";
+                  Anchor: (Width: 54, Height: 20);
+                  Style: (FontSize: 13, TextColor: #e9eef6, RenderBold: true, HorizontalAlignment: Center);
+                }
+                Label #Cmp9Delta {
+                  Text: "";
+                  Anchor: (Width: 82, Height: 20);
+                  Style: (FontSize: 13, TextColor: #e9eef6, RenderBold: true, HorizontalAlignment: Center);
+                }
+              }
             }
-            Label #Cmp11 {
+            Group #Cmp10Box {
+              Anchor: (Height: 20);
+
+              Group #Cmp10Good { Anchor: (Left: 0, Top: 1, Width: 344, Height: 18); Background: #3fae5a(0.20); }
+              Group #Cmp10Bad { Anchor: (Left: 0, Top: 1, Width: 344, Height: 18); Background: #c8553a(0.22); }
+              Label #Cmp10 { Text: ""; Anchor: (Left: 6, Top: 0, Width: 338, Height: 20); Style: (FontSize: 13, TextColor: #e9eef6); }
+              Group #Cmp10Row {
+                Anchor: (Left: 6, Top: 0, Width: 338, Height: 20);
+                LayoutMode: Left;
+
+                Label #Cmp10Name {
+                  Text: "";
+                  Anchor: (Width: 122, Height: 20);
+                  Style: (FontSize: 13, TextColor: #e9eef6);
+                }
+                Label #Cmp10Was {
+                  Text: "";
+                  Anchor: (Width: 54, Height: 20);
+                  Style: (FontSize: 13, TextColor: #e9eef6, HorizontalAlignment: Center);
+                }
+                Label #Cmp10Arrow {
+                  Text: "";
+                  Anchor: (Width: 26, Height: 20);
+                  Style: (FontSize: 13, TextColor: #e9eef6, HorizontalAlignment: Center);
+                }
+                Label #Cmp10Now {
+                  Text: "";
+                  Anchor: (Width: 54, Height: 20);
+                  Style: (FontSize: 13, TextColor: #e9eef6, RenderBold: true, HorizontalAlignment: Center);
+                }
+                Label #Cmp10Delta {
+                  Text: "";
+                  Anchor: (Width: 82, Height: 20);
+                  Style: (FontSize: 13, TextColor: #e9eef6, RenderBold: true, HorizontalAlignment: Center);
+                }
+              }
+            }
+            Label #CmpSum {
               Text: "";
-              Anchor: (Height: 19);
-              Style: (FontSize: 13, TextColor: #e9eef6);
+              Anchor: (Height: 18);
+              Style: (FontSize: 12, TextColor: #e8c46a, RenderBold: true);
             }
             Label #CmpDesc {
               Text: "";
-              Anchor: (Height: 58);
+              Anchor: (Height: 42);
               Style: (FontSize: 12, TextColor: #b4c2d6, Wrap: true);
             }
             Label #Message {

@@ -39,7 +39,7 @@ import java.util.Map;
  * Наведение мыши на команду или кнопку «?» на карточке показывает описание в окне описаний.
  * Иконки — маленькие документы Icons/&lt;ключ&gt;_&lt;размер&gt;.ui, вставляются в пустые слоты.
  */
-public final class BattleMenuPage extends InteractiveCustomUIPage<BattleMenuPage.Click> {
+public final class BattleMenuPage extends InteractiveCustomUIPage<BattleMenuPage.Click> implements AnimatedPage {
     public static final String LAYOUT = "JrpgBattle/BattleMenu.ui";
     public static final String ICONS = "JrpgBattle/Icons/";
     public static final int BUTTONS = 6, QUEUE = 8, ENEMIES = 5, PARTY = 3;
@@ -107,7 +107,10 @@ public final class BattleMenuPage extends InteractiveCustomUIPage<BattleMenuPage
             bind(evt, CustomUIEventBindingType.MouseExited, "#P" + i + "Info", "unpeek", i);
         }
         bind(evt, CustomUIEventBindingType.Activating, "#Back", "back", -1);
+        bind(evt, CustomUIEventBindingType.Activating, "#RewardOk", "reward", 0);
+        bind(evt, CustomUIEventBindingType.Activating, "#RewardGrid", "reward", 1);
         style(cmd);
+        rewardOn = false;
         anim.clear();
         ticking = false;
         shownQueue = List.of();
@@ -199,7 +202,8 @@ public final class BattleMenuPage extends InteractiveCustomUIPage<BattleMenuPage
     }
 
     /** Окно сейчас анимируется (кадры шли недавно) и собрано не только что — для ClickBuffer. */
-    boolean animatingNow() {
+    @Override
+    public boolean animatingNow() {
         long now = System.currentTimeMillis();
         return now - lastFrameAt < 400 && now - builtAt > 400;
     }
@@ -241,6 +245,7 @@ public final class BattleMenuPage extends InteractiveCustomUIPage<BattleMenuPage
         int i = parse(data.index);
         switch (data.action == null ? "" : data.action) {
             case "back" -> session.onBack();
+            case "reward" -> session.onReward(i);
             case "opt" -> {
                 press(i);
                 session.onOption(i);
@@ -376,6 +381,7 @@ public final class BattleMenuPage extends InteractiveCustomUIPage<BattleMenuPage
         fillInspect(cmd);
         fillGlow(cmd, session.menu());
         fillSpeech(cmd);
+        fillReward(cmd);
         String banner = session.banner(), sub = session.bannerSub();
         cmd.set("#BannerBox.Visible", !banner.isEmpty() || !sub.isEmpty());
         cmd.set("#Banner.Text", banner);
@@ -515,6 +521,68 @@ public final class BattleMenuPage extends InteractiveCustomUIPage<BattleMenuPage
                 c.set(id + ".Visible", t > 0);
                 UiAnim.box(c, id, UiAnim.ilerp(-32, 2, UiAnim.easeOut(t)), 2, ROW_W - 4, ROW_H - 4);
             });
+        }
+    }
+
+    private static final int REWARD_HEROES = 3, REWARD_LOOT = 8, REWARD_BAR = 300, REWARD_W = 660, REWARD_H = 560;
+    private boolean rewardOn;
+
+    /**
+     * Окно наград после победы: опыт каждому (полоска заполняется, при новом уровне — до конца и заново),
+     * новые уровни и очки навыков, добыча иконками. Окно опускается сверху, герои появляются по очереди.
+     */
+    private void fillReward(UICommandBuilder cmd) {
+        BattleSession.Rewards r = session.shownRewards();
+        cmd.set("#RewardLayer.Visible", r != null);
+        if (r == null || rewardOn) return;
+        rewardOn = true;
+        cmd.set("#RewardTitle.Text", "ПОБЕДА!");
+        cmd.set("#RewardSub.Text", r.encounter());
+        int each = r.heroes().isEmpty() ? r.exp() : r.heroes().get(0).gained();
+        cmd.set("#RewardExp.Text", "Опыт за бой: " + r.exp() + (r.heroes().size() > 1 ? "  (по " + each + " каждому)" : ""));
+        for (int i = 0; i < REWARD_HEROES; i++) {
+            String p = "#Rw" + i;
+            BattleSession.HeroGain g = i < r.heroes().size() ? r.heroes().get(i) : null;
+            cmd.set(p + ".Visible", g != null);
+            if (g == null) continue;
+            cmd.set(p + "Name.Text", g.name());
+            int ups = g.levelAfter() - g.levelBefore();
+            cmd.set(p + "Lvl.Text", ups > 0 ? "Уровень " + g.levelBefore() + " → " + g.levelAfter() + "!  Очков навыков: " + g.points()
+                    : "Уровень " + g.levelAfter() + (g.points() > 0 ? "   очков навыков: " + g.points() : ""));
+            cmd.set(p + "Lvl.Style.TextColor", ups > 0 ? "#ffe08a" : "#b4c2d6");
+            cmd.set(p + "Exp.Text", "+" + g.gained() + " опыта");
+            cmd.set(p + "Next.Text", "до следующего уровня: " + Math.max(0, g.nextAfter() - g.expAfter()));
+            icon(cmd, p + "Icon", iconKey("portrait:" + g.id()), "m");
+            int from = (int) Math.round(REWARD_BAR * Math.min(1.0, g.expBefore() / (double) Math.max(1, g.nextBefore())));
+            int to = (int) Math.round(REWARD_BAR * Math.min(1.0, g.expAfter() / (double) Math.max(1, g.nextAfter())));
+            setBar(cmd, p + "Bar", from, 8);
+            if (animated()) {
+                anim.play("rewardBar" + i, 500 + 250L * i, ups > 0 ? 1100 : 700, (c, t) -> {
+                    int w = ups == 0 ? UiAnim.ilerp(from, to, UiAnim.easeOut(t))
+                            : t < 0.5 ? UiAnim.ilerp(from, REWARD_BAR, UiAnim.easeIn(t * 2))
+                            : UiAnim.ilerp(0, to, UiAnim.easeOut((t - 0.5) * 2));
+                    setBar(c, p + "Bar", w, 8);
+                });
+                String mv = p;
+                anim.play("rewardRow" + i, 150 + 120L * i, 260, (c, t) -> c.set(mv + ".Visible", t > 0));
+            } else {
+                setBar(cmd, p + "Bar", to, 8);
+            }
+        }
+        cmd.set("#RewardLootTitle.Text", r.loot().isEmpty() ? "ДОБЫЧА: ничего не выпало" : "ДОБЫЧА (всё уже в рюкзаке)");
+        for (int i = 0; i < REWARD_LOOT; i++) {
+            BattleSession.LootLine l = i < r.loot().size() ? r.loot().get(i) : null;
+            cmd.set("#Loot" + i + ".Visible", l != null);
+            if (l == null) continue;
+            String more = i == REWARD_LOOT - 1 && r.loot().size() > REWARD_LOOT ? "  и ещё " + (r.loot().size() - REWARD_LOOT) : "";
+            cmd.set("#Loot" + i + "Name.Text", l.name() + (l.count() > 1 ? "  x" + l.count() : "") + more);
+            cmd.set("#Loot" + i + "Name.Style.TextColor", l.color() != null ? l.color() : "#e9eef6");
+            icon(cmd, "#Loot" + i + "Icon", iconKey(l.icon()), "r", l.tier());
+        }
+        if (animated()) {
+            note("окно наград опускается, полоски опыта заполняются");
+            anim.play("rewardIn", 0, 380, (c, t) -> UiAnim.box(c, "#RewardWin", 0,
+                    UiAnim.ilerp(-120, 0, UiAnim.easeOut(t)), REWARD_W, REWARD_H));
         }
     }
 
