@@ -38,3 +38,5 @@ sword
 thunder
 wall
 web
+tempest
+haste

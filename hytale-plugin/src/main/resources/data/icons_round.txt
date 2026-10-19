@@ -6,6 +6,7 @@ ice
 heal
 poison
 stun
+haste
 regen
 web
 focus
@@ -44,6 +45,7 @@ pt_trork
 pt_unknown
 gear_helm
 meteor
+tempest
 spike
 wall
 roar

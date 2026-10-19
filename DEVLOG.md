@@ -502,3 +502,7 @@ jrpg-mod/
 - Иконки-медальоны Kling (`/mnt/project-files/jrpg-gemini/kling/out/`, HANDOFF.md): 39 PNG заменили одноимённые в `Icons/`, новая `gear_sword` (оружие типа sword; `Describe.gearIcon` по умолчанию). Список внешних иконок — `tools/external_icons.txt`: `gen_icons.py` их не перерисовывает, только пишет обёртки `.ui` и `data/icons.txt`. Когда придут остальные 11 (water, haste, nova, quake, tempest, shadow, taunt, warcry, antidote, bomb, bag), положить PNG в `Icons/`, дописать имена в `external_icons.txt` и запустить `gen_icons.py`.
 - Круглые рамки уровня `tier_c1..3` для медальонов; какие иконки круглые, `gen_icons.py` определяет по прозрачному углу и пишет в `data/icons_round.txt` (`Icons.round`); `BattleMenuPage.putIcon` берёт `tier_c` или `tier_t`.
 - `jr_window.png` — panel_bg Kling без ромбиков посередине краёв (9-slice, Border 86): фон всех окон меню (`menu_window`). `jr_cell.png` — slot_frame Kling (Border 28): ячейки рюкзака и рамка выбранного предмета. panel_bg2 не подключён.
+
+## Сессия 28 — 0.10.6: иконки «Буря» и «Ускорение»
+
+- tempest.png и haste.png от Kling поставлены в `Icons/` и дописаны в `tools/external_icons.txt`. bomb и bag не приняты, их не ставить. Без новых пока: water, nova, quake, shadow, taunt, warcry, antidote, bomb, bag.
