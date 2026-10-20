@@ -33,6 +33,13 @@ public final class BattleCamera {
     private String lastShot = "";
     /** Куда поставили камеру и куда она смотрит (последний кадр) — для окон реплик над головами. */
     private volatile Vector3d lastCam, lastLook;
+    /**
+     * Кино-режим (катсцены): без курсора и мыши в мире, ввод игрока не двигает ни его, ни камеру
+     * (как PlaybackSafety.configureCamera в CameraMenu). Плюс свои угол обзора, размытие фона и крен.
+     */
+    private volatile boolean cinema;
+    private volatile float fovOverride = -1f, roll;
+    private volatile com.hypixel.hytale.protocol.DepthOfFieldSettings dof;
 
     public BattleCamera(PlayerRef player, Settings.Camera settings, Vector3d partyCenter, Vector3d enemyCenter) {
         this.player = player;
@@ -172,9 +179,22 @@ public final class BattleCamera {
             c.positionType = PositionType.Custom;
             c.position = new Position(camX, camY, camZ);
             c.rotationType = RotationType.Custom;
-            c.rotation = new Direction(yaw, realPitch, 0f);
-            if (s.fov > 1) c.baseFov = s.fov;
-            if (s.mouseTargets) {
+            c.rotation = new Direction(yaw, realPitch, cinema ? roll : 0f);
+            if (fovOverride > 1) c.baseFov = fovOverride;
+            else if (s.fov > 1) c.baseFov = s.fov;
+            if (cinema) {
+                c.displayCursor = false;
+                c.displayReticle = false;
+                c.hideHeldItem = true;
+                c.skipCharacterPhysics = true;
+                c.allowPitchControls = false;
+                c.movementMultiplier = new org.joml.Vector3f(0f, 0f, 0f);
+                c.lookMultiplier = new org.joml.Vector2f(0f, 0f);
+                c.speedModifier = 0f;
+                c.mouseInputTargetType = com.hypixel.hytale.protocol.MouseInputTargetType.None;
+                c.sendMouseMotion = false;
+                if (dof != null) c.depthOfField = dof;
+            } else if (s.mouseTargets) {
                 // Курсор в мире: клиент шлёт движение мыши и сущность под курсором (наведение и клик по врагу).
                 c.sendMouseMotion = true;
                 c.mouseInputTargetType = com.hypixel.hytale.protocol.MouseInputTargetType.Entity;
@@ -220,8 +240,28 @@ public final class BattleCamera {
         double z = dx * fx + dy * fy + dz * fz;
         if (z < 0.5) return null;
         double x = dx * rx + dy * ry + dz * rz, y = dx * ux + dy * uy + dz * uz;
-        double tanV = Math.tan(Math.toRadians((s.fov > 1 ? s.fov : 70) / 2.0)), tanH = tanV * 16.0 / 9.0;
+        double tanV = Math.tan(Math.toRadians(fov() / 2.0)), tanH = tanV * 16.0 / 9.0;
         return new double[]{0.5 + x / (z * tanH) / 2, 0.5 - y / (z * tanV) / 2};
+    }
+
+    /** Кино-режим для катсцен (см. поле cinema). */
+    public void cinema(boolean on) { cinema = on; }
+
+    /** Угол обзора кадров (градусы); 0 и меньше — как в настройках камеры. */
+    public void fov(float degrees) { fovOverride = degrees; }
+
+    public float fov() { return fovOverride > 1 ? fovOverride : (s.fov > 1 ? s.fov : 70f); }
+
+    /** Крен камеры (радианы), только в кино-режиме. */
+    public void roll(float radians) { roll = radians; }
+
+    /** Размытие фона (глубина резкости); null — выключить. Только в кино-режиме. */
+    public void dof(com.hypixel.hytale.protocol.DepthOfFieldSettings d) { dof = d; }
+
+    /** Повторить последний кадр (после смены fov, размытия или крена). */
+    public void refresh() {
+        Vector3d c = lastCam, l = lastLook;
+        if (c != null && l != null) place(lastShot, c, l, 1f);
     }
 
     public void reset() {

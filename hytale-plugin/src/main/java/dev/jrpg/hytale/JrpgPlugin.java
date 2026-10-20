@@ -87,6 +87,19 @@ public final class JrpgPlugin extends JavaPlugin {
         mover.start();
         menuKey.start();
         clickBuffer.start();
+        // Катсцены: клики без окна (ЛКМ дальше, ПКМ пропуск, колесо — выбор) и возврат игрока после краша.
+        getEntityStoreRegistry().registerSystem(new CutsceneInput());
+        getEventRegistry().registerGlobal(com.hypixel.hytale.server.core.event.events.player.PlayerReadyEvent.class, e -> {
+            try {
+                Ref<EntityStore> r = e.getPlayerRef();
+                if (r == null || !r.isValid()) return;
+                Store<EntityStore> st = r.getStore();
+                PlayerRef pr = st.getComponent(r, PlayerRef.getComponentType());
+                if (pr != null) st.getExternalData().getWorld().execute(() -> Cutscene.rescue(this, pr, r, st));
+            } catch (Throwable t) {
+                warn("Проверка оборванной катсцены", t);
+            }
+        });
         getEventRegistry().register(PlayerDisconnectEvent.class, e -> onDisconnect(e.getPlayerRef()));
         // Мышь в мире во время боя (камера боя включает курсор и отправку движения мыши): наведение и клик по врагу.
         getEventRegistry().register(com.hypixel.hytale.server.core.event.events.player.PlayerMouseMotionEvent.class, e -> {
@@ -94,6 +107,16 @@ public final class JrpgPlugin extends JavaPlugin {
             if (s != null) s.onWorld(() -> s.onWorldHover(e.getTargetEntityRef()));
         });
         getEventRegistry().register(com.hypixel.hytale.server.core.event.events.player.PlayerMouseButtonEvent.class, e -> {
+            PlayerRef cp = e.getPlayerRefComponent();
+            if (cp != null && Cutscene.playing(cp.getUuid()) && e.getMouseButton() != null) {
+                e.setCancelled(true);
+                var mb = e.getMouseButton();
+                if (mb.state == com.hypixel.hytale.protocol.MouseButtonState.Released) {
+                    if (mb.mouseButtonType == com.hypixel.hytale.protocol.MouseButtonType.Left) Cutscene.input(cp.getUuid(), Cutscene.Key.NEXT, 0);
+                    else if (mb.mouseButtonType == com.hypixel.hytale.protocol.MouseButtonType.Right) Cutscene.input(cp.getUuid(), Cutscene.Key.SKIP, 0);
+                }
+                return;
+            }
             BattleSession s = sessionOf(e.getPlayerRef());
             if (s == null || e.getMouseButton() == null) return;
             // В бою клики не бьют оружием по миру, а выбирают цель.
@@ -110,6 +133,7 @@ public final class JrpgPlugin extends JavaPlugin {
     protected void shutdown() {
         menuKey.stop();
         clickBuffer.stop();
+        Cutscene.cancelAll();
         for (BattleSession s : sessions.values()) s.abort("сервер останавливается");
         clearSquads();
         followers.clearAll();
@@ -126,6 +150,7 @@ public final class JrpgPlugin extends JavaPlugin {
             if (s != null) s.abort("игрок вышел");
             followers.forget(id);
             Sequences.cancel(id);
+            Cutscene.cancel(id);
             savePlayerNow(id);
         } catch (Throwable t) {
             warn("Ошибка при выходе игрока", t);

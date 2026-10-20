@@ -45,6 +45,12 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * и в итог сцены, шаг пропускается — сцена не ломается. Раз в {@link #TICK_MS} мс сцена делает шаг в потоке мира:
  * запускает наступившие шаги и двигает камеру (облёт, слежка, плавный наезд считаются здесь же).
  * slow — замедление: время сцены идёт в slow раз медленнее (анимации моделей играют как есть).
+ *
+ * Тот же движок играет катсцены ({@link Cutscene}): у сцены могут быть именованные актёры (on: "bram",
+ * "bram,lyra", "all"), точки в мире ([x,y,z] от начала сцены, имя актёра, {"at":..,"off":[..]}),
+ * метки и переходы (label / goto / if / end), камера по ключевым кадрам (shot, path, track, native),
+ * угол обзора, размытие фона, крен, замедление мира. Шаги и ожидания, которых движок не знает, отдаются
+ * расширению {@link Ext} (катсцена: субтитры, диалоги, затемнение, полосы, титры, время суток, погода).
  */
 final class SkillSequence {
     static final long TICK_MS = 50;
@@ -61,6 +67,21 @@ final class SkillSequence {
         void hit(List<Ref<EntityStore>> targets);
 
         void done(SkillSequence seq);
+    }
+
+    /** Расширение движка (катсцена): свои шаги, свои ожидания и свой тик. */
+    interface Ext {
+        /** Шаг key понят и выполнен — true; false — такого шага нет и у расширения. */
+        boolean step(String key, Map<String, Object> st, List<Ref<EntityStore>> on, double when);
+
+        /** Дождались ли what (true/false); null — такого ожидания расширение не знает. */
+        Boolean waited(String what, Map<String, Object> st, double now, double since);
+
+        /** Каждый тик сцены (до шагов). */
+        void tick(double now);
+
+        /** Сцена стоит (идёт реплика, ждём выбор): следующие шаги не начинаются; время потом — с момента отпуска. */
+        boolean holds();
     }
 
     private interface CamTrack {
@@ -89,6 +110,22 @@ final class SkillSequence {
     private CamTrack cam;
     private boolean finished;
 
+    // ---- для катсцен (у навыков всё по умолчанию) ----
+    /** Актёры по именам и где каждый стоял в начале (move back / to home). */
+    private final Map<String, Ref<EntityStore>> actors = new java.util.LinkedHashMap<>();
+    private final Map<Ref<EntityStore>, Vector3d> homes = new java.util.HashMap<>();
+    private final Map<Ref<EntityStore>, Float> homeYaws = new java.util.HashMap<>();
+    /** Начало координат сцены и куда «вперёд» ([x,y,z] в шагах: x вправо, y вверх, z вперёд). */
+    private Vector3d origin;
+    private float originYaw;
+    private Ext ext;
+    private double maxMs = MAX_MS;
+    /** Переменные сцены (выборы в диалогах): "if": "имя" / "!имя". */
+    private final Set<String> vars = new java.util.HashSet<>();
+    private boolean jumped, held;
+    /** Плавная смена угла обзора и размытие, которое следит за актёром. */
+    private CamTrack fovTrack, dofTrack;
+    private double slowUntil = -1;
     SkillSequence(JrpgPlugin plugin, String id, List<Map<String, Object>> steps, PlayerRef player, Ref<EntityStore> viewer,
                   Store<EntityStore> store, World world, BattleCamera camera, Cast cast, double slow, Hooks hooks) {
         this.plugin = plugin;
@@ -102,8 +139,61 @@ final class SkillSequence {
         this.cast = cast;
         this.slow = Math.max(1, slow);
         this.hooks = hooks;
+        this.origin = cast.casterHome();
+        this.originYaw = cast.casterYaw();
+        homes.put(cast.caster(), cast.casterHome());
+        homeYaws.put(cast.caster(), cast.casterYaw());
     }
 
+    /** Актёры сцены по именам (их нынешние места запоминаются как «дом»). */
+    SkillSequence actors(Map<String, Ref<EntityStore>> named) {
+        actors.putAll(named);
+        for (Ref<EntityStore> r : named.values()) {
+            if (r == null || !r.isValid()) continue;
+            homes.putIfAbsent(r, Fx.position(store, r));
+            homeYaws.putIfAbsent(r, yawOf(r));
+        }
+        return this;
+    }
+
+    SkillSequence ext(Ext e) {
+        ext = e;
+        return this;
+    }
+
+    SkillSequence maxMs(double ms) {
+        maxMs = ms;
+        return this;
+    }
+
+    SkillSequence origin(Vector3d o, float yaw) {
+        origin = new Vector3d(o);
+        originYaw = yaw;
+        return this;
+    }
+
+    Set<String> vars() { return vars; }
+
+    Map<String, Ref<EntityStore>> actorMap() { return actors; }
+
+    /** Перейти к метке (шаг {"label": name}, дальше — шаги после неё); время считается от этого момента. */
+    boolean jump(String label) {
+        for (int i = 0; i < steps.size(); i++) {
+            if (label.equals(String.valueOf(steps.get(i).get("label")))) {
+                index = i + 1;
+                segStart = prev = now();
+                jumped = true;
+                return true;
+            }
+        }
+        missing.add("метка «" + label + "»");
+        return false;
+    }
+
+    /** Завершить сцену сейчас (пропуск катсцены, шаг end). */
+    void end() { finish(); }
+
+    boolean finished() { return finished; }
     /** Запустить через delayMs (успеть заспавнить кукол). */
     void start(long delayMs) {
         startReal = System.currentTimeMillis() + delayMs;
@@ -139,6 +229,11 @@ final class SkillSequence {
         finished = true;
         if (task != null) task.cancel(false);
         plugin.mover().stop(cast.caster());
+        for (Ref<EntityStore> r : actors.values()) plugin.mover().stop(r);
+        if (slowUntil >= 0) {
+            slowUntil = -1;
+            timeDilation(1f);
+        }
         plugin.log("Сцена " + id + " закончена" + (missing.isEmpty() ? "" : "; не нашлось: " + String.join("; ", missing)));
         try {
             hooks.done(this);
@@ -156,17 +251,39 @@ final class SkillSequence {
     private void tick() {
         if (finished) return;
         double now = now();
-        if (now > MAX_MS) {
-            missing.add("сцена дольше " + (long) (MAX_MS / 1000) + " с — оборвана");
+        if (now > maxMs) {
+            missing.add("сцена дольше " + (long) (maxMs / 1000) + " с — оборвана");
             finish();
             return;
         }
-        while (index < steps.size()) {
+        if (slowUntil >= 0 && now >= slowUntil) {
+            slowUntil = -1;
+            timeDilation(1f);
+        }
+        if (ext != null) ext.tick(now);
+        jumped = false; // переход из тика расширения (выбор в диалоге) уже поставил index
+        while (index < steps.size() && !finished) {
+            if (ext != null && ext.holds()) {
+                held = true;
+                break;
+            }
+            if (held) {
+                held = false;
+                segStart = prev = now;
+            }
             Map<String, Object> st = steps.get(index);
+            if (!condition(st)) {
+                index++;
+                continue;
+            }
             double when = when(st);
             if (now < when) break;
             if (st.containsKey("wait")) {
                 if (!waited(st, now, when)) break;
+                if (jumped) {
+                    jumped = false;
+                    continue;
+                }
                 segStart = prev = now;
                 index++;
                 continue;
@@ -174,11 +291,35 @@ final class SkillSequence {
             run(st, when);
             prev = when;
             lastAction = now;
+            if (Json.bool(st, "end", false)) {
+                finish();
+                return;
+            }
+            if (st.get("goto") != null && jump(String.valueOf(st.get("goto")))) {
+                jumped = false;
+                continue;
+            }
+            if (jumped) {
+                jumped = false;
+                continue;
+            }
             index++;
         }
+        if (finished) return;
         if (cam != null && !cam.frame(now)) cam = null;
+        boolean extra = false;
+        if (fovTrack != null) {
+            if (!fovTrack.frame(now)) fovTrack = null;
+            extra = true;
+        }
+        if (dofTrack != null) {
+            if (!dofTrack.frame(now)) dofTrack = null;
+            extra = true;
+        }
+        if (extra && cam == null) camera.refresh();
         // Конец: все шаги прошли, кастующий дошёл, последние эффекты успели доиграть.
-        if (index >= steps.size() && !plugin.mover().moving(cast.caster()) && now - lastAction > 700) finish();
+        if (index >= steps.size() && !plugin.mover().moving(cast.caster()) && now - lastAction > 700
+                && (ext == null || !ext.holds())) finish();
     }
 
     private double when(Map<String, Object> st) {
@@ -199,19 +340,37 @@ final class SkillSequence {
         Object w = st.get("wait");
         if (w instanceof Number n) return now >= since + n.doubleValue();
         String what = String.valueOf(w);
-        if (what.equals("arrived")) return !plugin.mover().moving(cast.caster()) || now - since > 8000;
-        missing.add("wait «" + what + "» (есть: arrived или число мс)");
+        if (what.equals("arrived")) {
+            List<Ref<EntityStore>> on = st.containsKey("on") ? who(Json.str(st, "on", "caster")) : List.of(cast.caster());
+            for (Ref<EntityStore> r : on) if (plugin.mover().moving(r) && now - since <= 12000) return false;
+            return true;
+        }
+        if (what.equals("camera")) return cam == null || now - since > 30000;
+        if (ext != null) {
+            Boolean r = ext.waited(what, st, now, since);
+            if (r != null) return r;
+        }
+        missing.add("wait «" + what + "» (есть: arrived, camera, число мс" + (ext != null ? ", click, dialog, choice" : "") + ")");
         return true;
+    }
+
+    /** "if": "имя" — шаг только если выбор сделан; "!имя" — только если нет. */
+    private boolean condition(Map<String, Object> st) {
+        Object c = st.get("if");
+        if (c == null) return true;
+        String v = String.valueOf(c).trim();
+        return v.startsWith("!") ? !vars.contains(v.substring(1)) : vars.contains(v);
     }
 
     // ---------- шаг ----------
 
     private void run(Map<String, Object> st, double when) {
-        List<Ref<EntityStore>> on = who(Json.str(st, "on", "caster"));
+        // Кто делает шаг: on, иначе говорящий (who в репликах катсцены — его эмоция/анимация), иначе кастующий.
+        String whoSays = Json.str(st, "who", "");
+        List<Ref<EntityStore>> on = who(Json.str(st, "on", actors.containsKey(whoSays) ? whoSays : "caster"));
         StringBuilder log = new StringBuilder();
         for (String key : st.keySet()) {
-            if (List.of("t", "on", "ms", "ease", "fallback", "attach", "offset", "color", "dist", "height", "side",
-                    "from", "to", "stopAt", "radius", "fallMs").contains(key)) continue;
+            if (PARAMS.contains(key)) continue;
             log.append(key).append(' ');
             try {
                 switch (key) {
@@ -227,7 +386,19 @@ final class SkillSequence {
                     case "hit" -> {
                         if (Json.bool(st, "hit", true)) hooks.hit(on);
                     }
-                    default -> missing.add("шаг «" + key + "» пока не поддержан");
+                    case "fov" -> fov(st);
+                    case "dof" -> dof(st);
+                    case "roll" -> {
+                        camera.roll((float) Math.toRadians(Json.num(st, "roll", 0)));
+                        if (cam == null) camera.refresh();
+                    }
+                    case "slowmo" -> slowmo(st, when);
+                    case "face" -> face(st, on);
+                    case "set" -> vars.add(Json.str(st, "set", ""));
+                    case "unset" -> vars.remove(Json.str(st, "unset", ""));
+                    default -> {
+                        if (ext == null || !ext.step(key, st, on, when)) missing.add("шаг «" + key + "» пока не поддержан");
+                    }
                 }
             } catch (Throwable t) {
                 Fx.warnOnce("Сцена " + id + ": шаг " + key + " не сработал", t);
@@ -238,12 +409,84 @@ final class SkillSequence {
                 + (st.containsKey("on") ? " → " + st.get("on") : ""));
     }
 
-    private List<Ref<EntityStore>> who(String on) {
-        return switch (on) {
-            case "target" -> cast.target() == null ? List.of() : List.of(cast.target());
-            case "targets" -> cast.targets();
-            default -> List.of(cast.caster());
-        };
+    /** Параметры шагов (не действия). */
+    private static final Set<String> PARAMS = Set.of("t", "on", "ms", "ease", "fallback", "attach", "offset", "color",
+            "dist", "height", "side", "from", "to", "stopAt", "radius", "fallMs", "label", "goto", "if", "end", "pos",
+            "look", "points", "keys", "speed", "loop", "note", "who", "voice", "auto", "options", "size", "sub", "at",
+            "fromCurrent", "id", "hero", "enemy", "role", "name", "hidden", "yaw", "nameplate", "_clicks");
+
+    /** Кто: caster, target, targets, all (все актёры), имя актёра или несколько через запятую. */
+    List<Ref<EntityStore>> who(String on) {
+        switch (on) {
+            case "target":
+                return cast.target() == null ? List.of() : List.of(cast.target());
+            case "targets":
+                return cast.targets();
+            case "caster":
+                return List.of(cast.caster());
+            case "all": {
+                List<Ref<EntityStore>> all = new ArrayList<>();
+                for (Ref<EntityStore> r : actors.values()) if (r != null && r.isValid()) all.add(r);
+                return all;
+            }
+            default: {
+                List<Ref<EntityStore>> out = new ArrayList<>();
+                for (String n : on.split(",")) {
+                    Ref<EntityStore> r = actors.get(n.trim());
+                    if (r != null && r.isValid()) out.add(r);
+                    else if (!n.isBlank()) missing.add("актёр «" + n.trim() + "»");
+                }
+                return out;
+            }
+        }
+    }
+
+    // ---------- точки ----------
+
+    /**
+     * Точка мира: [x,y,z] — от начала сцены (x вправо, y вверх, z вперёд), "имя" — где стоит актёр
+     * (caster/target тоже), {"at": точка или имя, "off": [x,y,z]} — со сдвигом (у актёра — в его осях:
+     * x вправо, z вперёд от его взгляда), {"world": [x,y,z]} — абсолютные координаты.
+     */
+    Vector3d point(Object spec) {
+        if (spec instanceof List<?> l && l.size() >= 3) return local(origin, originYaw, l);
+        if (spec instanceof String name) {
+            List<Ref<EntityStore>> r = who(name);
+            return r.isEmpty() ? new Vector3d(origin) : center(r);
+        }
+        if (spec instanceof Map<?, ?> m) {
+            Object w = m.get("world");
+            if (w instanceof List<?> wl && wl.size() >= 3) return new Vector3d(d(wl.get(0)), d(wl.get(1)), d(wl.get(2)));
+            Object at = m.get("at");
+            Object off = m.get("off");
+            Vector3d base;
+            float yaw = originYaw;
+            if (at instanceof String name && !who(name).isEmpty()) {
+                Ref<EntityStore> r = who(name).get(0);
+                base = Fx.position(store, r);
+                yaw = yawOf(r);
+            } else {
+                base = at == null ? new Vector3d(origin) : point(at);
+            }
+            return off instanceof List<?> ol && ol.size() >= 3 ? local(base, yaw, ol) : base;
+        }
+        return new Vector3d(origin);
+    }
+
+    /** Точка взгляда: у актёра (имя) — на уровне груди. */
+    private Vector3d lookPoint(Object spec) {
+        Vector3d p = point(spec);
+        return spec instanceof String ? new Vector3d(p.x, p.y + 1.3, p.z) : p;
+    }
+
+    private static Vector3d local(Vector3d base, float yaw, List<?> xyz) {
+        double fx = -Math.sin(yaw), fz = -Math.cos(yaw), rx = -fz, rz = fx;
+        double x = d(xyz.get(0)), y = d(xyz.get(1)), z = d(xyz.get(2));
+        return new Vector3d(base.x + rx * x + fx * z, base.y + y, base.z + rz * x + fz * z);
+    }
+
+    private static double d(Object o) {
+        return o instanceof Number n ? n.doubleValue() : 0;
     }
 
     // ---------- камера ----------
@@ -300,7 +543,32 @@ final class SkillSequence {
                 cam = null;
                 camera.action(Fx.position(store, cast.caster()), center(cast.targets()));
             }
-            default -> missing.add("камера «" + kind + "» (есть focus, follow, orbit, battle)");
+            case "shot" -> {
+                // Кадр: камера в pos, взгляд на look; ms — плавный проезд от текущего кадра (0 — склейка).
+                Vector3d to = point(st.get("pos"));
+                Vector3d look = lookPoint(st.containsKey("look") ? st.get("look") : st.getOrDefault("on", "caster"));
+                cam = glide(to, look, when, ms, ease);
+            }
+            case "path" -> cam = path(st, when, ms, ease);
+            case "track" -> {
+                // Камера стоит (или едет к pos) и следит за актёром.
+                Ref<EntityStore> ref = on.isEmpty() ? cast.caster() : on.get(0);
+                Vector3d to = point(st.get("pos"));
+                Vector3d fromCam = camera.lastCam() == null ? to : camera.lastCam();
+                double up = Json.num(st, "height", 1.3);
+                cam = now -> {
+                    double t = ms <= 0 ? 1 : Math.min(1, Math.max(0, (now - when) / ms));
+                    Vector3d p = Fx.position(store, ref);
+                    camera.aim("seq:track", new Vector3d(fromCam).lerp(to, ease(ease, t)), new Vector3d(p.x, p.y + up, p.z), 0.35f);
+                    return ref.isValid();
+                };
+            }
+            case "native" -> nativeKeys(st);
+            case "player" -> {
+                cam = null;
+                camera.reset();
+            }
+            default -> missing.add("камера «" + kind + "» (есть focus, follow, orbit, battle, shot, path, track, native, player)");
         }
     }
 
@@ -318,6 +586,154 @@ final class SkillSequence {
             camera.aim("seq:focus", new Vector3d(fc).lerp(toCam, e), new Vector3d(fl).lerp(toLook, e), 0.35f);
             return t < 1;
         };
+    }
+
+    /**
+     * Проезд по ключевым кадрам: points = [{pos, look}, ...], сплайн Catmull-Rom (как в CameraMenu) через все
+     * точки, первая — текущий кадр камеры, если "fromCurrent": true. ms — на весь проезд.
+     */
+    private CamTrack path(Map<String, Object> st, double start, double ms, String ease) {
+        List<Vector3d> ps = new ArrayList<>(), ls = new ArrayList<>();
+        if (Json.bool(st, "fromCurrent", false) && camera.lastCam() != null) {
+            ps.add(camera.lastCam());
+            ls.add(camera.lastLook());
+        }
+        Object pts = st.get("points");
+        if (pts instanceof List<?> l) {
+            for (Object o : l) {
+                if (!(o instanceof Map<?, ?> m)) continue;
+                ps.add(point(m.get("pos")));
+                Object lk = m.get("look");
+                ls.add(lk == null ? (ls.isEmpty() ? new Vector3d(origin) : new Vector3d(ls.get(ls.size() - 1))) : lookPoint(lk));
+            }
+        }
+        if (ps.size() < 2) {
+            missing.add("камера path: нужно минимум 2 точки");
+            return null;
+        }
+        return now -> {
+            double t = ms <= 0 ? 1 : Math.min(1, Math.max(0, (now - start) / ms));
+            double e = ease(ease, t);
+            camera.aim("seq:path", spline(ps, e), spline(ls, e), 0.5f);
+            return t < 1;
+        };
+    }
+
+    /** Точка сплайна Catmull-Rom по списку при параметре u 0..1 (равномерно по отрезкам). */
+    static Vector3d spline(List<Vector3d> p, double u) {
+        int n = p.size() - 1;
+        double f = Math.min(n - 1e-9, Math.max(0, u * n));
+        int i = (int) Math.floor(f);
+        double t = f - i;
+        Vector3d p0 = p.get(Math.max(0, i - 1)), p1 = p.get(i), p2 = p.get(Math.min(n, i + 1)), p3 = p.get(Math.min(n, i + 2));
+        return new Vector3d(cr(p0.x, p1.x, p2.x, p3.x, t), cr(p0.y, p1.y, p2.y, p3.y, t), cr(p0.z, p1.z, p2.z, p3.z, t));
+    }
+
+    private static double cr(double p0, double p1, double p2, double p3, double t) {
+        return 0.5 * (2 * p1 + (-p0 + p2) * t + (2 * p0 - 5 * p1 + 4 * p2 - p3) * t * t + (-p0 + 3 * p1 - 3 * p2 + p3) * t * t * t);
+    }
+
+    /**
+     * Родная последовательность камеры клиента (CameraSequenceBuilder, как облёт в Viewfinder): клиент сам
+     * плавно ведёт камеру по keys = [{pos, look, ms, fov, ease}]. Не проверено вместе с нашими кадрами:
+     * пока она идёт, другие camera-шаги не ставить.
+     */
+    private void nativeKeys(Map<String, Object> st) {
+        Object keys = st.get("keys");
+        if (!(keys instanceof List<?> l) || l.isEmpty()) {
+            missing.add("камера native: нет keys");
+            return;
+        }
+        cam = null;
+        var b = new com.hypixel.hytale.server.core.modules.camera.CameraSequenceBuilder()
+                .addFlag((byte) 2).addFlag((byte) 4).addFlag((byte) 1).baseFov(camera.fov());
+        boolean first = true;
+        for (Object o : l) {
+            if (!(o instanceof Map<?, ?> raw)) continue;
+            Map<String, Object> k = Json.obj(raw);
+            float secs = (float) (first ? 0.05 : Json.num(k, "ms", 1000) * slow / 1000.0);
+            first = false;
+            com.hypixel.hytale.protocol.EasingType et = com.hypixel.hytale.protocol.EasingType.Linear;
+            for (var v : com.hypixel.hytale.protocol.EasingType.values()) if (v.name().equalsIgnoreCase(Json.str(k, "ease", "Linear"))) et = v;
+            var kb = new com.hypixel.hytale.server.core.modules.camera.CameraKeyframeBuilder(secs, et)
+                    .position(point(k.get("pos"))).lookAt(lookPoint(k.getOrDefault("look", "caster")));
+            if (k.containsKey("fov")) kb.fov((float) Json.num(k, "fov", 70));
+            b.keyframe(kb);
+        }
+        b.sendTo(player);
+    }
+
+    // ---------- угол обзора, размытие, замедление, поворот ----------
+
+    /** {"fov": 40, "ms": 800} — плавно сменить угол обзора (меньше = «зум»). */
+    private void fov(Map<String, Object> st) {
+        float from = camera.fov(), to = (float) Json.num(st, "fov", 70);
+        double ms = Json.num(st, "ms", 600), start = now();
+        String ease = Json.str(st, "ease", "InOutQuad");
+        fovTrack = now -> {
+            double t = ms <= 0 ? 1 : Math.min(1, Math.max(0, (now - start) / ms));
+            camera.fov((float) (from + (to - from) * ease(ease, t)));
+            return t < 1;
+        };
+    }
+
+    /**
+     * {"dof": {"focus": "bram", "blur": 0.7}} — фон размыт, резко там, где focus (актёр или расстояние в блоках);
+     * "dof": false — выключить. Зона резкости как в Viewfinder: вокруг расстояния фокуса.
+     */
+    private void dof(Map<String, Object> st) {
+        Object d = st.get("dof");
+        if (!(d instanceof Map<?, ?> m)) {
+            dofTrack = null;
+            camera.dof(null);
+            if (cam == null) camera.refresh();
+            return;
+        }
+        Map<String, Object> o = Json.obj(m);
+        float blur = (float) Json.num(o, "blur", 0.7);
+        Object focus = o.getOrDefault("focus", "caster");
+        dofTrack = now -> {
+            float dist;
+            if (focus instanceof Number n) dist = n.floatValue();
+            else {
+                Vector3d c = camera.lastCam(), p = lookPoint(focus);
+                dist = c == null ? 4f : (float) c.distance(p);
+            }
+            camera.dof(dofAt(dist, blur));
+            return true;
+        };
+    }
+
+    static com.hypixel.hytale.protocol.DepthOfFieldSettings dofAt(float focus, float blur) {
+        focus = Math.max(0.3f, focus);
+        float depth = Math.max(0.3f, focus * 0.35f);
+        float nearSharp = Math.max(0.05f, focus - depth * 0.8f), farSharp = focus + depth * 1.3f;
+        float nearBlurry = nearSharp * 0.45f, farBlurry = farSharp + Math.max(2.5f, focus * 2f);
+        return new com.hypixel.hytale.protocol.DepthOfFieldSettings(nearBlurry, nearSharp, farSharp, farBlurry, blur, blur);
+    }
+
+    /** {"slowmo": 0.3, "ms": 600} — весь мир медленнее (World.setTimeDilation), потом обратно. */
+    private void slowmo(Map<String, Object> st, double when) {
+        float k = (float) Math.max(0.0101, Math.min(4, Json.num(st, "slowmo", 0.3)));
+        timeDilation(k);
+        slowUntil = k >= 0.999 ? -1 : when + Json.num(st, "ms", 600);
+    }
+
+    private void timeDilation(float k) {
+        try {
+            World.setTimeDilation(k, store);
+        } catch (Throwable t) {
+            Fx.warnOnce("Замедление мира не сработало", t);
+        }
+    }
+
+    /** {"face": точка или имя, "on": "bram"} — повернуться лицом. */
+    private void face(Map<String, Object> st, List<Ref<EntityStore>> on) {
+        Vector3d to = point(st.get("face"));
+        for (Ref<EntityStore> r : on) {
+            Vector3d p = Fx.position(store, r);
+            Fx.place(store, r, p, Fx.yawTowards(p, to));
+        }
     }
 
     static double ease(String name, double t) {
@@ -356,26 +772,45 @@ final class SkillSequence {
 
     // ---------- движение ----------
 
+    /**
+     * move: run / walk к to (target, targets, home, имя актёра, точка), back — домой. Кто идёт — on
+     * (по умолчанию кастующий), каждый к своей точке со сдвигом stopAt. В катсцене "speed" — блоков в секунду.
+     */
     private void move(Map<String, Object> st) {
         String how = Json.str(st, "move", "run");
-        Ref<EntityStore> ref = cast.caster();
-        Vector3d from = Fx.position(store, ref);
-        if (how.equals("back")) {
-            go(ref, from, cast.casterHome(), true, cast.casterYaw());
-            return;
+        List<Ref<EntityStore>> movers = st.containsKey("on") ? who(Json.str(st, "on", "caster")) : List.of(cast.caster());
+        boolean run = !how.equals("walk");
+        double speed = Json.num(st, "speed", 0);
+        for (Ref<EntityStore> ref : movers) {
+            Vector3d from = Fx.position(store, ref);
+            if (how.equals("back")) {
+                Vector3d home = homes.getOrDefault(ref, cast.casterHome());
+                go(ref, from, home, true, homeYaws.getOrDefault(ref, cast.casterYaw()), speed);
+                continue;
+            }
+            Object toSpec = st.getOrDefault("to", "target");
+            boolean home = "home".equals(toSpec);
+            Vector3d goal = home ? homes.getOrDefault(ref, cast.casterHome()) : point(toSpec);
+            boolean actorGoal = toSpec instanceof String && !home;
+            double stop = actorGoal ? Json.num(st, "stopAt", 1.6) : Json.num(st, "stopAt", 0);
+            double dx = goal.x - from.x, dz = goal.z - from.z, len = Math.hypot(dx, dz);
+            if (len <= stop + 0.05) continue;
+            Vector3d dest = new Vector3d(goal.x - dx / len * stop, goal.y, goal.z - dz / len * stop);
+            if (!actorGoal && !home) {
+                // Точка в мире: держаться земли.
+                Double y = Fx.groundY(world, dest.x, dest.z, dest.y);
+                if (y != null && Math.abs(y - dest.y) < 4) dest = new Vector3d(dest.x, y, dest.z);
+            }
+            float endYaw = st.containsKey("face") ? Fx.yawTowards(dest, point(st.get("face"))) : Fx.yawTowards(dest, goal);
+            if (len < 1e-3) endYaw = yawOf(ref);
+            go(ref, from, dest, run, endYaw, speed);
         }
-        String to = Json.str(st, "to", "target");
-        Vector3d goal = to.equals("home") ? cast.casterHome() : center(who(to));
-        double stop = to.equals("home") ? 0 : Json.num(st, "stopAt", 1.6);
-        double dx = goal.x - from.x, dz = goal.z - from.z, len = Math.hypot(dx, dz);
-        if (len <= stop + 0.05) return;
-        Vector3d dest = new Vector3d(goal.x - dx / len * stop, goal.y, goal.z - dz / len * stop);
-        go(ref, from, dest, !how.equals("walk"), Fx.yawTowards(dest, goal));
     }
 
-    private void go(Ref<EntityStore> ref, Vector3d from, Vector3d to, boolean run, float endYaw) {
+    private void go(Ref<EntityStore> ref, Vector3d from, Vector3d to, boolean run, float endYaw, double speed) {
         double dist = Math.hypot(to.x - from.x, to.z - from.z);
-        long ms = Math.max(150, Math.round(dist / (run ? RUN_SPEED : WALK_SPEED) * 1000 * slow));
+        double v = speed > 0 ? speed : (run ? RUN_SPEED : WALK_SPEED);
+        long ms = Math.max(150, Math.round(dist / v * 1000 * slow));
         plugin.mover().go(store, world, ref, from, to, ms, run, false, endYaw);
     }
 

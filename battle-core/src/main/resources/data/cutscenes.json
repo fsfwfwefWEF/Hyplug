@@ -1,0 +1,121 @@
+{
+  // Катсцены. Полное описание формата — cinematic-skills/CUTSCENES.md (и DEVLOG.md, 0.12.0).
+  // Файл перечитывается сам, как только его сохранишь: правь и запускай /jrpg cut <id> без перезапуска.
+  // Шаги — тот же движок, что у навыков (sequences.json): camera, move, anim, emote, particles, shape, glow,
+  // sound, shake, face, fov, dof, roll, slowmo, label/goto/if/end, wait. Плюс шаги катсцены: bars, fade, flash,
+  // title, subtitle, say, choice, time, weather, music, spawn, despawn, hide, show, hint.
+  // Точки: [x, y, z] от начала сцены (x вправо, y вверх, z вперёд), имя актёра, {"at": "bram", "off": [0, 1.6, 2]},
+  // {"world": [x, y, z]}. Начало сцены — где стоит игрок, «вперёд» — к центру встречи (или куда он смотрит).
+
+  "_settings": {
+    "freezePlayer": true,      // игрок заморожен на время сцены
+    "hidePlayer": true,        // тело игрока спрятано (в кадре его двойник-актёр "hero")
+    "skippable": true,         // ПКМ дважды — пропуск (у сцены можно "skippable": false)
+    "barsHeight": 96,          // высота полос кино
+    "clickTimeoutMs": 30000,   // реплика сама закроется, если никто не нажал
+    "autoHoldMs": 1600         // "auto" у реплики без числа: столько висит допечатанная строка
+  },
+
+  // Пример, который играет где угодно: /jrpg cut demo
+  "demo": {
+    "name": "Засада гоблинов",
+    "fromBlack": true,
+    "actors": {
+      "hero":   { "hero": "hero", "at": [0, 0, 0],    "color": "#9fd3ff" },
+      "bram":   { "hero": "bram", "at": [-1.6, 0, -1.2], "color": "#ffb36b" },
+      "lyra":   { "hero": "lyra", "at": [1.6, 0, -1.2],  "color": "#b5f29a" },
+      "chief":  { "enemy": "goblin", "name": "Вождь гоблинов", "at": [0, 0, 11], "face": "hero", "color": "#ff7a7a" },
+      "g1":     { "enemy": "goblin", "at": [-2.5, 0, 12.5], "face": "hero", "hidden": true },
+      "g2":     { "enemy": "goblin", "at": [2.5, 0, 12.5],  "face": "hero", "hidden": true }
+    },
+    "steps": [
+      { "bars": true, "ms": 0 },
+      { "time": 19.5 },
+      { "camera": "shot", "pos": [6, 7, 18], "look": [0, 1, 6], "ms": 0 },
+      { "fade": "in", "ms": 1500 },
+      { "t": 300, "title": "Глава I", "sub": "Опушка Чёрного леса", "ms": 3800 },
+      { "t": 300, "camera": "path", "ms": 6500, "ease": "InOutCubic", "points": [
+          { "pos": [6, 7, 18],  "look": [0, 1, 6] },
+          { "pos": [5, 4, 8],   "look": [0, 1.2, 2] },
+          { "pos": [3, 2.4, 2], "look": "hero" },
+          { "pos": [1.8, 1.9, -3.2], "look": [0, 1.4, 6] }
+      ]},
+      { "wait": "camera" },
+
+      { "camera": "shot", "pos": { "at": "bram", "off": [0.7, 1.7, 2.4] }, "look": "bram", "ms": 700 },
+      { "dof": { "focus": "bram", "blur": 0.7 } },
+      { "say": "Тихо тут. Слишком тихо для леса, где живут гоблины.", "who": "bram", "emote": "Salute" },
+      { "camera": "shot", "pos": { "at": "lyra", "off": [-0.7, 1.6, 2.3] }, "look": "lyra", "ms": 700 },
+      { "dof": { "focus": "lyra", "blur": 0.7 } },
+      { "say": "Ты всегда так говоришь. А потом мы всё равно дерёмся.", "who": "lyra", "emote": "Laugh" },
+
+      { "dof": false },
+      { "camera": "track", "on": "chief", "pos": [0.8, 1.9, 4.5], "height": 1.2, "ms": 900 },
+      { "t": 200, "fov": 45, "ms": 1400, "ease": "OutCubic" },
+      { "t": 400, "say": "Хе-хе... Вкусные путники сами пришли к ужину!", "who": "chief" },
+      { "slowmo": 0.25, "ms": 700, "flash": 90, "shake": 0.7, "show": "g1,g2" },
+      { "particles": "@physical", "on": "g1,g2" },
+      { "fov": 70, "ms": 500 },
+      { "camera": "orbit", "on": "chief", "dist": 7, "height": 3, "from": -35, "to": 25, "ms": 2600, "ease": "InOutQuad" },
+      { "t": 200, "subtitle": "Из кустов выскакивают гоблины!", "ms": 2200 },
+      { "wait": 2400 },
+
+      { "camera": "shot", "pos": [0, 2.3, -3.2], "look": [0, 1.2, 6], "ms": 800 },
+      { "choice": "Что скажешь?", "who": "hero", "options": [
+          { "text": "Ужин отменяется. К бою!", "goto": "brave", "set": "brave" },
+          { "text": "Может, договоримся?", "goto": "talk", "set": "diplomat" }
+      ]},
+
+      { "label": "brave" },
+      { "say": "Ужин отменяется. К бою!", "who": "hero", "auto": 900 },
+      { "emote": "Salute", "on": "bram,lyra" },
+      { "goto": "fight" },
+
+      { "label": "talk" },
+      { "say": "Может, договоримся? У нас есть золото.", "who": "hero", "auto": 900 },
+      { "camera": "shot", "pos": { "at": "chief", "off": [0.6, 1.4, 2.2] }, "look": "chief", "ms": 500 },
+      { "say": "Золото мы заберём и так!", "who": "chief" },
+
+      { "label": "fight" },
+      { "camera": "shot", "pos": [3.5, 3, 1], "look": [0, 1, 6], "ms": 600 },
+      { "move": "run", "on": "bram,lyra", "to": "chief", "stopAt": 4, "speed": 4 },
+      { "t": 900, "fade": "out", "ms": 700 },
+      { "wait": "fade" },
+      { "wait": 200 }
+    ]
+  },
+
+  // Перед боем в логове Королевы пауков (encounters.json → spider_queen_lair): играет один раз,
+  // потом сразу бой ("then": "battle"; "prompt" — окно «Сражаться / Сбежать», "none" — ничего).
+  "spider_queen_intro": {
+    "name": "Логово Королевы",
+    "before": "spider_queen_lair",
+    "then": "battle",
+    "once": true,
+    "fromBlack": true,
+    "actors": {
+      "hero":  { "hero": "hero", "at": [0, 0, 0], "color": "#9fd3ff" },
+      "bram":  { "hero": "bram", "at": [-1.6, 0, -1.2], "color": "#ffb36b" },
+      "lyra":  { "hero": "lyra", "at": [1.6, 0, -1.2], "color": "#b5f29a" },
+      "queen": { "enemy": "spider_queen", "at": [0, 0, 10], "face": "hero", "hidden": true, "color": "#d58cff" }
+    },
+    "steps": [
+      { "bars": true, "ms": 0 },
+      { "camera": "shot", "pos": [0, 2.2, -4], "look": [0, 1.4, 8], "ms": 0 },
+      { "fade": "in", "ms": 1200 },
+      { "t": 200, "camera": "shot", "pos": [0, 1.8, 3], "look": [0, 1.5, 10], "ms": 3500, "ease": "InOutQuad" },
+      { "t": 600, "subtitle": "Сверху доносится шорох...", "ms": 2500 },
+      { "t": 1500, "shake": 0.3 },
+      { "wait": "subtitle" },
+      { "say": "Паутина повсюду. Держитесь ближе.", "who": "lyra" },
+      { "slowmo": 0.3, "ms": 800, "flash": 120, "shake": 0.8, "show": "queen" },
+      { "camera": "track", "on": "queen", "pos": [1.2, 1.2, 5], "height": 1.5, "ms": 600 },
+      { "fov": 42, "ms": 1600, "ease": "OutCubic" },
+      { "t": 400, "say": "Кто посмел потревожить моё логово?", "who": "queen" },
+      { "fov": 70, "ms": 400 },
+      { "say": "Дети мои, к ужину!", "who": "queen", "auto": 1200 },
+      { "fade": "out", "ms": 600 },
+      { "wait": "fade" }
+    ]
+  }
+}

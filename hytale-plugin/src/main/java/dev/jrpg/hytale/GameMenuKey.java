@@ -161,7 +161,8 @@ final class GameMenuKey {
                 if (!p.isValid()) continue;
                 Ref<EntityStore> ref = p.getReference();
                 if (ref == null || !ref.isValid()) continue;
-                boolean want = plugin.settings().keyHint && plugin.flag(p.getUuid(), FLAG, true);
+                // На время катсцены подсказка прячется (кадр чистый).
+                boolean want = plugin.settings().keyHint && plugin.flag(p.getUuid(), FLAG, true) && !Cutscene.playing(p.getUuid());
                 Store<EntityStore> store = ref.getStore();
                 store.getExternalData().getWorld().execute(() -> syncHud(p, ref, store, want));
             }
@@ -221,7 +222,7 @@ final class GameMenuKey {
             if (pm != null && pm.getCustomPage() == null) s.openMenu();
             return;
         }
-        if (plugin.isPrompting(playerRef.getUuid())) return;
+        if (plugin.isPrompting(playerRef.getUuid()) || Cutscene.playing(playerRef.getUuid())) return;
         Pages.open(plugin, playerRef, ref, store, new MainMenuPage(playerRef, plugin));
     }
 

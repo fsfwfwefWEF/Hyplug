@@ -55,6 +55,82 @@ public final class JrpgCommand extends AbstractCommandCollection {
         addSubCommand(new GameMenuKey.Toggle(plugin));
         addSubCommand(new GameMenuKey.MusicCmd(plugin));
         addSubCommand(new Seq(plugin));
+        addSubCommand(new Cut(plugin));
+    }
+
+    /** /jrpg cut &lt;id|list|next|skip|1..4|reset&gt; — катсцены из cutscenes.json. */
+    static final class Cut extends Sub {
+        private final RequiredArg<String> arg =
+                withRequiredArg("id", "катсцена (list — список, id:battle — потом бой; next, skip, 1-4 — управление; reset — снова показывать)", ArgTypes.STRING);
+
+        Cut(JrpgPlugin plugin) {
+            super(plugin, "cut", "Катсцена из cutscenes.json");
+        }
+
+        @Override
+        protected void execute(@Nonnull CommandContext ctx, @Nonnull Store<EntityStore> store,
+                               @Nonnull Ref<EntityStore> ref, @Nonnull PlayerRef playerRef, @Nonnull World world) {
+            String a = arg.get(ctx).trim();
+            java.util.UUID id = playerRef.getUuid();
+            switch (a) {
+                case "next" -> {
+                    if (!Cutscene.input(id, Cutscene.Key.NEXT, 0)) ctx.sendMessage(Message.raw("Сцена не идёт."));
+                    return;
+                }
+                case "skip" -> {
+                    if (!Cutscene.input(id, Cutscene.Key.SKIP_NOW, 0)) ctx.sendMessage(Message.raw("Сцена не идёт."));
+                    return;
+                }
+                case "1", "2", "3", "4" -> {
+                    if (!Cutscene.input(id, Cutscene.Key.PICK, Integer.parseInt(a) - 1)) ctx.sendMessage(Message.raw("Сцена не идёт."));
+                    return;
+                }
+                default -> { }
+            }
+            java.util.Map<String, Cutscene.Def> all;
+            try {
+                all = Cutscene.defs(plugin);
+            } catch (Exception e) {
+                ctx.sendMessage(Message.raw("Ошибка в " + Cutscene.FILE + ": " + e.getMessage()));
+                return;
+            }
+            if (a.equals("reset")) {
+                for (String k : all.keySet()) plugin.setFlag(id, "cut:" + k, false);
+                ctx.sendMessage(Message.raw("Все катсцены снова покажутся."));
+                return;
+            }
+            String[] parts = a.split(":");
+            Cutscene.Def def = all.get(parts[0]);
+            if (def == null) {
+                ctx.sendMessage(Message.raw((a.equals("list") ? "" : "Нет сцены «" + parts[0] + "». ") + "Катсцены: "
+                        + String.join(", ", all.keySet()) + ". Запуск: /jrpg cut <id>, с боем после: /jrpg cut <id>:battle"));
+                return;
+            }
+            boolean battle = parts.length > 1 && parts[1].equals("battle") && def.before() != null;
+            Encounter enc = null;
+            if (def.before() != null) {
+                try {
+                    enc = plugin.data().encounter(def.before());
+                } catch (IllegalArgumentException ignored) {
+                    enc = null;
+                }
+            }
+            org.joml.Vector3d center = null;
+            if (enc != null) {
+                Encounter.Location l = enc.location();
+                center = new org.joml.Vector3d(l.x(), l.y(), l.z());
+                // Встреча далеко (проверка в другом месте) — сцена встаёт перед игроком, как будто встреча впереди.
+                if (center.distance(Fx.position(store, ref)) > 40) center = null;
+            }
+            Encounter fe = enc;
+            Runnable after = battle && fe != null ? () -> {
+                String err = BattleSession.start(plugin, fe, playerRef, ref, store, world, null);
+                if (err != null) playerRef.sendMessage(Message.raw(err));
+            } : null;
+            String err = Cutscene.play(plugin, playerRef, ref, store, world, def,
+                    Cutscene.placeFor(def, store, ref, enc, center), after);
+            if (err != null) ctx.sendMessage(Message.raw(err));
+        }
     }
 
     static final class Seq extends Sub {
