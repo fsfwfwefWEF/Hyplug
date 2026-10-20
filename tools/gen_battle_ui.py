@@ -1025,7 +1025,7 @@ def equipment():
 # ---------- меню героя (клавиша O) ----------
 
 MAIN_BUTTONS = [("Party", "Прокачка партии", "levelup"), ("Gear", "Экипировка", "sword"), ("Bag", "Рюкзак", "bag"),
-                ("Follow", "Компаньоны", "pt_bram"), ("Mode", "Режим игры", "info")]
+                ("Follow", "Компаньоны", "pt_bram"), ("Mode", "Режим игры", "info"), ("Admin", "Админ-меню", "focus")]
 
 
 def mainmenu():
@@ -1054,9 +1054,74 @@ def mainmenu():
         body,
     ])
     write("MainMenu.ui", '$C = "../Common.ui";\n\n'
-          "// Меню героя на клавише режима (MainMenuPage). Кнопки: #Party, #Gear, #Bag, #Follow, #Mode, #Close;\n"
+          "// Меню героя на клавише режима (MainMenuPage). Кнопки: #Party, #Gear, #Bag, #Follow, #Mode, #Admin, #Close;\n"
           "// тексты #Follow и #Mode ставит код. Собрано tools/gen_battle_ui.py — правь скрипт.\n\n"
-          + centered(470, window) + "\n")
+          + centered(470 + 52 * (len(MAIN_BUTTONS) - 5), window) + "\n")
+
+
+# ---------- админ-меню (AdminPage) ----------
+
+ADMIN_TABS = ["Катсцены", "Сцены навыков", "Бои и встречи", "Отряды", "Герои", "Музыка и эффекты", "Система"]
+ADMIN_ROWS = 10
+ADMIN_W = 1000
+ADMIN_TAB_W = 210
+
+
+def admin():
+    tabs = []
+    for i, name in enumerate(ADMIN_TABS):
+        tabs += [group("", ["Anchor: (Height: 40);", "LayoutMode: Left;"], [
+            label(f"Tab{i}Mark", "", 16, GOLD, True, width=18, height=40),
+            f'$C.@SecondaryTextButton #Tab{i} {{ @Text = "{name}"; Anchor: (Width: {ADMIN_TAB_W - 46}, Height: 38); }}',
+        ]), spacer(h=6)]
+    left = column("", [f"Anchor: (Width: {ADMIN_TAB_W});"], [panel_title("РАЗДЕЛЫ"), spacer(h=6)] + tabs + [
+        spacer(flex=True),
+        label("", "Кнопка выполняет действие, подсказка справа объясняет, что будет.", 12, SUB, wrap=True, height=54),
+    ], pad=12)
+    # правая колонка: ширина окна 1000 − поля 2×24 − левая 210 − зазор 10 = 732, минус поля колонки 2×12 = 708
+    right_w = ADMIN_W - 48 - ADMIN_TAB_W - 10
+    inner = right_w - 24
+    rows = []
+    for i in range(ADMIN_ROWS):
+        rows += [group(f"Row{i}", ["Anchor: (Height: 40);", "LayoutMode: Left;"], [
+            f'$C.@SecondaryTextButton #Act{i} {{ @Text = ""; Anchor: (Width: 300, Height: 38); }}',
+            spacer(w=6),
+            group(f"AltBox{i}", ["Anchor: (Width: 130, Height: 38);"], [
+                f'$C.@SecondaryTextButton #Alt{i} {{ @Text = ""; Anchor: (Left: 0, Top: 0, Width: 130, Height: 38); }}']),
+            spacer(w=10),
+            label(f"Hint{i}", "", 12, SUB, wrap=True, width=inner - 300 - 6 - 130 - 10, height=38),
+        ]), spacer(h=4)]
+    right = column("", [f"Anchor: (Width: {right_w});"], [
+        label("SecTitle", "", 18, GOLD, True, height=24),
+        label("SecSub", "", 12, SUB, wrap=True, height=32),
+        divider(),
+        spacer(h=8),
+    ] + rows + [
+        spacer(flex=True),
+        group("", ["Anchor: (Height: 36);", "LayoutMode: Left;"], [
+            '$C.@SecondaryTextButton #Prev { @Text = "Назад"; Anchor: (Width: 120, Height: 34); }',
+            label("Page", "", 13, SUB, width=140, height=34, center=True),
+            '$C.@SecondaryTextButton #Next { @Text = "Дальше"; Anchor: (Width: 120, Height: 34); }',
+        ]),
+    ], pad=12)
+    body_h = 52 + 32 + 10 + ADMIN_ROWS * 44 + 44 + 24
+    body = group("", [f"Anchor: (Height: {body_h});", "LayoutMode: Left;"], [left, spacer(w=10), right])
+    window = menu_window(ADMIN_W, [
+        menu_title("АДМИН-МЕНЮ", "Sub", "/jrpg admin · кнопка «Админ-меню» в меню героя (O)", width=520),
+        spacer(h=6),
+        body,
+        spacer(h=8),
+        group("", ["Anchor: (Height: 40);", "LayoutMode: Left;"], [
+            label("Status", "", 14, GOLD, True, flex=True, height=40, wrap=True),
+            spacer(w=10),
+            '$C.@CancelTextButton #Close { @Text = "Закрыть"; Anchor: (Width: 200, Height: 40); }',
+        ]),
+    ])
+    write("Admin.ui", '$C = "../Common.ui";\n\n'
+          "// Админ-меню (AdminPage): разделы #Tab0..6 (метка #Tab<i>Mark), строки #Row<i> с кнопками #Act<i>/#Alt<i>\n"
+          "// (#AltBox<i> прячет вторую кнопку) и подсказкой #Hint<i>; #SecTitle, #SecSub, #Prev/#Page/#Next, #Status, #Close.\n"
+          "// Собрано tools/gen_battle_ui.py — правь скрипт.\n\n"
+          + centered(52 + 6 + body_h + 8 + 40 + 40, window) + "\n")
 
 
 def ring_dots(r):
@@ -1086,3 +1151,4 @@ if __name__ == "__main__":
     backpack()
     equipment()
     mainmenu()
+    admin()

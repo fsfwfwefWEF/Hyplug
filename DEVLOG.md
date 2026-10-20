@@ -556,3 +556,8 @@ jrpg-mod/
 - Новые: Cutscene (cutscenes.json, актёры, реплики, выбор, файл спасения), CutsceneHud (HUD: полосы, затемнение #Fade1..10, титры, субтитры, окно реплики), CutsceneInput (InteractionChainStartEvent: ЛКМ/ПКМ/колесо/цифры), Cutscene.ui (ручной), data/cutscenes.json (demo, spider_queen_intro).
 - SkillSequence стал общим движком навыков и катсцен (актёры по именам, точки, label/goto/if, camera shot/path/track/native, fov/dof/roll, slowmo). BattleCamera: cinema(). EncounterWatcher: катсцена before/zone. /jrpg cut. Меню на O во время сцены не открывается.
 - Формат для пользователя: /mnt/project-files/cinematic-skills/CUTSCENES.md. Сервер стартует (462 SEVERE как раньше), в игре не проверено.
+
+## 0.13.0 (2026-10-20) — админ-меню
+- `AdminPage` + `Admin.ui` (tools/gen_battle_ui.py → admin()): окно 1000 px на jr_window, слева 7 разделов (#Tab<i>, метка #Tab<i>Mark), справа 10 строк (#Row<i>: #Act<i>, #Alt<i> в #AltBox<i>, #Hint<i>), листание #Prev/#Page/#Next, #Status, #Close.
+- Строки раздела строятся заново при каждом показе (Row: подпись, вторая кнопка, подсказка, действия). Катсцены и сцены навыков идут командой /jrpg cut|seq после закрытия окна (окно прячет HUD); бой — BattleSession.start (бой сам меняет окно); остальное прямо в окне с итогом в #Status.
+- Открытие: `/jrpg admin`, кнопка #Admin в меню героя (MainMenu.ui выше на 52 px).

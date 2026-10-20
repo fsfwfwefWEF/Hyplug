@@ -1,6 +1,6 @@
 $C = "../Common.ui";
 
-// Меню героя на клавише режима (MainMenuPage). Кнопки: #Party, #Gear, #Bag, #Follow, #Mode, #Close;
+// Меню героя на клавише режима (MainMenuPage). Кнопки: #Party, #Gear, #Bag, #Follow, #Mode, #Admin, #Close;
 // тексты #Follow и #Mode ставит код. Собрано tools/gen_battle_ui.py — правь скрипт.
 
 Group {
@@ -8,7 +8,7 @@ Group {
 
   Group { FlexWeight: 1; }
   Group {
-    Anchor: (Height: 486);
+    Anchor: (Height: 538);
     LayoutMode: Left;
 
     Group { FlexWeight: 1; }
@@ -16,7 +16,7 @@ Group {
       Anchor: (Width: 450);
 
       Group #Window {
-        Anchor: (Left: 0, Top: 0, Width: 450, Height: 486);
+        Anchor: (Left: 0, Top: 0, Width: 450, Height: 538);
         LayoutMode: Top;
         Background: (TexturePath: "jr_window.png", Border: 86);
         Padding: (Left: 24, Right: 24, Top: 16, Bottom: 24);
@@ -47,7 +47,7 @@ Group {
         }
         Group { Anchor: (Height: 4); }
         Group {
-          Anchor: (Height: 344);
+          Anchor: (Height: 396);
           LayoutMode: Top;
           Background: (TexturePath: "jr_panel.png", Border: 22);
           Padding: (Full: 14);
@@ -120,6 +120,20 @@ Group {
             }
             Group { Anchor: (Width: 8); }
             $C.@SecondaryTextButton #Mode { @Text = "Режим игры"; Anchor: (Width: 316, Height: 42); }
+          }
+          Group { Anchor: (Height: 6); }
+          Group {
+            Anchor: (Height: 46);
+            LayoutMode: Left;
+
+            Group {
+              Anchor: (Width: 46, Height: 46);
+              Background: (TexturePath: "jr_slot.png", Border: 8);
+
+              Group { Anchor: (Left: 5, Top: 5, Width: 36, Height: 36); Background: (TexturePath: "Icons/focus.png"); }
+            }
+            Group { Anchor: (Width: 8); }
+            $C.@SecondaryTextButton #Admin { @Text = "Админ-меню"; Anchor: (Width: 316, Height: 42); }
           }
           Group { Anchor: (Height: 6); }
           Group { Anchor: (Height: 4); }

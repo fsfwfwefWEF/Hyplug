@@ -1,0 +1,401 @@
+$C = "../Common.ui";
+
+// Админ-меню (AdminPage): разделы #Tab0..6 (метка #Tab<i>Mark), строки #Row<i> с кнопками #Act<i>/#Alt<i>
+// (#AltBox<i> прячет вторую кнопку) и подсказкой #Hint<i>; #SecTitle, #SecSub, #Prev/#Page/#Next, #Status, #Close.
+// Собрано tools/gen_battle_ui.py — правь скрипт.
+
+Group {
+  LayoutMode: Top;
+
+  Group { FlexWeight: 1; }
+  Group {
+    Anchor: (Height: 764);
+    LayoutMode: Left;
+
+    Group { FlexWeight: 1; }
+    Group #WindowSlot {
+      Anchor: (Width: 1000);
+
+      Group #Window {
+        Anchor: (Left: 0, Top: 0, Width: 1000, Height: 764);
+        LayoutMode: Top;
+        Background: (TexturePath: "jr_window.png", Border: 86);
+        Padding: (Left: 24, Right: 24, Top: 16, Bottom: 24);
+
+        Group {
+          Anchor: (Height: 52);
+          LayoutMode: Left;
+
+          Group { FlexWeight: 1; }
+          Group {
+            Anchor: (Width: 520, Height: 52);
+            LayoutMode: Top;
+            Background: (TexturePath: "jr_banner.png");
+            Padding: (Top: 6);
+
+            Label {
+              Text: "АДМИН-МЕНЮ";
+              Anchor: (Height: 26);
+              Style: (FontSize: 21, TextColor: #e8c46a, RenderBold: true, HorizontalAlignment: Center);
+            }
+            Label #Sub {
+              Text: "/jrpg admin · кнопка «Админ-меню» в меню героя (O)";
+              Anchor: (Height: 16);
+              Style: (FontSize: 12, TextColor: #b4c2d6, HorizontalAlignment: Center);
+            }
+          }
+          Group { FlexWeight: 1; }
+        }
+        Group { Anchor: (Height: 6); }
+        Group {
+          Anchor: (Height: 602);
+          LayoutMode: Left;
+
+          Group {
+            Anchor: (Width: 210);
+            LayoutMode: Top;
+            Background: (TexturePath: "jr_panel.png", Border: 22);
+            Padding: (Full: 12);
+
+            Label {
+              Text: "РАЗДЕЛЫ";
+              Anchor: (Height: 20);
+              Style: (FontSize: 13, TextColor: #e8c46a, RenderBold: true);
+            }
+            Group { Anchor: (Height: 6); }
+            Group {
+              Anchor: (Height: 40);
+              LayoutMode: Left;
+
+              Label #Tab0Mark {
+                Text: "";
+                Anchor: (Width: 18, Height: 40);
+                Style: (FontSize: 16, TextColor: #e8c46a, RenderBold: true);
+              }
+              $C.@SecondaryTextButton #Tab0 { @Text = "Катсцены"; Anchor: (Width: 164, Height: 38); }
+            }
+            Group { Anchor: (Height: 6); }
+            Group {
+              Anchor: (Height: 40);
+              LayoutMode: Left;
+
+              Label #Tab1Mark {
+                Text: "";
+                Anchor: (Width: 18, Height: 40);
+                Style: (FontSize: 16, TextColor: #e8c46a, RenderBold: true);
+              }
+              $C.@SecondaryTextButton #Tab1 { @Text = "Сцены навыков"; Anchor: (Width: 164, Height: 38); }
+            }
+            Group { Anchor: (Height: 6); }
+            Group {
+              Anchor: (Height: 40);
+              LayoutMode: Left;
+
+              Label #Tab2Mark {
+                Text: "";
+                Anchor: (Width: 18, Height: 40);
+                Style: (FontSize: 16, TextColor: #e8c46a, RenderBold: true);
+              }
+              $C.@SecondaryTextButton #Tab2 { @Text = "Бои и встречи"; Anchor: (Width: 164, Height: 38); }
+            }
+            Group { Anchor: (Height: 6); }
+            Group {
+              Anchor: (Height: 40);
+              LayoutMode: Left;
+
+              Label #Tab3Mark {
+                Text: "";
+                Anchor: (Width: 18, Height: 40);
+                Style: (FontSize: 16, TextColor: #e8c46a, RenderBold: true);
+              }
+              $C.@SecondaryTextButton #Tab3 { @Text = "Отряды"; Anchor: (Width: 164, Height: 38); }
+            }
+            Group { Anchor: (Height: 6); }
+            Group {
+              Anchor: (Height: 40);
+              LayoutMode: Left;
+
+              Label #Tab4Mark {
+                Text: "";
+                Anchor: (Width: 18, Height: 40);
+                Style: (FontSize: 16, TextColor: #e8c46a, RenderBold: true);
+              }
+              $C.@SecondaryTextButton #Tab4 { @Text = "Герои"; Anchor: (Width: 164, Height: 38); }
+            }
+            Group { Anchor: (Height: 6); }
+            Group {
+              Anchor: (Height: 40);
+              LayoutMode: Left;
+
+              Label #Tab5Mark {
+                Text: "";
+                Anchor: (Width: 18, Height: 40);
+                Style: (FontSize: 16, TextColor: #e8c46a, RenderBold: true);
+              }
+              $C.@SecondaryTextButton #Tab5 { @Text = "Музыка и эффекты"; Anchor: (Width: 164, Height: 38); }
+            }
+            Group { Anchor: (Height: 6); }
+            Group {
+              Anchor: (Height: 40);
+              LayoutMode: Left;
+
+              Label #Tab6Mark {
+                Text: "";
+                Anchor: (Width: 18, Height: 40);
+                Style: (FontSize: 16, TextColor: #e8c46a, RenderBold: true);
+              }
+              $C.@SecondaryTextButton #Tab6 { @Text = "Система"; Anchor: (Width: 164, Height: 38); }
+            }
+            Group { Anchor: (Height: 6); }
+            Group { FlexWeight: 1; }
+            Label {
+              Text: "Кнопка выполняет действие, подсказка справа объясняет, что будет.";
+              Anchor: (Height: 54);
+              Style: (FontSize: 12, TextColor: #b4c2d6, Wrap: true);
+            }
+          }
+          Group { Anchor: (Width: 10); }
+          Group {
+            Anchor: (Width: 732);
+            LayoutMode: Top;
+            Background: (TexturePath: "jr_panel.png", Border: 22);
+            Padding: (Full: 12);
+
+            Label #SecTitle {
+              Text: "";
+              Anchor: (Height: 24);
+              Style: (FontSize: 18, TextColor: #e8c46a, RenderBold: true);
+            }
+            Label #SecSub {
+              Text: "";
+              Anchor: (Height: 32);
+              Style: (FontSize: 12, TextColor: #b4c2d6, Wrap: true);
+            }
+            Group { Anchor: (Height: 1); Background: #e8c46a(0.40); }
+            Group { Anchor: (Height: 1); Background: #000000(0.35); }
+            Group { Anchor: (Height: 8); }
+            Group #Row0 {
+              Anchor: (Height: 40);
+              LayoutMode: Left;
+
+              $C.@SecondaryTextButton #Act0 { @Text = ""; Anchor: (Width: 300, Height: 38); }
+              Group { Anchor: (Width: 6); }
+              Group #AltBox0 {
+                Anchor: (Width: 130, Height: 38);
+
+                $C.@SecondaryTextButton #Alt0 { @Text = ""; Anchor: (Left: 0, Top: 0, Width: 130, Height: 38); }
+              }
+              Group { Anchor: (Width: 10); }
+              Label #Hint0 {
+                Text: "";
+                Anchor: (Width: 262, Height: 38);
+                Style: (FontSize: 12, TextColor: #b4c2d6, Wrap: true);
+              }
+            }
+            Group { Anchor: (Height: 4); }
+            Group #Row1 {
+              Anchor: (Height: 40);
+              LayoutMode: Left;
+
+              $C.@SecondaryTextButton #Act1 { @Text = ""; Anchor: (Width: 300, Height: 38); }
+              Group { Anchor: (Width: 6); }
+              Group #AltBox1 {
+                Anchor: (Width: 130, Height: 38);
+
+                $C.@SecondaryTextButton #Alt1 { @Text = ""; Anchor: (Left: 0, Top: 0, Width: 130, Height: 38); }
+              }
+              Group { Anchor: (Width: 10); }
+              Label #Hint1 {
+                Text: "";
+                Anchor: (Width: 262, Height: 38);
+                Style: (FontSize: 12, TextColor: #b4c2d6, Wrap: true);
+              }
+            }
+            Group { Anchor: (Height: 4); }
+            Group #Row2 {
+              Anchor: (Height: 40);
+              LayoutMode: Left;
+
+              $C.@SecondaryTextButton #Act2 { @Text = ""; Anchor: (Width: 300, Height: 38); }
+              Group { Anchor: (Width: 6); }
+              Group #AltBox2 {
+                Anchor: (Width: 130, Height: 38);
+
+                $C.@SecondaryTextButton #Alt2 { @Text = ""; Anchor: (Left: 0, Top: 0, Width: 130, Height: 38); }
+              }
+              Group { Anchor: (Width: 10); }
+              Label #Hint2 {
+                Text: "";
+                Anchor: (Width: 262, Height: 38);
+                Style: (FontSize: 12, TextColor: #b4c2d6, Wrap: true);
+              }
+            }
+            Group { Anchor: (Height: 4); }
+            Group #Row3 {
+              Anchor: (Height: 40);
+              LayoutMode: Left;
+
+              $C.@SecondaryTextButton #Act3 { @Text = ""; Anchor: (Width: 300, Height: 38); }
+              Group { Anchor: (Width: 6); }
+              Group #AltBox3 {
+                Anchor: (Width: 130, Height: 38);
+
+                $C.@SecondaryTextButton #Alt3 { @Text = ""; Anchor: (Left: 0, Top: 0, Width: 130, Height: 38); }
+              }
+              Group { Anchor: (Width: 10); }
+              Label #Hint3 {
+                Text: "";
+                Anchor: (Width: 262, Height: 38);
+                Style: (FontSize: 12, TextColor: #b4c2d6, Wrap: true);
+              }
+            }
+            Group { Anchor: (Height: 4); }
+            Group #Row4 {
+              Anchor: (Height: 40);
+              LayoutMode: Left;
+
+              $C.@SecondaryTextButton #Act4 { @Text = ""; Anchor: (Width: 300, Height: 38); }
+              Group { Anchor: (Width: 6); }
+              Group #AltBox4 {
+                Anchor: (Width: 130, Height: 38);
+
+                $C.@SecondaryTextButton #Alt4 { @Text = ""; Anchor: (Left: 0, Top: 0, Width: 130, Height: 38); }
+              }
+              Group { Anchor: (Width: 10); }
+              Label #Hint4 {
+                Text: "";
+                Anchor: (Width: 262, Height: 38);
+                Style: (FontSize: 12, TextColor: #b4c2d6, Wrap: true);
+              }
+            }
+            Group { Anchor: (Height: 4); }
+            Group #Row5 {
+              Anchor: (Height: 40);
+              LayoutMode: Left;
+
+              $C.@SecondaryTextButton #Act5 { @Text = ""; Anchor: (Width: 300, Height: 38); }
+              Group { Anchor: (Width: 6); }
+              Group #AltBox5 {
+                Anchor: (Width: 130, Height: 38);
+
+                $C.@SecondaryTextButton #Alt5 { @Text = ""; Anchor: (Left: 0, Top: 0, Width: 130, Height: 38); }
+              }
+              Group { Anchor: (Width: 10); }
+              Label #Hint5 {
+                Text: "";
+                Anchor: (Width: 262, Height: 38);
+                Style: (FontSize: 12, TextColor: #b4c2d6, Wrap: true);
+              }
+            }
+            Group { Anchor: (Height: 4); }
+            Group #Row6 {
+              Anchor: (Height: 40);
+              LayoutMode: Left;
+
+              $C.@SecondaryTextButton #Act6 { @Text = ""; Anchor: (Width: 300, Height: 38); }
+              Group { Anchor: (Width: 6); }
+              Group #AltBox6 {
+                Anchor: (Width: 130, Height: 38);
+
+                $C.@SecondaryTextButton #Alt6 { @Text = ""; Anchor: (Left: 0, Top: 0, Width: 130, Height: 38); }
+              }
+              Group { Anchor: (Width: 10); }
+              Label #Hint6 {
+                Text: "";
+                Anchor: (Width: 262, Height: 38);
+                Style: (FontSize: 12, TextColor: #b4c2d6, Wrap: true);
+              }
+            }
+            Group { Anchor: (Height: 4); }
+            Group #Row7 {
+              Anchor: (Height: 40);
+              LayoutMode: Left;
+
+              $C.@SecondaryTextButton #Act7 { @Text = ""; Anchor: (Width: 300, Height: 38); }
+              Group { Anchor: (Width: 6); }
+              Group #AltBox7 {
+                Anchor: (Width: 130, Height: 38);
+
+                $C.@SecondaryTextButton #Alt7 { @Text = ""; Anchor: (Left: 0, Top: 0, Width: 130, Height: 38); }
+              }
+              Group { Anchor: (Width: 10); }
+              Label #Hint7 {
+                Text: "";
+                Anchor: (Width: 262, Height: 38);
+                Style: (FontSize: 12, TextColor: #b4c2d6, Wrap: true);
+              }
+            }
+            Group { Anchor: (Height: 4); }
+            Group #Row8 {
+              Anchor: (Height: 40);
+              LayoutMode: Left;
+
+              $C.@SecondaryTextButton #Act8 { @Text = ""; Anchor: (Width: 300, Height: 38); }
+              Group { Anchor: (Width: 6); }
+              Group #AltBox8 {
+                Anchor: (Width: 130, Height: 38);
+
+                $C.@SecondaryTextButton #Alt8 { @Text = ""; Anchor: (Left: 0, Top: 0, Width: 130, Height: 38); }
+              }
+              Group { Anchor: (Width: 10); }
+              Label #Hint8 {
+                Text: "";
+                Anchor: (Width: 262, Height: 38);
+                Style: (FontSize: 12, TextColor: #b4c2d6, Wrap: true);
+              }
+            }
+            Group { Anchor: (Height: 4); }
+            Group #Row9 {
+              Anchor: (Height: 40);
+              LayoutMode: Left;
+
+              $C.@SecondaryTextButton #Act9 { @Text = ""; Anchor: (Width: 300, Height: 38); }
+              Group { Anchor: (Width: 6); }
+              Group #AltBox9 {
+                Anchor: (Width: 130, Height: 38);
+
+                $C.@SecondaryTextButton #Alt9 { @Text = ""; Anchor: (Left: 0, Top: 0, Width: 130, Height: 38); }
+              }
+              Group { Anchor: (Width: 10); }
+              Label #Hint9 {
+                Text: "";
+                Anchor: (Width: 262, Height: 38);
+                Style: (FontSize: 12, TextColor: #b4c2d6, Wrap: true);
+              }
+            }
+            Group { Anchor: (Height: 4); }
+            Group { FlexWeight: 1; }
+            Group {
+              Anchor: (Height: 36);
+              LayoutMode: Left;
+
+              $C.@SecondaryTextButton #Prev { @Text = "Назад"; Anchor: (Width: 120, Height: 34); }
+              Label #Page {
+                Text: "";
+                Anchor: (Width: 140, Height: 34);
+                Style: (FontSize: 13, TextColor: #b4c2d6, HorizontalAlignment: Center);
+              }
+              $C.@SecondaryTextButton #Next { @Text = "Дальше"; Anchor: (Width: 120, Height: 34); }
+            }
+          }
+        }
+        Group { Anchor: (Height: 8); }
+        Group {
+          Anchor: (Height: 40);
+          LayoutMode: Left;
+
+          Label #Status {
+            Text: "";
+            Anchor: (Height: 40);
+            FlexWeight: 1;
+            Style: (FontSize: 14, TextColor: #e8c46a, RenderBold: true, Wrap: true);
+          }
+          Group { Anchor: (Width: 10); }
+          $C.@CancelTextButton #Close { @Text = "Закрыть"; Anchor: (Width: 200, Height: 40); }
+        }
+      }
+    }
+    Group { FlexWeight: 1; }
+  }
+  Group { FlexWeight: 1; }
+}

@@ -32,6 +32,7 @@ import javax.annotation.Nonnull;
  * /jrpg particles <часть имени> — какие системы частиц есть в игре (для settings.json)
  * /jrpg gmkey — клавиша режима открывает меню героя / снова переключает режим
  * /jrpg music <id|off> — включить трек боя (проверка) / выключить
+ * /jrpg admin — админ-меню: все функции мода кнопками
  * /jrpg seq <id>[:герой][:slow] — сцена навыка из sequences.json перед тобой (list — список)
  */
 public final class JrpgCommand extends AbstractCommandCollection {
@@ -55,6 +56,7 @@ public final class JrpgCommand extends AbstractCommandCollection {
         addSubCommand(new GameMenuKey.Toggle(plugin));
         addSubCommand(new GameMenuKey.MusicCmd(plugin));
         addSubCommand(new Seq(plugin));
+        addSubCommand(new Admin(plugin));
         addSubCommand(new Cut(plugin));
     }
 
@@ -130,6 +132,22 @@ public final class JrpgCommand extends AbstractCommandCollection {
             String err = Cutscene.play(plugin, playerRef, ref, store, world, def,
                     Cutscene.placeFor(def, store, ref, enc, center), after);
             if (err != null) ctx.sendMessage(Message.raw(err));
+        }
+    }
+
+    static final class Admin extends Sub {
+        Admin(JrpgPlugin plugin) {
+            super(plugin, "admin", "Админ-меню: катсцены, сцены навыков, бои, отряды, герои, музыка");
+        }
+
+        @Override
+        protected void execute(@Nonnull CommandContext ctx, @Nonnull Store<EntityStore> store,
+                               @Nonnull Ref<EntityStore> ref, @Nonnull PlayerRef playerRef, @Nonnull World world) {
+            if (plugin.sessions().containsKey(playerRef.getUuid())) {
+                ctx.sendMessage(Message.raw("Сначала закончи бой."));
+                return;
+            }
+            Pages.open(plugin, playerRef, ref, store, new AdminPage(playerRef, plugin));
         }
     }
 

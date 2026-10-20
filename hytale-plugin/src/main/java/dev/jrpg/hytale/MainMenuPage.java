@@ -18,7 +18,8 @@ import javax.annotation.Nonnull;
 
 /**
  * Меню героя на клавише режима (Common/UI/Custom/JrpgBattle/MainMenu.ui, написан вручную):
- * прокачка, экипировка, рюкзак, компаньоны идут / ждут, смена режима игры (саму клавишу перехватывает GameMenuKey).
+ * прокачка, экипировка, рюкзак, компаньоны идут / ждут, смена режима игры (саму клавишу перехватывает GameMenuKey),
+ * админ-меню ({@link AdminPage}).
  */
 public final class MainMenuPage extends InteractiveCustomUIPage<BattleMenuPage.Click> {
     public static final String LAYOUT = "JrpgBattle/MainMenu.ui";
@@ -39,6 +40,7 @@ public final class MainMenuPage extends InteractiveCustomUIPage<BattleMenuPage.C
         bind(evt, "#Bag", "bag");
         bind(evt, "#Follow", "follow");
         bind(evt, "#Mode", "mode");
+        bind(evt, "#Admin", "admin");
         bind(evt, "#Close", "close");
         fill(cmd, store, ref);
         WindowIntro.play(this, playerRef, plugin, store, cmd, LAYOUT);
@@ -71,6 +73,7 @@ public final class MainMenuPage extends InteractiveCustomUIPage<BattleMenuPage.C
                 plugin.menuKey().allowNextChange(playerRef.getUuid());
                 CommandManager.get().handleCommand(playerRef, command);
             }
+            case "admin" -> Pages.open(plugin, playerRef, ref, store, new AdminPage(playerRef, plugin));
             case "close" -> Pages.close(this, playerRef);
             default -> { }
         }
