@@ -58,6 +58,9 @@ public final class JrpgCommand extends AbstractCommandCollection {
         addSubCommand(new Seq(plugin));
         addSubCommand(new Admin(plugin));
         addSubCommand(new Cut(plugin));
+        addSubCommand(new SmithCmd(plugin));
+        addSubCommand(new SmithRemove(plugin));
+        addSubCommand(new ForgeCmd(plugin));
     }
 
     /** /jrpg cut &lt;id|list|next|skip|1..4|reset&gt; — катсцены из cutscenes.json. */
@@ -192,6 +195,42 @@ public final class JrpgCommand extends AbstractCommandCollection {
         protected void execute(@Nonnull CommandContext ctx, @Nonnull Store<EntityStore> store,
                                @Nonnull Ref<EntityStore> ref, @Nonnull PlayerRef playerRef, @Nonnull World world) {
             plugin.openEquipment(playerRef, ref, store, null);
+        }
+    }
+
+    static final class SmithCmd extends Sub {
+        SmithCmd(JrpgPlugin plugin) {
+            super(plugin, "smith", "Поставить кузнеца перед собой");
+        }
+
+        @Override
+        protected void execute(@Nonnull CommandContext ctx, @Nonnull Store<EntityStore> store,
+                               @Nonnull Ref<EntityStore> ref, @Nonnull PlayerRef playerRef, @Nonnull World world) {
+            ctx.sendMessage(Message.raw(plugin.smiths().place(playerRef, ref, store, world)));
+        }
+    }
+
+    static final class SmithRemove extends Sub {
+        SmithRemove(JrpgPlugin plugin) {
+            super(plugin, "smithremove", "Убрать ближайшего кузнеца");
+        }
+
+        @Override
+        protected void execute(@Nonnull CommandContext ctx, @Nonnull Store<EntityStore> store,
+                               @Nonnull Ref<EntityStore> ref, @Nonnull PlayerRef playerRef, @Nonnull World world) {
+            ctx.sendMessage(Message.raw(plugin.smiths().remove(ref, store, world)));
+        }
+    }
+
+    static final class ForgeCmd extends Sub {
+        ForgeCmd(JrpgPlugin plugin) {
+            super(plugin, "forge", "Открыть кузницу без кузнеца (для проверки)");
+        }
+
+        @Override
+        protected void execute(@Nonnull CommandContext ctx, @Nonnull Store<EntityStore> store,
+                               @Nonnull Ref<EntityStore> ref, @Nonnull PlayerRef playerRef, @Nonnull World world) {
+            plugin.smiths().open(playerRef, ref, store);
         }
     }
 

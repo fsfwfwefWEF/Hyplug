@@ -845,7 +845,8 @@ def prebattle():
 # ---------- рюкзак ----------
 
 BAG_COLS, BAG_ROWS, CELL = 6, 4, 86
-BAG_TABS = ["Все", "Зелья", "Боевые", "Материалы", "Снаряжение"]
+BAG_TABS = ["Все", "Зелья", "Боевые", "Материалы", "Снаряжение", "Камни"]
+BAG_TAB_W = [64, 88, 88, 112, 122, 86]
 BAG_SORTS = [("SortKind", "Тип"), ("SortName", "Имя"), ("SortCount", "Кол-во")]
 
 
@@ -863,7 +864,7 @@ def bag_cell(i):
 
 def backpack():
     tabs = group("Tabs", ["Anchor: (Height: 34);", "LayoutMode: Left;"],
-                 sum(([button(f"Tab{i}", t, 112, 32), spacer(w=5)] for i, t in enumerate(BAG_TABS)), [])
+                 sum(([button(f"Tab{i}", t, BAG_TAB_W[i], 32), spacer(w=5)] for i, t in enumerate(BAG_TABS)), [])
                  + [spacer(flex=True), label("", "Сортировка:", 13, SUB, width=100, height=32)]
                  + sum(([button(bid, t, 96, 32), spacer(w=4)] for bid, t in BAG_SORTS), []))
     grid_w, grid_h = BAG_COLS * CELL, BAG_ROWS * CELL
@@ -904,7 +905,7 @@ def backpack():
         group("", [f"Anchor: (Height: {grid_h + 84});", "LayoutMode: Left;"], [left, spacer(w=10), detail]),
     ])
     write("Backpack.ui", '$C = "../Common.ui";\n\n'
-          "// Рюкзак: вкладки-фильтры #Tab0..4, сортировка #SortKind/#SortName/#SortCount, ячейки #S<n>\n"
+          "// Рюкзак: вкладки-фильтры #Tab0..5, сортировка #SortKind/#SortName/#SortCount, ячейки #S<n>\n"
           "// (#S<n>Sel — выбрана, #S<n>Btn — кнопка, #S<n>Icon — иконка, #S<n>Count — количество).\n"
           "// Собрано tools/gen_battle_ui.py — правь скрипт.\n\n" + centered(grid_h + 200, window) + "\n")
 
@@ -1020,6 +1021,182 @@ def equipment():
           "// рюкзака #Item0..7 (+ #Item<n>Q — качество, #Item<n>Icon), сравнение #Cmp0..11 и #CmpIcon,\n"
           "// кнопки #Equip/#Unequip/#Back/#Close. Собрано tools/gen_battle_ui.py — правь скрипт.\n\n"
           + centered(body_h + 140, window) + "\n")
+
+
+# ---------- меню героя: кукла со слотами и рюкзак (0.15.0) ----------
+
+HERO_BAG_TABS = [("Все", 60), ("Оружие", 92), ("Броня", 84), ("Аксесс.", 90), ("Камни", 84), ("Прочее", 92)]
+HERO_INFO = 8
+SOCKETS = 3
+# слоты куклы: индекс Equipment.Slot → (колонка, ряд). Слева броня, справа оружие и аксессуары.
+DOLL = {2: (0, 0), 3: (0, 1), 4: (0, 2), 5: (0, 3), 0: (2, 0), 1: (2, 1), 6: (2, 2), 7: (2, 3)}
+DOLL_MID = 116
+
+
+def cell(id_, left, top, glow=False, name=False):
+    """Ячейка 80×80 как в рюкзаке: #<id>Back, #<id>Sel (выбрано), #<id>Glow (сюда можно положить), #<id>Btn,
+    #<id>Icon, #<id>Count; name — подпись пустого слота #<id>Name."""
+    kids = [f"Group #{id_}Back {{ Anchor: (Left: 2, Top: 2, Width: 76, Height: 76); {skin('jr_cell', 28)} }}"]
+    if name:
+        kids.append(f'Label #{id_}Name {{ Text: ""; Anchor: (Left: 6, Top: 30, Width: 68, Height: 18); '
+                    f"Style: (FontSize: 11, TextColor: {DIM}, HorizontalAlignment: Center); }}")
+    kids.append(sel_frame(f"{id_}Sel", 80, 80, 16))
+    if glow:
+        kids.append(f"Group #{id_}Glow {{ Anchor: (Left: 4, Top: 4, Width: 72, Height: 72); Background: #6fdc8c(0.30); }}")
+    kids += [
+        button(f"{id_}Btn", "", 64, 64, left=8, top=8),
+        f"Group #{id_}Icon {{ Anchor: (Left: 16, Top: 14, Width: 48, Height: 48); }}",
+        f'Label #{id_}Count {{ Text: ""; Anchor: (Left: 44, Top: 58, Width: 34, Height: 18); '
+        f"Style: (FontSize: 13, TextColor: #ffffff, RenderBold: true); }}",
+    ]
+    return group(id_, [f"Anchor: (Left: {left}, Top: {top}, Width: {CELL - 6}, Height: {CELL - 6});"], kids)
+
+
+def info_lines(n, width):
+    return [label(f"Info{i}", "", 13, TEXT, height=18, width=width) for i in range(n)]
+
+
+def socket_row(i, width, button_text=None):
+    kids = [f"Group {{ Anchor: (Left: 0, Top: 0, Width: {width}, Height: 34); {skin('jr_slot', 8)} }}",
+            f"Group #Sock{i}Icon {{ Anchor: (Left: 4, Top: 2, Width: 30, Height: 30); }}",
+            f'Label #Sock{i} {{ Text: ""; Anchor: (Left: 40, Top: 0, Width: {width - (150 if button_text else 46)}, Height: 34); '
+            f"Style: (FontSize: 12, TextColor: {TEXT}, Wrap: true); }}"]
+    if button_text:
+        kids.append(button(f"Ext{i}", button_text, 100, 28, left=width - 104, top=3))
+    return group(f"Sock{i}Box", [f"Anchor: (Height: 34);"], kids)
+
+
+def card(width, buttons, sockets_button=None, extra=None):
+    kids = [
+        group("", ["Anchor: (Height: 68);", "LayoutMode: Left;"], [
+            group("", ["Anchor: (Width: 68, Height: 68);", skin("jr_cell", 26)], [
+                "Group #SelIcon { Anchor: (Left: 10, Top: 10, Width: 48, Height: 48); }"]),
+            spacer(w=10),
+            group("", ["FlexWeight: 1;", "LayoutMode: Top;"], [
+                label("SelName", "", 17, GOLD, True, height=26),
+                label("SelKind", "", 12, SUB, height=36, wrap=True),
+            ]),
+        ]),
+        spacer(h=4), divider(), spacer(h=4),
+    ] + info_lines(HERO_INFO, width - 24) + [spacer(h=4)]
+    for i in range(SOCKETS):
+        kids += [socket_row(i, width - 24, sockets_button), spacer(h=3)]
+    kids += (extra or []) + [label("Message", "", 12, "#ffd27a", height=34, wrap=True)] + buttons
+    return column("CardCol", ["FlexWeight: 1;"], kids, pad=12)
+
+
+def hero():
+    tabs = group("Tabs", ["Anchor: (Height: 34);", "LayoutMode: Left;"],
+                 sum(([button(f"Tab{i}", "", 190, 32), spacer(w=6)] for i in range(PARTY)), [])
+                 + [spacer(flex=True), label("Hint", "", 12, SUB, width=430, height=34, wrap=True)])
+    doll_w = 2 * CELL + DOLL_MID
+    doll = group("Doll", [f"Anchor: (Width: {doll_w}, Height: {4 * CELL});"],
+                 [cell(f"D{i}", (0 if c == 0 else CELL + DOLL_MID) , r * CELL, glow=True, name=True) for i, (c, r) in DOLL.items()]
+                 + [f"Group #Portrait {{ Anchor: (Left: {CELL + (DOLL_MID - 88) // 2}, Top: 30, Width: 88, Height: 88); }}",
+                    f'Label #DollLvl {{ Text: ""; Anchor: (Left: {CELL}, Top: 124, Width: {DOLL_MID}, Height: 20); '
+                    f"Style: (FontSize: 13, TextColor: {GOLD}, RenderBold: true, HorizontalAlignment: Center); }}",
+                    f'Label #DollStats {{ Text: ""; Anchor: (Left: {CELL}, Top: 150, Width: {DOLL_MID}, Height: 190); '
+                    f"Style: (FontSize: 12, TextColor: {TEXT}, Wrap: true, HorizontalAlignment: Center); }}"])
+    left = column("DollCol", [f"Anchor: (Width: {doll_w + 20});"], [
+        label("HeroName", "", 18, PARTY_NAME, True, height=24),
+        label("HeroSub", "", 12, SUB, height=18),
+        spacer(h=6),
+        doll,
+        spacer(h=4),
+        label("HeroStats", "", 12, TEXT, height=40, wrap=True),
+    ])
+    grid_w, grid_h = BAG_COLS * CELL, BAG_ROWS * CELL
+    btabs = group("", ["Anchor: (Height: 32);", "LayoutMode: Left;"],
+                  sum(([button(f"BTab{i}", t, w, 30), spacer(w=3)] for i, (t, w) in enumerate(HERO_BAG_TABS)), []))
+    middle = column("BagCol", [f"Anchor: (Width: {grid_w + 20});"], [
+        btabs,
+        spacer(h=6),
+        group("Grid", [f"Anchor: (Width: {grid_w}, Height: {grid_h});"],
+              [cell(f"S{i}", (i % BAG_COLS) * CELL, (i // BAG_COLS) * CELL, glow=True) for i in range(BAG_COLS * BAG_ROWS)]),
+        spacer(h=6),
+        group("", ["Anchor: (Height: 30);", "LayoutMode: Left;"], [
+            button("PrevPage", "<", 60, 28), spacer(w=6),
+            label("Page", "", 13, SUB, height=28, flex=True, center=True),
+            button("NextPage", ">", 60, 28),
+        ]),
+    ])
+    buttons = [
+        group("", ["Anchor: (Height: 34);", "LayoutMode: Left;"], [
+            button("Act", "Надеть", 150, 32), spacer(w=4), button("Cancel", "Отменить выбор", 150, 32)]),
+        spacer(h=4),
+        group("", ["Anchor: (Height: 34);", "LayoutMode: Left;"], [
+            button("Back", "Меню героя", 150, 32), spacer(w=4), button("Close", "Закрыть", 150, 32, cancel=True)]),
+    ]
+    right = card(340, buttons)
+    body_h = 24 + 18 + 6 + 4 * CELL + 4 + 40 + 24
+    window = menu_window(1220, [
+        menu_title("ГЕРОЙ", "Total", sub="снаряжение и рюкзак"),
+        tabs,
+        spacer(h=8),
+        group("", [f"Anchor: (Height: {body_h});", "LayoutMode: Left;"], [left, spacer(w=8), middle, spacer(w=8), right]),
+    ])
+    write("Hero.ui", '$C = "../Common.ui";\n\n'
+          "// Меню героя: вкладки #Tab0..2, кукла — слоты #D0..7 (индекс = Equipment.Slot), рюкзак #S0..23 с вкладками\n"
+          "// #BTab0..5, карточка вещи (#SelIcon, #SelName, #SelKind, #Info0..7, гнёзда #Sock0..2), кнопки #Act/#Cancel/#Back/#Close.\n"
+          "// #<ячейка>Glow — куда можно положить выбранное. Собрано tools/gen_battle_ui.py — правь скрипт.\n\n"
+          + centered(body_h + 150, window) + "\n")
+
+
+SMITH_ROWS = 9
+SMITH_GEMS = 8
+
+
+def smith():
+    rows = []
+    for i in range(SMITH_ROWS):
+        rows += [sel_row(f"L{i}", 360, EQ_ROW, 250, extra=True), spacer(h=2)]
+    left = column("ListCol", ["Anchor: (Width: 380);"], [
+        label("", "Вещи: надетые и в рюкзаке", 15, GOLD, True, height=22),
+        spacer(h=4),
+    ] + rows + [
+        group("", ["Anchor: (Height: 30);", "LayoutMode: Left;"], [
+            button("LPrev", "<", 50, 28), spacer(w=6),
+            label("LPage", "", 12, SUB, height=28, flex=True, center=True),
+            button("LNext", ">", 50, 28),
+        ]),
+    ])
+    gems = []
+    for i in range(SMITH_GEMS):
+        gems += [sel_row(f"G{i}", 300, EQ_ROW, 220, extra=True), spacer(h=2)]
+    right = column("GemCol", ["Anchor: (Width: 320);"], [
+        label("", "Камни в рюкзаке", 15, GOLD, True, height=22),
+        spacer(h=4),
+    ] + gems + [
+        group("", ["Anchor: (Height: 30);", "LayoutMode: Left;"], [
+            button("GPrev", "<", 50, 28), spacer(w=6),
+            label("GPage", "", 12, SUB, height=28, flex=True, center=True),
+            button("GNext", ">", 50, 28),
+        ]),
+        spacer(h=4),
+        button("Insert", "Вставить в вещь", 300, 32),
+        spacer(h=4),
+        button("Merge", "Слить 3 в 1 (уровень выше)", 300, 32),
+    ])
+    upgrade = [
+        divider(), spacer(h=4),
+        label("UpCost", "", 12, TEXT, height=34, wrap=True),
+        button("Upgrade", "Улучшить качество", 300, 32),
+        spacer(h=4),
+    ]
+    buttons = [button("Close", "Закрыть", 300, 32, cancel=True)]
+    middle = card(400, buttons, sockets_button="Достать", extra=upgrade)
+    body_h = 22 + 4 + SMITH_ROWS * (EQ_ROW + 2) + 30 + 22
+    window = menu_window(1180, [
+        menu_title("КУЗНИЦА", "Total", sub="улучшение вещей и камни"),
+        group("", ["Anchor: (Height: 22);", "LayoutMode: Left;"], [label("Hint", "", 12, SUB, flex=True, height=22)]),
+        spacer(h=6),
+        group("", [f"Anchor: (Height: {body_h});", "LayoutMode: Left;"], [left, spacer(w=8), middle, spacer(w=8), right]),
+    ])
+    write("Smith.ui", '$C = "../Common.ui";\n\n'
+          "// Кузница: вещи #L0..8 (#L<n>Btn/#L<n>Icon/#L<n>Q/#L<n>Sel), карточка (#SelIcon, #SelName, #SelKind, #Info0..7,\n"
+          "// гнёзда #Sock0..2 с кнопками #Ext0..2), улучшение #UpCost/#Upgrade, камни #G0..7, #Insert, #Merge, #Close.\n"
+          "// Собрано tools/gen_battle_ui.py — правь скрипт.\n\n"
+          + centered(body_h + 120, window) + "\n")
 
 
 # ---------- меню героя (клавиша O) ----------
@@ -1175,6 +1352,8 @@ if __name__ == "__main__":
     prebattle()
     backpack()
     equipment()
+    hero()
+    smith()
     mainmenu()
     admin()
     cutscene_talk()

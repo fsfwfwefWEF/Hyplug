@@ -75,6 +75,7 @@ public final class GameData {
     /** dataDir == null → встроенные данные из jar. */
     public static GameData load(Content content, Path dataDir) throws IOException {
         GameData d = new GameData(content);
+        Gems.load(content, read(dataDir, "gems.json"));
         Equipment.load(content, read(dataDir, "equipment.json"));
         for (Object o : (List<?>) Json.parse(read(dataDir, "enemies.json"))) {
             EnemyTemplate t = parseEnemy(Json.obj(o));
@@ -213,7 +214,11 @@ public final class GameData {
                                BattleListener listener, long seed, int partyLevel) {
         List<Combatant> all = new ArrayList<>(party);
         int n = 0;
-        for (Encounter.Spot s : e.enemies()) all.add(spawnEnemy(enemy(s.template()), s.template() + "#" + (++n), partyLevel));
+        for (Encounter.Spot s : e.enemies()) {
+            Combatant c = spawnEnemy(enemy(s.template()), s.template() + "#" + (++n), partyLevel);
+            if (Squads.elite(e)) c = boost(c, Squads.ELITE_BOOST);
+            all.add(c);
+        }
         Battle battle = new Battle(content, all, inventory, listener, seed);
         battle.setFleeAllowed(e.canFlee());
 
@@ -235,6 +240,25 @@ public final class GameData {
         if (e.script() != null) scripts.add(BOSS_SCRIPTS.get(e.script()).get());
         battle.setScript(BattleScript.combine(scripts.toArray(BattleScript[]::new)));
         return battle;
+    }
+
+    /** Усиленная копия врага (сильная группа): HP, атака и магия × k. */
+    private static Combatant boost(Combatant c, double k) {
+        Stats s = c.stats;
+        Stats b = new Stats((int) Math.round(s.maxHp() * k), s.maxMp(), (int) Math.round(s.atk() * k),
+                (int) Math.round(s.mag() * k), s.def(), s.spd());
+        Combatant out = new Combatant(c.id, c.name, c.side, b, c.abilities);
+        out.templateId = c.templateId;
+        out.boss = c.boss;
+        out.immunities.addAll(c.immunities);
+        return out;
+    }
+
+    /** Какой лут камней (gems.json → loot) у этого боя: "boss", "elite" или "normal". */
+    public String lootRule(Encounter e) {
+        if (e == null) return "normal";
+        for (Encounter.Spot s : e.enemies()) if (enemies.containsKey(s.template()) && enemy(s.template()).boss()) return "boss";
+        return Squads.elite(e) ? "elite" : "normal";
     }
 
     /** Что выпало с поверженного врага (loot из enemies.json). */

@@ -24,6 +24,13 @@ public final class Content {
     private final Map<String, Equipment.Gear> gear = new java.util.LinkedHashMap<>();
     private final Map<String, Map<Equipment.Slot, String>> startGear = new HashMap<>();
     private Map<String, Integer> starterBag = Map.of();
+    /** Вещи с другим качеством/камнями (id base@Q:…), собираются при первом обращении. */
+    private final Map<String, Equipment.Gear> variants = new java.util.concurrent.ConcurrentHashMap<>();
+    private final java.util.Set<String> badVariants = java.util.concurrent.ConcurrentHashMap.newKeySet();
+    private Equipment.Rules gearRules = Equipment.Rules.NONE;
+    private final Map<String, Gems.Type> gemTypes = new java.util.LinkedHashMap<>();
+    private List<Gems.Tier> gemTiers = List.of();
+    private Map<String, Gems.LootRule> gemLoot = Map.of();
 
     public void add(StatusDef s) { statuses.put(s.id(), s); }
     public void add(Ability a) { abilities.put(a.id(), a); }
@@ -46,10 +53,53 @@ public final class Content {
         for (String id : gear.keySet()) items.remove(id);
         gear.clear();
         startGear.clear();
+        variants.clear();
+        badVariants.clear();
     }
 
-    public Equipment.Gear gear(String id) { return require(gear, id, "вещь снаряжения"); }
-    public boolean hasGear(String id) { return gear.containsKey(id); }
+    public Equipment.Gear gear(String id) {
+        Equipment.Gear v = variant(id);
+        return v != null ? v : require(gear, id, "вещь снаряжения");
+    }
+    public boolean hasGear(String id) { return id != null && (gear.containsKey(id) || variant(id) != null); }
+    /** Вещь из equipment.json (не вариант). */
+    public boolean hasBaseGear(String id) { return gear.containsKey(id); }
+
+    private Equipment.Gear variant(String id) {
+        if (id == null || id.indexOf('@') < 0 || badVariants.contains(id)) return null;
+        Equipment.Gear v = variants.get(id);
+        if (v != null) return v;
+        try {
+            v = Equipment.resolve(this, id);
+        } catch (RuntimeException e) {
+            v = null;
+        }
+        if (v == null) badVariants.add(id);
+        else variants.put(id, v);
+        return v;
+    }
+
+    public Equipment.Rules gearRules() { return gearRules; }
+    public void gearRules(Equipment.Rules r) { gearRules = r; }
+
+    // ---------- камни ----------
+
+    public void clearGems() {
+        for (Gems.Type t : gemTypes.values()) for (Gems.Tier tier : gemTiers) items.remove(Gems.itemId(t.id(), tier.level()));
+        gemTypes.clear();
+        gemTiers = List.of();
+        gemLoot = Map.of();
+        variants.clear();
+        badVariants.clear();
+    }
+    public void add(Gems.Type t) { gemTypes.put(t.id(), t); }
+    public Gems.Type gemType(String id) { return gemTypes.get(id); }
+    public java.util.Collection<Gems.Type> gemTypes() { return gemTypes.values(); }
+    public void gemTiers(List<Gems.Tier> t) { gemTiers = List.copyOf(t); }
+    public List<Gems.Tier> gemTiers() { return gemTiers; }
+    public Gems.Tier gemTier(int level) { return level >= 1 && level <= gemTiers.size() ? gemTiers.get(level - 1) : null; }
+    public void gemLoot(Map<String, Gems.LootRule> m) { gemLoot = Map.copyOf(m); }
+    public Map<String, Gems.LootRule> gemLoot() { return gemLoot; }
     public java.util.Collection<Equipment.Gear> gearList() { return gear.values(); }
     public void startGear(String heroId, Map<Equipment.Slot, String> eq) { startGear.put(heroId, eq); }
     /** Снаряжение героя в новой игре (пусто, если не задано). */
@@ -74,18 +124,29 @@ public final class Content {
     public void flavor(String id, String text) { flavors.put(id, text); }
 
     /** Явная иконка способности/предмета (иначе выбирается по эффекту, см. {@link Describe}). */
-    public String icon(String id) { return icons.get(id); }
+    public String icon(String id) {
+        String k = icons.get(id);
+        int at = id == null ? -1 : id.indexOf('@');
+        return k != null || at < 0 ? k : icons.get(id.substring(0, at));
+    }
     public void icon(String id, String key) { icons.put(id, key); }
 
     public java.util.Collection<Progression.HeroDef> heroes() { return heroes.values(); }
     public Progression.HeroDef hero(String id) { return require(heroes, id, "герой"); }
 
     public StatusDef status(String id) { return require(statuses, id, "статус"); }
+    public boolean hasStatus(String id) { return id != null && statuses.containsKey(id); }
     public Ability ability(String id) { return require(abilities, id, "способность"); }
 
     public boolean hasAbility(String id) { return id != null && abilities.containsKey(id); }
-    public Item item(String id) { return require(items, id, "предмет"); }
-    public boolean hasItem(String id) { return items.containsKey(id); }
+    public Item item(String id) {
+        Item i = items.get(id);
+        if (i != null) return i;
+        Equipment.Gear v = variant(id);
+        if (v != null) return new Item(v.id(), v.name(), null, Item.Kind.GEAR, v.description());
+        return require(items, id, "предмет");
+    }
+    public boolean hasItem(String id) { return items.containsKey(id) || variant(id) != null; }
     public java.util.Collection<Item> items() { return items.values(); }
 
     private static <T> T require(Map<String, T> map, String id, String what) {

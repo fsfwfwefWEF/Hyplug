@@ -49,22 +49,46 @@ public final class Equipment {
         }
     }
 
+    /** Качество вещи: цвет, число гнёзд под камни, множитель мощи и статов (от качества в equipment.json). */
     public enum Quality {
-        COMMON("обычное", "#c9ced8"), RARE("редкое", "#6fdc8c"), EPIC("эпическое", "#7fb2ff"), LEGENDARY("легендарное", "#ffb84a");
+        COMMON("обычное", "#a7afbd", 0, 1.0), GOOD("хорошее", "#6fc27a", 1, 1.15), RARE("редкое", "#5b9cf0", 2, 1.3),
+        EPIC("эпическое", "#b07cf0", 2, 1.5), LEGENDARY("легендарное", "#f0a040", 3, 1.75);
 
         public final String label;
         public final String color;
+        public final int sockets;
+        public final double mult;
 
-        Quality(String label, String color) {
+        Quality(String label, String color, int sockets, double mult) {
             this.label = label;
             this.color = color;
+            this.sockets = sockets;
+            this.mult = mult;
+        }
+
+        public Quality next() {
+            return this == LEGENDARY ? null : values()[ordinal() + 1];
         }
 
         public static Quality parse(String s) {
             if (s == null) return COMMON;
-            for (Quality q : values()) if (q.name().equalsIgnoreCase(s.trim())) return q;
+            String k = s.trim();
+            if (k.equalsIgnoreCase("uncommon")) return GOOD;
+            for (Quality q : values()) if (q.name().equalsIgnoreCase(k)) return q;
             return COMMON;
         }
+    }
+
+    /** Цена улучшения до качества: любые материалы и любые камни из рюкзака. */
+    public record Cost(int materials, int gems) {}
+
+    /**
+     * Правила из equipment.json: навыки по качеству для типа вещи (typeSkills) и для отдельной вещи (qualitySkills),
+     * цена улучшения (upgrade).
+     */
+    public record Rules(Map<String, Map<Quality, String>> typeSkills, Map<String, Map<Quality, String>> itemSkills,
+                        Map<Quality, Cost> upgrade) {
+        public static final Rules NONE = new Rules(Map.of(), Map.of(), Map.of());
     }
 
     /**
@@ -78,7 +102,29 @@ public final class Equipment {
      */
     public record Gear(String id, String name, String type, Slot slot, Quality quality, List<String> model,
                        int power, Map<String, String> scale, String element, Stats bonus,
-                       List<String> immunities, List<String> skills, boolean twoHanded, String description) {
+                       List<String> immunities, List<String> skills, boolean twoHanded, String description,
+                       String base, List<String> gems) {
+        /** Гнёзд под камни (по качеству). */
+        public int sockets() {
+            return quality.sockets;
+        }
+
+        /** Камень в гнезде i или null. */
+        public String gem(int i) {
+            return i < gems.size() ? gems.get(i) : null;
+        }
+
+        public int freeSocket() {
+            for (int i = 0; i < sockets(); i++) if (gem(i) == null) return i;
+            return -1;
+        }
+
+        public int gemCount() {
+            int n = 0;
+            for (String g : gems) if (g != null) n++;
+            return n;
+        }
+
         public boolean accessory() {
             return slot == Slot.ACC1 || slot == Slot.ACC2;
         }
@@ -156,10 +202,139 @@ public final class Equipment {
             });
         }
         content.starterBag(bag);
+        content.gearRules(new Rules(skillTable(root.get("typeSkills")), skillTable(root.get("qualitySkills")), costs(root.get("upgrade"))));
+        for (Map<Quality, String> t : content.gearRules().typeSkills().values()) for (String s : t.values()) content.ability(s);
+        for (Map<Quality, String> t : content.gearRules().itemSkills().values()) for (String s : t.values()) content.ability(s);
+        for (Gear g : List.copyOf(content.gearList())) {
+            List<String> empty = new ArrayList<>();
+            for (int i = 0; i < g.sockets(); i++) empty.add(null);
+            content.add(build(content, g, g.quality(), empty, g.id()));
+        }
         for (Gear g : content.gearList()) {
             for (String s : g.skills()) content.ability(s);
             for (String s : g.immunities()) content.status(s);
         }
+    }
+
+    private static Map<String, Map<Quality, String>> skillTable(Object o) {
+        Map<String, Map<Quality, String>> out = new LinkedHashMap<>();
+        if (!(o instanceof Map<?, ?>)) return out;
+        Json.obj(o).forEach((k, v) -> {
+            Map<Quality, String> t = new EnumMap<>(Quality.class);
+            Json.obj(v).forEach((q, a) -> t.put(Quality.parse(q), String.valueOf(a)));
+            out.put(k, t);
+        });
+        return out;
+    }
+
+    private static Map<Quality, Cost> costs(Object o) {
+        Map<Quality, Cost> out = new EnumMap<>(Quality.class);
+        if (!(o instanceof Map<?, ?>)) return out;
+        Json.obj(o).forEach((q, v) -> {
+            Map<String, Object> m = Json.obj(v);
+            out.put(Quality.parse(q), new Cost((int) Json.num(m, "materials", 0), (int) Json.num(m, "gems", 0)));
+        });
+        return out;
+    }
+
+    // ---------- качество и камни: вещь-вариант ----------
+
+    /**
+     * id вещи с качеством и камнями: base@Q или base@Q:камень,-,камень («-» — пустое гнездо). Если качество как у
+     * исходной вещи и камней нет — просто base (так старые сохранения остаются как есть).
+     */
+    public static String variantId(String base, int quality, List<String> gems) {
+        boolean any = false;
+        for (String g : gems) if (g != null) any = true;
+        StringBuilder sb = new StringBuilder(base).append('@').append(quality);
+        if (any) {
+            sb.append(':');
+            for (int i = 0; i < gems.size(); i++) {
+                if (i > 0) sb.append(',');
+                sb.append(gems.get(i) == null ? "-" : gems.get(i));
+            }
+        }
+        return sb.toString();
+    }
+
+    /** Тот же вариант, но с другим качеством/камнями; сворачивается в base, если ничего не отличается. */
+    public static String variantId(Content content, Gear g, Quality q, List<String> gems) {
+        Gear b = content.gear(g.base());
+        boolean any = false;
+        for (String x : gems) if (x != null) any = true;
+        if (q == b.quality() && !any) return b.id();
+        return variantId(g.base(), q.ordinal(), gems);
+    }
+
+    /** Разбор id-варианта (см. {@link #variantId}); null — не вариант или ошибка. Вызывает Content при поиске вещи. */
+    static Gear resolve(Content content, String id) {
+        int at = id.indexOf('@');
+        if (at <= 0) return null;
+        String baseId = id.substring(0, at);
+        if (!content.hasBaseGear(baseId)) return null;
+        Gear b = content.gear(baseId);
+        String rest = id.substring(at + 1);
+        int colon = rest.indexOf(':');
+        Quality q;
+        try {
+            int qi = Integer.parseInt(colon < 0 ? rest : rest.substring(0, colon));
+            if (qi < 0 || qi >= Quality.values().length) return null;
+            q = Quality.values()[qi];
+        } catch (NumberFormatException e) {
+            return null;
+        }
+        List<String> gems = new ArrayList<>();
+        if (colon >= 0) {
+            for (String x : rest.substring(colon + 1).split(",", -1)) {
+                if (x.isEmpty() || x.equals("-")) gems.add(null);
+                else if (Gems.parse(content, x) == null) return null;
+                else gems.add(x);
+            }
+        }
+        while (gems.size() > q.sockets) {
+            if (gems.get(gems.size() - 1) != null) return null;
+            gems.remove(gems.size() - 1);
+        }
+        while (gems.size() < q.sockets) gems.add(null);
+        return build(content, b, q, gems, id);
+    }
+
+    private static Gear build(Content content, Gear b, Quality q, List<String> gems, String id) {
+        double k = q.mult / b.quality().mult;
+        Stats s = b.bonus();
+        int[] st = {s.maxHp(), s.maxMp(), s.atk(), s.mag(), s.def(), s.spd()};
+        for (int i = 0; i < st.length; i++) if (st[i] > 0) st[i] = (int) Math.round(st[i] * k);
+        String element = b.element();
+        List<String> imm = new ArrayList<>(b.immunities());
+        Slot slot = b.slot() == Slot.OFFHAND && !"shield".equals(b.type()) ? Slot.WEAPON : b.slot();
+        for (String gid : gems) {
+            if (gid == null) continue;
+            Gems.Effect e = Gems.parse(content, gid).in(slot);
+            Stats eb = e.bonus();
+            st[0] += eb.maxHp(); st[1] += eb.maxMp(); st[2] += eb.atk(); st[3] += eb.mag(); st[4] += eb.def(); st[5] += eb.spd();
+            if (slot == Slot.WEAPON && element == null && e.element() != null) element = e.element();
+            if (e.immunity() != null && !imm.contains(e.immunity())) imm.add(e.immunity());
+        }
+        List<String> skills = new ArrayList<>(b.skills());
+        for (String sk : qualitySkills(content, b, q)) if (!skills.contains(sk)) skills.add(sk);
+        String name = q == b.quality() ? b.name() : b.name() + " (" + q.label + ")";
+        return new Gear(id, name, b.type(), b.slot(), q, b.model(), (int) Math.round(b.power() * k), b.scale(), element,
+                new Stats(st[0], st[1], st[2], st[3], st[4], st[5]), List.copyOf(imm), List.copyOf(skills), b.twoHanded(),
+                b.description(), b.id(), java.util.Collections.unmodifiableList(gems));
+    }
+
+    /** Навыки, которые вещь получает на качестве q (накопительно: эпическая получает и навыки ниже). */
+    public static List<String> qualitySkills(Content content, Gear b, Quality q) {
+        List<String> out = new ArrayList<>();
+        Rules r = content.gearRules();
+        String typeKey = b.accessory() ? "accessory" : b.slot().armor() ? "armor" : b.type();
+        for (Map<Quality, String> t : java.util.Arrays.asList(r.typeSkills().get(typeKey), r.itemSkills().get(b.id()))) {
+            if (t == null) continue;
+            t.forEach((tq, sk) -> {
+                if (tq.ordinal() <= q.ordinal() && !out.contains(sk)) out.add(sk);
+            });
+        }
+        return out;
     }
 
     /** Иконка по умолчанию: тип оружия или слот брони (Describe.gearIcon); "icon" в json её заменяет. */
@@ -182,7 +357,7 @@ public final class Equipment {
         return new Gear(id, Json.str(m, "name", id), type, slot, Quality.parse(Json.str(m, "quality", null)), model,
                 (int) Json.num(m, "power", 0), scale, Json.str(m, "element", null), bonus,
                 Json.strings(m, "immunities"), Json.strings(m, "skills"), Json.bool(m, "twoHanded", false),
-                Json.str(m, "description", ""));
+                Json.str(m, "description", ""), id, List.of());
     }
 
     // ---------- надеть / снять ----------

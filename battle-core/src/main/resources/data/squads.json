@@ -32,6 +32,11 @@
       "loot": [ { "item": "ether", "count": 1, "chance": 0.3 } ] },
     { "id": "trork_band", "name": "Банда трорков", "enemies": ["goblin", "trork", "goblin"], "weight": 1, "exp": 55,
       "loot": [ { "item": "bomb", "count": 1, "chance": 0.5 } ] },
-    { "id": "slime_pond", "name": "Слизни у пруда", "enemies": ["slime", "slime"], "weight": 2, "exp": 25 }
+    { "id": "slime_pond", "name": "Слизни у пруда", "enemies": ["slime", "slime"], "weight": 2, "exp": 25 },
+    // Сильные группы ("elite": true): враги ×1.5, опыт ×1.5, лут камней и вещей лучше (gems.json → loot.elite).
+    { "id": "elite_trorks", "name": "Банда трорков", "elite": true, "enemies": ["trork", "goblin", "trork"], "weight": 1, "exp": 70,
+      "loot": [ { "item": "trork_tusk", "count": 1, "chance": 0.8 } ] },
+    { "id": "elite_dead", "name": "Костяной дозор", "elite": true, "enemies": ["skeleton", "skeleton", "skeleton"], "weight": 1, "exp": 60,
+      "loot": [ { "item": "bone", "count": 2, "chance": 0.8 } ] }
   ]
 }

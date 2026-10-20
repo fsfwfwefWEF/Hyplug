@@ -1377,6 +1377,9 @@ public final class BattleSession implements BattleListener {
         Map<String, Integer> got;
         try {
             got = plugin.data().rollLoot(plugin.data().enemy(c.templateId), rnd);
+            // Качество вещей по силе боя; камни с каждого врага — только в обычных боях (у сильных — в награде).
+            String rule = plugin.data().lootRule(encounter);
+            got = dev.jrpg.battle.Gems.enrich(plugin.content(), got, rule, rnd, rule.equals("normal"));
         } catch (RuntimeException e) {
             return Map.of();
         }
@@ -1391,6 +1394,7 @@ public final class BattleSession implements BattleListener {
         addLog(sb.toString(), LOG_LOOT);
         // Снаряжение — отдельной строкой цветом редкости, чтобы его было видно в журнале.
         for (String item : got.keySet()) {
+            if (item.startsWith(dev.jrpg.battle.Gems.PREFIX)) addLog("Камень: " + plugin.content().item(item).name(), "#e8c547");
             if (!plugin.content().hasGear(item)) continue;
             dev.jrpg.battle.Equipment.Gear g = plugin.content().gear(item);
             addLog("Снаряжение: " + g.name() + " (" + g.quality().label + ")", g.quality().color);
@@ -1442,7 +1446,9 @@ public final class BattleSession implements BattleListener {
                 plugin.scheduler().execute(plugin::saveWorld);
             }
             barkAny(Side.PARTY, "win");
-            Map<String, Integer> loot = plugin.data().rollLoot(encounter, rnd);
+            String rule = plugin.data().lootRule(encounter);
+            Map<String, Integer> loot = dev.jrpg.battle.Gems.enrich(plugin.content(), plugin.data().rollLoot(encounter, rnd),
+                    rule, rnd, !rule.equals("normal"));
             loot.forEach((item, cnt) -> battle.inventory().merge(item, cnt, Integer::sum));
             Map<String, Integer> all = new java.util.LinkedHashMap<>(drops);
             loot.forEach((item, cnt) -> all.merge(item, cnt, Integer::sum));

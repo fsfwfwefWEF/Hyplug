@@ -513,6 +513,20 @@ def g_amulet(d, S):
     d.ellipse(P(S, [(0.43, 0.54), (0.49, 0.60)]), fill=(230, 255, 255))
 
 
+def gem_glyph(c):
+    """Огранённый камень: корона и павильон, светлые и тёмные грани."""
+    def draw(d, S):
+        light = tuple(min(255, int(v + (255 - v) * 0.55)) for v in c)
+        dark = tuple(int(v * 0.55) for v in c)
+        top, mid, bot = 0.24, 0.42, 0.86
+        d.polygon(P(S, [(0.30, top), (0.70, top), (0.86, mid), (0.5, bot), (0.14, mid)]), fill=c)
+        d.polygon(P(S, [(0.30, top), (0.70, top), (0.62, mid), (0.38, mid)]), fill=light)
+        d.polygon(P(S, [(0.14, mid), (0.38, mid), (0.5, bot)]), fill=dark)
+        d.polygon(P(S, [(0.62, mid), (0.86, mid), (0.5, bot)]), fill=tuple(int(v * 0.8) for v in c))
+        d.polygon(P(S, [(0.36, 0.28), (0.46, 0.28), (0.42, 0.36)]), fill=(255, 255, 255))
+    return draw
+
+
 # ---------- новые способности (0.10.3) ----------
 
 def g_meteor(d, S):
@@ -688,14 +702,21 @@ ICONS = {
     "roar": ("#a8402a", "#3a0e08", g_roar),
     "claw": ("#8a3a3a", "#2a0c0c", g_claw),
     "split": ("#2a7a7a", "#0a2a2a", g_split),
+    "gem_ruby": ("#a83a3a", "#2a0a0a", gem_glyph((232, 80, 80))),
+    "gem_sapphire": ("#3a5aa8", "#0a142a", gem_glyph((80, 140, 240))),
+    "gem_topaz": ("#a8902a", "#2a220a", gem_glyph((240, 200, 70))),
+    "gem_emerald": ("#2a8a4a", "#0a2a14", gem_glyph((90, 210, 120))),
+    "gem_amethyst": ("#6a3aa8", "#1e0a2e", gem_glyph((180, 120, 240))),
+    "gem_diamond": ("#6a7a8a", "#1a1e24", gem_glyph((225, 232, 245))),
+    "smith": ("#7a5a3a", "#22160a", g_mace),
 }
 
 # Рамки уровня: одна прозрачная рамка на уровень поверх любой иконки (иконка + рамка = два слоя в слоте),
 # так уровни не множат текстуры. Цвета — как у качества вещей (Equipment.Quality).
-TIERS = {"t1": ((111, 220, 140), 1), "t2": ((127, 178, 255), 2), "t3": ((255, 184, 74), 3)}
+TIERS = {"t1": ((111, 220, 140), 1), "t2": ((127, 178, 255), 2), "t3": ((255, 184, 74), 3), "t4": ((176, 124, 240), 3)}
 
 
-SPARKLY = {"meteor", "nova", "tempest", "magic", "focus", "ether", "levelup", "star", "st_charged", "haste", "st_haste", "thunder", "ice",
+SPARKLY = {"gem_ruby", "gem_sapphire", "gem_topaz", "gem_emerald", "gem_amethyst", "gem_diamond", "meteor", "nova", "tempest", "magic", "focus", "ether", "levelup", "star", "st_charged", "haste", "st_haste", "thunder", "ice",
            "st_frozen", "heal", "regen", "st_regen"}
 
 

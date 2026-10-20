@@ -74,6 +74,7 @@ final class EncounterWatcher {
         if (!ref.isValid() || plugin.sessions().containsKey(p.getUuid()) || plugin.isPrompting(p.getUuid())
                 || Cutscene.playing(p.getUuid())) return;
         Vector3d pos = Fx.position(store, ref);
+        if (plugin.smiths() != null && plugin.smiths().tick(p, ref, store, world, pos)) return;
         long now = System.currentTimeMillis();
         boolean cooldown = plugin.onCooldown(p.getUuid());
         boolean auto = plugin.settings().proximityTrigger && !cooldown;

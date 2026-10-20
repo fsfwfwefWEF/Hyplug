@@ -1,6 +1,6 @@
 $C = "../Common.ui";
 
-// Рюкзак: вкладки-фильтры #Tab0..4, сортировка #SortKind/#SortName/#SortCount, ячейки #S<n>
+// Рюкзак: вкладки-фильтры #Tab0..5, сортировка #SortKind/#SortName/#SortCount, ячейки #S<n>
 // (#S<n>Sel — выбрана, #S<n>Btn — кнопка, #S<n>Icon — иконка, #S<n>Count — количество).
 // Собрано tools/gen_battle_ui.py — правь скрипт.
 
@@ -50,15 +50,17 @@ Group {
           Anchor: (Height: 34);
           LayoutMode: Left;
 
-          $C.@SecondaryTextButton #Tab0 { @Text = "Все"; Anchor: (Width: 112, Height: 32); }
+          $C.@SecondaryTextButton #Tab0 { @Text = "Все"; Anchor: (Width: 64, Height: 32); }
           Group { Anchor: (Width: 5); }
-          $C.@SecondaryTextButton #Tab1 { @Text = "Зелья"; Anchor: (Width: 112, Height: 32); }
+          $C.@SecondaryTextButton #Tab1 { @Text = "Зелья"; Anchor: (Width: 88, Height: 32); }
           Group { Anchor: (Width: 5); }
-          $C.@SecondaryTextButton #Tab2 { @Text = "Боевые"; Anchor: (Width: 112, Height: 32); }
+          $C.@SecondaryTextButton #Tab2 { @Text = "Боевые"; Anchor: (Width: 88, Height: 32); }
           Group { Anchor: (Width: 5); }
           $C.@SecondaryTextButton #Tab3 { @Text = "Материалы"; Anchor: (Width: 112, Height: 32); }
           Group { Anchor: (Width: 5); }
-          $C.@SecondaryTextButton #Tab4 { @Text = "Снаряжение"; Anchor: (Width: 112, Height: 32); }
+          $C.@SecondaryTextButton #Tab4 { @Text = "Снаряжение"; Anchor: (Width: 122, Height: 32); }
+          Group { Anchor: (Width: 5); }
+          $C.@SecondaryTextButton #Tab5 { @Text = "Камни"; Anchor: (Width: 86, Height: 32); }
           Group { Anchor: (Width: 5); }
           Group { FlexWeight: 1; }
           Label {

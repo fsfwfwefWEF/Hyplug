@@ -82,4 +82,11 @@ wall
 roar
 claw
 split
+gem_ruby
+gem_sapphire
+gem_topaz
+gem_emerald
+gem_amethyst
+gem_diamond
+smith
 gear_sword

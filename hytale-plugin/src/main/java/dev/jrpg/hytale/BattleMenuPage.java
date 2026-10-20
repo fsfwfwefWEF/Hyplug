@@ -835,7 +835,7 @@ public final class BattleMenuPage extends InteractiveCustomUIPage<BattleMenuPage
      */
     static void putIcon(UICommandBuilder cmd, Map<String, String> shown, String slot, String key, String size, int tier) {
         boolean has = key != null && !key.isEmpty();
-        int t = Math.max(0, Math.min(3, tier));
+        int t = Math.max(0, Math.min(4, tier));
         String want = has ? key + "_" + size + (t > 0 ? "+" + t : "") : "";
         if (want.equals(shown.get(slot))) return;
         shown.put(slot, want);

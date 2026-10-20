@@ -30,12 +30,12 @@ import java.util.logging.Level;
  * здесь связь с Hytale: команда /jrpg, боевые сессии, автостарт у встреч.
  */
 public final class JrpgPlugin extends JavaPlugin {
-    private static final String[] DATA_FILES = {"enemies.json", "encounters.json", "settings.json", "squads.json", "equipment.json"};
+    private static final String[] DATA_FILES = {"enemies.json", "encounters.json", "settings.json", "squads.json", "equipment.json", "gems.json"};
     /**
      * Версия встроенных файлов данных. Если копия в папке мода старее, она сохраняется в backup-vN/
      * и заменяется новой (иначе новые враги/настройки не появятся у тех, кто уже запускал мод).
      */
-    private static final int DATA_VERSION = 15;
+    private static final int DATA_VERSION = 16;
     private static final String STARTER_GEAR_FLAG = "starterGear";
     /** Автосохранение загруженных игроков, с. */
     private static final long AUTOSAVE_S = 60;
@@ -79,6 +79,7 @@ public final class JrpgPlugin extends JavaPlugin {
         reloadData();
         saves = new Saves(this, getDataDirectory());
         saves.loadWorld(progress);
+        smiths = new Smiths(this);
         getCommandRegistry().registerCommand(new JrpgCommand(this));
         EncounterWatcher watcher = new EncounterWatcher(this);
         scheduler.scheduleAtFixedRate(watcher::tickSafe, 2, 1, TimeUnit.SECONDS);
@@ -137,6 +138,7 @@ public final class JrpgPlugin extends JavaPlugin {
         for (BattleSession s : sessions.values()) s.abort("сервер останавливается");
         clearSquads();
         followers.clearAll();
+        if (smiths != null) smiths.despawnAll();
         for (UUID id : java.util.List.copyOf(parties.keySet())) savePlayerNow(id);
         saveWorld();
         scheduler.shutdownNow();
@@ -394,6 +396,10 @@ public final class JrpgPlugin extends JavaPlugin {
     }
 
     CompanionFollowers followers() { return followers; }
+
+    private volatile Smiths smiths;
+
+    Smiths smiths() { return smiths; }
     NpcMover mover() { return mover; }
 
     GameMenuKey menuKey() { return menuKey; }
@@ -406,7 +412,7 @@ public final class JrpgPlugin extends JavaPlugin {
 
     /** Открыть экипировку (вызывать в потоке мира). heroId — какая вкладка открыта (null — первая). */
     public void openEquipment(PlayerRef playerRef, Ref<EntityStore> ref, Store<EntityStore> store, String heroId) {
-        Pages.open(this, playerRef, ref, store, new EquipmentPage(playerRef, this, heroId));
+        Pages.open(this, playerRef, ref, store, new HeroPage(playerRef, this, heroId));
     }
 
     /** Открыть рюкзак (вызывать в потоке мира). */

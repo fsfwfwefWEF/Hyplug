@@ -27,9 +27,9 @@ import java.util.Map;
  */
 public final class BackpackPage extends InteractiveCustomUIPage<BattleMenuPage.Click> {
     public static final String LAYOUT = "JrpgBattle/Backpack.ui";
-    private static final int CELLS = 24, TABS = 5;
-    private static final String[] TAB_NAMES = {"Все", "Зелья", "Боевые", "Материалы", "Снаряжение"};
-    private static final Item.Kind[] TAB_KINDS = {null, Item.Kind.CONSUMABLE, Item.Kind.BATTLE, Item.Kind.MATERIAL, Item.Kind.GEAR};
+    private static final int CELLS = 24, TABS = 6;
+    private static final String[] TAB_NAMES = {"Все", "Зелья", "Боевые", "Материалы", "Снаряжение", "Камни"};
+    private static final Item.Kind[] TAB_KINDS = {null, Item.Kind.CONSUMABLE, Item.Kind.BATTLE, Item.Kind.MATERIAL, Item.Kind.GEAR, Item.Kind.GEM};
     private static final String[][] SORTS = {{"#SortKind", "Тип"}, {"#SortName", "Имя"}, {"#SortCount", "Кол-во"}};
 
     private final JrpgPlugin plugin;
@@ -172,6 +172,6 @@ public final class BackpackPage extends InteractiveCustomUIPage<BattleMenuPage.C
 
     /** Рамка уровня: у снаряжения — по качеству. */
     private int tier(String itemId) {
-        return content.hasGear(itemId) ? Describe.gearTier(content.gear(itemId)) : 0;
+        return HeroPage.tier(content, itemId);
     }
 }

@@ -201,9 +201,29 @@ public final class Describe {
         };
     }
 
-    /** Уровень рамки иконки вещи: 0 — обычная (без рамки), 1–3 — редкая, эпическая, легендарная. */
+    /** Рамка иконки вещи: 0 — обычная (без рамки), 1 зелёная, 2 синяя, 4 фиолетовая, 3 оранжевая (легендарная). */
     public static int gearTier(Equipment.Gear g) {
-        return g.quality().ordinal();
+        return switch (g.quality()) {
+            case COMMON -> 0;
+            case GOOD -> 1;
+            case RARE -> 2;
+            case EPIC -> 4;
+            case LEGENDARY -> 3;
+        };
+    }
+
+    /** Строки гнёзд: «◇ пусто» / «Рубин: +2 атаки, удар огнём». */
+    public static List<String> sockets(Content content, Equipment.Gear g) {
+        List<String> out = new ArrayList<>();
+        for (int i = 0; i < g.sockets(); i++) {
+            String id = g.gem(i);
+            if (id == null) out.add("Гнездо " + (i + 1) + ": пусто");
+            else {
+                Gems.Gem gem = Gems.parse(content, id);
+                out.add("Гнездо " + (i + 1) + ": " + gem.name() + " (" + Gems.text(content, gem.in(Forge.slotOf(g))) + ")");
+            }
+        }
+        return out;
     }
 
     /**
@@ -249,6 +269,7 @@ public final class Describe {
                 sb.append(content.status(g.immunities().get(i)).name());
             }
         }
+        if (g.sockets() > 0) sb.append("\n").append(String.join("\n", sockets(content, g)));
         return sb.toString();
     }
 

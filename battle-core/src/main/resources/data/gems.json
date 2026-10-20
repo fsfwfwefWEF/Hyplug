@@ -1,0 +1,28 @@
+{
+  "_about": "Драгоценные камни. tiers — уровни (value — множитель прибавок). gems — виды: что камень даёт в оружии (weapon), броне и щите (armor), аксессуаре (accessory): статы hp/mp/atk/mag/def/spd за единицу силы, element — стихия удара (если у оружия нет своей), immunity — иммунитет к статусу. loot — что падает: normal (обычные бои), elite (сильные группы ★), boss; gemChance — шанс каждого из gems камней, tiers — уровни камней, upgrade — шанс поднять качество выпавшей вещи на 1 и на 2 ступени, bonusGear — шанс лишней вещи качества bonusQuality.",
+  "tiers": [
+    { "name": "Осколок", "value": 1, "color": "#a7afbd" },
+    { "name": "Камень", "value": 2, "color": "#6fc27a" },
+    { "name": "Огранённый", "value": 3, "color": "#5b9cf0" },
+    { "name": "Безупречный", "value": 5, "color": "#f0a040" }
+  ],
+  "gems": {
+    "ruby": { "color": "#e8605a", "names": ["Осколок рубина", "Рубин", "Огранённый рубин", "Безупречный рубин"],
+      "weapon": { "atk": 2, "element": "fire" }, "armor": { "hp": 8 }, "accessory": { "hp": 3, "immunity": "burn" } },
+    "sapphire": { "color": "#5b9cf0", "names": ["Осколок сапфира", "Сапфир", "Огранённый сапфир", "Безупречный сапфир"],
+      "weapon": { "mag": 2, "element": "ice" }, "armor": { "mp": 5 }, "accessory": { "mp": 2, "immunity": "frozen" } },
+    "topaz": { "color": "#e8c547", "names": ["Осколок топаза", "Топаз", "Огранённый топаз", "Безупречный топаз"],
+      "weapon": { "spd": 1, "element": "thunder" }, "armor": { "def": 1, "spd": 1 }, "accessory": { "spd": 1, "immunity": "stun" } },
+    "emerald": { "color": "#6fc27a", "names": ["Осколок изумруда", "Изумруд", "Огранённый изумруд", "Безупречный изумруд"],
+      "weapon": { "atk": 1, "element": "poison" }, "armor": { "hp": 4, "def": 1 }, "accessory": { "hp": 3, "immunity": "poison" } },
+    "amethyst": { "color": "#b07cf0", "names": ["Осколок аметиста", "Аметист", "Огранённый аметист", "Безупречный аметист"],
+      "weapon": { "atk": 1, "mag": 1 }, "armor": { "mp": 3, "mag": 1 }, "accessory": { "mag": 1, "spd": 1 } },
+    "diamond": { "color": "#d6dbe4", "names": ["Осколок алмаза", "Алмаз", "Огранённый алмаз", "Безупречный алмаз"],
+      "weapon": { "atk": 2, "spd": 1 }, "armor": { "def": 2 }, "accessory": { "hp": 5, "def": 1 } }
+  },
+  "loot": {
+    "normal": { "gemChance": 0.05, "gems": 1, "tiers": [1], "upgrade": [0.10, 0.02] },
+    "elite": { "gemChance": 0.9, "gems": 2, "tiers": [1, 2], "upgrade": [0.35, 0.10], "bonusGear": 0.25, "bonusQuality": "rare" },
+    "boss": { "gemChance": 1.0, "gems": 2, "tiers": [2, 3], "upgrade": [0.40, 0.20], "bonusGear": 1.0, "bonusQuality": "epic" }
+  }
+}

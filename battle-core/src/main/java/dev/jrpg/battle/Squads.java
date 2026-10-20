@@ -15,7 +15,15 @@ import java.util.Random;
  */
 public final class Squads {
     public record Template(String id, String name, List<String> enemies, double weight, int exp,
-                           List<Encounter.Loot> loot) {}
+                           List<Encounter.Loot> loot, boolean elite) {}
+
+    /** Приставка к имени сильной группы: по ней бой усиливает врагов (×{@link #ELITE_BOOST}) и даёт лут «elite». */
+    public static final String ELITE_PREFIX = "Элита: ";
+    public static final double ELITE_BOOST = 1.5;
+
+    public static boolean elite(Encounter e) {
+        return e != null && e.name() != null && e.name().startsWith(ELITE_PREFIX);
+    }
 
     public record Zone(String world, double x, double z, double radius) {}
 
@@ -56,7 +64,8 @@ public final class Squads {
                         Json.num(l, "chance", 1)));
             }
             s.templates.add(new Template(Json.str(t, "id", "squad"), Json.str(t, "name", "Отряд"),
-                    Json.strings(t, "enemies"), Json.num(t, "weight", 1), (int) Json.num(t, "exp", 20), loot));
+                    Json.strings(t, "enemies"), Json.num(t, "weight", 1), (int) Json.num(t, "exp", 20), loot,
+                    Json.bool(t, "elite", false)));
         }
         return s;
     }
@@ -100,8 +109,10 @@ public final class Squads {
             double sx = (i - (n - 1) / 2.0) * 4.0;
             spots.add(new Encounter.Spot(t.enemies().get(i), sx, 10 - Math.abs(sx) * 0.15));
         }
-        return new Encounter(instanceId, t.name(), new Encounter.Location(world, x, y, z, triggerRadius),
-                false, 0, true, spots, List.of(), List.of(), null, t.loot(), t.exp());
+        String name = t.elite() ? ELITE_PREFIX + t.name() : t.name();
+        int exp = t.elite() ? (int) Math.round(t.exp() * ELITE_BOOST) : t.exp();
+        return new Encounter(instanceId, name, new Encounter.Location(world, x, y, z, triggerRadius),
+                false, 0, true, spots, List.of(), List.of(), null, t.loot(), exp);
     }
 
     /** Ловим опечатки в squads.json при загрузке. */
