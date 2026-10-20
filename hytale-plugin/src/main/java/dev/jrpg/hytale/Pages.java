@@ -68,7 +68,7 @@ final class Pages {
      */
     static void open(JrpgPlugin plugin, PlayerRef playerRef, Ref<EntityStore> ref, Store<EntityStore> store,
                      CustomUIPage page, BooleanSupplier wanted, Runnable dropped) {
-        PageManager pm = manager(store, ref);
+        PageManager pm = JrpgPageManager.install(plugin, playerRef, ref, store);
         if (pm == null || (wanted != null && !wanted.getAsBoolean())) {
             if (dropped != null) dropped.run();
             return;

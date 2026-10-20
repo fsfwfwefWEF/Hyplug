@@ -651,3 +651,10 @@ jrpg-mod/
 - Не сделано: замена PageManager для кликов без потерь (как в Replay) — среда заблокировала подмену поля Player.pageManager
   через reflection, ждёт решения пользователя; ClickBuffer остаётся. Камни в метаданных предмета (SocketReforge) не подходят:
   наши вещи виртуальные (id в карте рюкзака), не ItemStack игрока — оставлен id base@Q:gems (сохранения совместимы).
+
+## 0.16.1 (2026-10-20) — клики без потерь (приём из Replay, разрешено пользователем)
+- JrpgPageManager extends PageManager: на CustomPageEvent Data сбрасывает счётчик подтверждений (clearLegacyCustomPageAcknowledgements)
+  и передаёт нажатие дальше; на Acknowledge только сбрасывает. Ставится в поле Player.pageManager через reflection в Pages.open,
+  когда у игрока нет окна (состояние старого менеджера не переносится). Снимается при выходе игрока (onDisconnect) и выключении плагина.
+- Выключатель: settings.json → ui.fastClicks (по умолчанию true). Не встал — лог «Не удалось поставить менеджер окон…», работает ClickBuffer.
+- ClickBuffer пропускает игроков с JrpgPageManager (нажатия и так не теряются).

@@ -29,6 +29,8 @@ public final class Settings {
     public String uiTitleFont = "Secondary";
     /** Кнопки меню на своих текстурах (jr_btn*.png); false — стандартные кнопки игры. */
     public boolean uiSkinButtons = false;
+    /** Клики без потерь: свой менеджер окон игрока, сбрасывающий ожидание подтверждений на нажатие (как в Replay). */
+    public boolean uiFastClicks = true;
     public String turnRing = "", targetRing = "", hitFx = "";
     /** Частицы эффектов боя по ключам {@link ParticleCatalog#KEYWORDS}; чего нет — подбирается само. */
     public final Map<String, String> fx = new HashMap<>();
@@ -254,6 +256,7 @@ public final class Settings {
             s.uiAnimations = Json.bool(u, "animations", s.uiAnimations);
             s.uiTitleFont = Json.str(u, "titleFont", s.uiTitleFont);
             s.uiSkinButtons = Json.bool(u, "skinButtons", s.uiSkinButtons);
+            s.uiFastClicks = Json.bool(u, "fastClicks", s.uiFastClicks);
         }
         Object fx = m.get("particles");
         if (fx != null) {

@@ -50,7 +50,7 @@ final class ClickBuffer {
             if (ref == null || !ref.isValid()) return false;
             Store<EntityStore> store = ref.getStore();
             PageManager pm = Pages.manager(store, ref);
-            if (pm == null || !(pm.getCustomPage() instanceof AnimatedPage anim)) return false;
+            if (pm == null || pm instanceof JrpgPageManager || !(pm.getCustomPage() instanceof AnimatedPage anim)) return false;
             boolean all = anim.takeAllClicks();
             if (!all && !anim.animatingNow()) return false;
             var page = pm.getCustomPage();

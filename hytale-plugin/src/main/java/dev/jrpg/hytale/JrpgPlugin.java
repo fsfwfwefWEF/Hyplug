@@ -134,6 +134,7 @@ public final class JrpgPlugin extends JavaPlugin {
     protected void shutdown() {
         menuKey.stop();
         clickBuffer.stop();
+        JrpgPageManager.restoreAll();
         Cutscene.cancelAll();
         for (BattleSession s : sessions.values()) s.abort("сервер останавливается");
         clearSquads();
@@ -154,6 +155,7 @@ public final class JrpgPlugin extends JavaPlugin {
             Sequences.cancel(id);
             Cutscene.cancel(id);
             savePlayerNow(id);
+            JrpgPageManager.restore(id);
         } catch (Throwable t) {
             warn("Ошибка при выходе игрока", t);
         } finally {
