@@ -1371,6 +1371,15 @@ public final class BattleSession implements BattleListener {
 
     private static final long SINK_MS = 1500;
 
+    /** Откуда падают камни — строка журнала, когда в бою камня не выпало. */
+    private String gemHint() {
+        Map<String, dev.jrpg.battle.Gems.LootRule> r = plugin.content().gemLoot();
+        java.util.function.Function<String, String> pct = k -> r.containsKey(k)
+                ? Math.round(r.get(k).gemChance() * 100) + "%" : "—";
+        return "Камней нет. Шанс камня: с каждого врага " + pct.apply("normal") + ", с группы «Элита» " + pct.apply("elite")
+                + ", с босса " + pct.apply("boss") + ".";
+    }
+
     /** Добыча с врага (loot в enemies.json): сразу в рюкзак партии. */
     private Map<String, Integer> rollDrops(Combatant c) {
         if (c.templateId == null) return Map.of();
@@ -1464,6 +1473,9 @@ public final class BattleSession implements BattleListener {
             all.forEach((item, cnt) -> sb.append(", ").append(plugin.content().item(item).name()).append(" x").append(cnt));
             if (!all.isEmpty()) sb.append(" (всё в рюкзаке: /jrpg bag)");
             addLog(sb.toString(), LOG_LOOT);
+            boolean gem = all.keySet().stream().anyMatch(id -> id.startsWith(dev.jrpg.battle.Gems.PREFIX));
+            plugin.log("Лут боя " + encounter.id() + " (правило камней " + rule + "): " + all);
+            if (!gem) addLog(gemHint(), LOG_LOOT);
             say(sb.toString());
             Progression.Party party = plugin.partyOf(player.getUuid());
             List<int[]> before = new java.util.ArrayList<>();

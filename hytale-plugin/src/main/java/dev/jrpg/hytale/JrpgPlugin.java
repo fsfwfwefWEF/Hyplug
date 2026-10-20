@@ -35,7 +35,7 @@ public final class JrpgPlugin extends JavaPlugin {
      * Версия встроенных файлов данных. Если копия в папке мода старее, она сохраняется в backup-vN/
      * и заменяется новой (иначе новые враги/настройки не появятся у тех, кто уже запускал мод).
      */
-    private static final int DATA_VERSION = 16;
+    private static final int DATA_VERSION = 17;
     private static final String STARTER_GEAR_FLAG = "starterGear";
     /** Автосохранение загруженных игроков, с. */
     private static final long AUTOSAVE_S = 60;
@@ -262,6 +262,20 @@ public final class JrpgPlugin extends JavaPlugin {
     public boolean flag(UUID player, String key, boolean def) {
         load(player);
         return flags.get(player).get(key) instanceof Boolean b ? b : def;
+    }
+
+    /** Свой порядок вещей в рюкзаке (перетаскиванием в меню героя): id по порядку; пусто — по видам. */
+    public java.util.List<String> bagOrder(UUID player) {
+        load(player);
+        java.util.List<String> out = new java.util.ArrayList<>();
+        if (flags.get(player).get("bagOrder") instanceof java.util.List<?> l) for (Object o : l) if (o != null) out.add(String.valueOf(o));
+        return out;
+    }
+
+    public void setBagOrder(UUID player, java.util.List<String> order) {
+        load(player);
+        flags.get(player).put("bagOrder", new java.util.ArrayList<>(order));
+        savePlayer(player);
     }
 
     public void setFlag(UUID player, String key, boolean value) {

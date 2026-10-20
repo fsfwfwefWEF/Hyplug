@@ -21,7 +21,7 @@
       "weapon": { "atk": 2, "spd": 1 }, "armor": { "def": 2 }, "accessory": { "hp": 5, "def": 1 } }
   },
   "loot": {
-    "normal": { "gemChance": 0.05, "gems": 1, "tiers": [1], "upgrade": [0.10, 0.02] },
+    "normal": { "gemChance": 0.15, "gems": 1, "tiers": [1], "upgrade": [0.10, 0.02] },
     "elite": { "gemChance": 0.9, "gems": 2, "tiers": [1, 2], "upgrade": [0.35, 0.10], "bonusGear": 0.25, "bonusQuality": "rare" },
     "boss": { "gemChance": 1.0, "gems": 2, "tiers": [2, 3], "upgrade": [0.40, 0.20], "bonusGear": 1.0, "bonusQuality": "epic" }
   }

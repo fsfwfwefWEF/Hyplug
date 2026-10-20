@@ -185,12 +185,14 @@ public final class HeroPage extends InteractiveCustomUIPage<BattleMenuPage.Click
         if (srcGrid.equals("BagGrid")) {
             String id = bagIds[src];
             if (grid.equals("BagGrid")) {
-                // камень на вещь в рюкзаке — вставить
                 String to = target >= 0 && target < CELLS ? bagIds[target] : null;
-                if (isGem(id) && to != null && content.hasGear(to)) {
+                if (isGem(id) && to != null && content.hasGear(to) && content.gear(to).freeSocket() >= 0) {
+                    // камень на вещь со свободным гнездом — вставить
                     Forge.Result r = Forge.insert(content, inventory, Forge.Place.bag(to), id, -1);
                     message = r.error() != null ? "Нельзя: " + r.error() : r.message();
                     if (r.error() == null) saved();
+                } else if (id != null && !id.equals(to)) {
+                    reorder(id, to);
                 }
                 return;
             }
@@ -217,6 +219,30 @@ public final class HeroPage extends InteractiveCustomUIPage<BattleMenuPage.Click
             message = "Аксессуары поменялись местами.";
             saved();
         }
+    }
+
+    /** Рюкзак в своём порядке игрока (перетаскивание внутри рюкзака): сначала вещи из порядка, остальные — по видам. */
+    private List<Backpack.Entry> ordered(List<Backpack.Entry> all) {
+        List<String> order = plugin.bagOrder(playerRef.getUuid());
+        if (order.isEmpty()) return all;
+        Map<String, Integer> pos = new java.util.HashMap<>();
+        for (int i = 0; i < order.size(); i++) pos.putIfAbsent(order.get(i), i);
+        List<Backpack.Entry> out = new ArrayList<>(all);
+        out.sort(java.util.Comparator.comparingInt(e -> pos.getOrDefault(e.item().id(), Integer.MAX_VALUE)));
+        return out;
+    }
+
+    /** Переставить вещь moved на место вещи target (null — в конец). */
+    private void reorder(String moved, String target) {
+        List<String> ids = new ArrayList<>();
+        for (Backpack.Entry e : ordered(Backpack.list(content, inventory, null, Backpack.Sort.KIND))) ids.add(e.item().id());
+        int from = ids.indexOf(moved), to = target == null ? -1 : ids.indexOf(target);
+        if (from < 0) return;
+        ids.remove(from);
+        if (to < 0) ids.add(moved);
+        else ids.add(to, moved); // после удаления индекс цели сдвинулся — вещь встаёт ровно на её место
+        plugin.setBagOrder(playerRef.getUuid(), ids);
+        message = "Порядок в рюкзаке сохранён.";
     }
 
     private boolean holds(Progression.Hero h, String grid, int i, String itemStackId) {
@@ -468,7 +494,7 @@ public final class HeroPage extends InteractiveCustomUIPage<BattleMenuPage.Click
         }
 
         // Рюкзак
-        List<Backpack.Entry> all = Backpack.list(content, inventory, null, Backpack.Sort.KIND);
+        List<Backpack.Entry> all = ordered(Backpack.list(content, inventory, null, Backpack.Sort.KIND));
         List<Backpack.Entry> list = new ArrayList<>();
         for (Backpack.Entry e : all) if (inTab(e.item())) list.add(e);
         shown = list;

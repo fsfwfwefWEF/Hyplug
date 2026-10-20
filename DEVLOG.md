@@ -658,3 +658,15 @@ jrpg-mod/
   когда у игрока нет окна (состояние старого менеджера не переносится). Снимается при выходе игрока (onDisconnect) и выключении плагина.
 - Выключатель: settings.json → ui.fastClicks (по умолчанию true). Не встал — лог «Не удалось поставить менеджер окон…», работает ClickBuffer.
 - ClickBuffer пропускает игроков с JrpgPageManager (нажатия и так не теряются).
+
+## 0.16.2 (2026-10-20) — правки по проверке 0.16.1
+- Прозрачность героя в начале навыка: шаг glow сцены брал ванильный EntityEffect с подсветкой ближайшего цвета, а среди них есть
+  эффекты исчезновения (Cinematic_Dissolve_In, Explosive_Barrel_Vanish_Effect: ModelVFX.switchTo = Disappear/Transparency).
+  SkillSequence.Glow теперь берёт только switchTo == null/PostColor и отбрасывает имена dissolve/vanish/spectator/preview/transition/carry/invis.
+- Камни: обычный бой — 15% на камень с каждого врага (было 5%), DATA_VERSION 17 (gems.json обновится). Если камня не выпало,
+  в журнале строка «Камней нет. Шанс камня: с каждого врага …, с группы «Элита» …, с босса …». В лог сервера — «Лут боя <id> …».
+- Рюкзак/кукла/кузница в режиме перетаскивания показывают наши иконки: ItemGridSlot.setOverlay(Value.ref("JrpgBattle/Icons/Tiles.ui",
+  "T<Ключ><уровень>")) — непрозрачная плитка (ячейка + иконка + рамка уровня) поверх предмета игры (приём CustomInventory: Value.ref на
+  именованный PatchStyle). Плитки: tools/gen_slot_tiles.py → Icons/tiles/*.png (72px, 96 цветов) + Icons/Tiles.ui.
+- Свой порядок рюкзака: вещь перетаскивается на другую ячейку рюкзака — встаёт на её место (камень на вещь со свободным гнездом —
+  по-прежнему вставка). Порядок — flag bagOrder в сохранении игрока (JrpgPlugin.bagOrder/setBagOrder), HeroPage.ordered/reorder.

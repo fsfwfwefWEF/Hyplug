@@ -3,6 +3,8 @@ package dev.jrpg.hytale;
 import com.hypixel.hytale.server.core.asset.type.item.config.Item;
 import com.hypixel.hytale.server.core.inventory.ItemStack;
 import com.hypixel.hytale.server.core.ui.ItemGridSlot;
+import com.hypixel.hytale.server.core.ui.Value;
+import dev.jrpg.battle.Describe;
 import dev.jrpg.battle.Content;
 import dev.jrpg.battle.Equipment;
 import dev.jrpg.battle.Gems;
@@ -30,10 +32,31 @@ final class DragItems {
         ItemGridSlot s = hy == null ? new ItemGridSlot() : new ItemGridSlot(new ItemStack(hy, Math.max(1, count)));
         dev.jrpg.battle.Item it = content.item(id);
         s.setName(it.name());
-        String desc = content.hasGear(id) ? dev.jrpg.battle.Describe.gear(content, content.gear(id)) : it.description();
+        String desc = content.hasGear(id) ? Describe.gear(content, content.gear(id)) : it.description();
         s.setDescription(desc == null ? "" : desc);
         s.setActivatable(true);
+        s.setSkipItemQualityBackground(true);
+        String tile = tile(BattleMenuPage.iconKey(Describe.itemIcon(content, it)), HeroPage.tier(content, id));
+        if (tile != null) s.setOverlay(Value.ref(TILES, tile)); // наша иконка поверх предмета игры
         return s;
+    }
+
+    static final String TILES = "JrpgBattle/Icons/Tiles.ui";
+    private static final Map<String, Boolean> tileExists = new ConcurrentHashMap<>();
+
+    /** Имя стиля плитки из Icons/Tiles.ui (tools/gen_slot_tiles.py) или null, если плитки нет. */
+    static String tile(String key, int tier) {
+        if (key == null || key.isEmpty()) return null;
+        int t = Math.max(0, Math.min(4, tier));
+        boolean ok = tileExists.computeIfAbsent(key, k ->
+                DragItems.class.getResource("/Common/UI/Custom/JrpgBattle/Icons/tiles/" + k + "_0.png") != null);
+        if (!ok) return null;
+        StringBuilder sb = new StringBuilder("T");
+        for (String p : key.replace('-', '_').split("_")) {
+            if (p.isEmpty()) continue;
+            sb.append(Character.toUpperCase(p.charAt(0))).append(p.substring(1));
+        }
+        return sb.append(t).toString();
     }
 
     /** Предмет Hytale для нашей вещи (id предмета игры) или null. */

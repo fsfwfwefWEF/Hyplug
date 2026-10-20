@@ -948,6 +948,12 @@ final class SkillSequence {
                     if (vfx == null || vfx.isBlank()) continue;
                     ModelVFX mv = ModelVFX.getAssetMap().getAssetMap().get(vfx);
                     if (mv == null || mv.getHighlightColor() == null) continue;
+                    // только подсветка/оттенок: Disappear/Transparency/Distortion делают модель прозрачной (герой «исчезал»)
+                    var sw = mv.getSwitchTo();
+                    if (sw != null && sw != com.hypixel.hytale.protocol.SwitchTo.PostColor) continue;
+                    String low = e.getKey().toLowerCase(java.util.Locale.ROOT);
+                    if (low.contains("dissolve") || low.contains("vanish") || low.contains("spectator") || low.contains("preview")
+                            || low.contains("transition") || low.contains("carry") || low.contains("invis")) continue;
                     Color c = mv.getHighlightColor();
                     out.add(new Option(e.getKey(), ef, ((c.red & 255) << 16) | ((c.green & 255) << 8) | (c.blue & 255), clean));
                 }
