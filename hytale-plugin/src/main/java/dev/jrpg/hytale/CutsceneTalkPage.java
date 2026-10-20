@@ -79,4 +79,13 @@ final class CutsceneTalkPage extends InteractiveCustomUIPage<BattleMenuPage.Clic
     public boolean animatingNow() {
         return System.currentTimeMillis() - openedAt > 250;
     }
+
+    /**
+     * В 0.13.1 клики терялись: кадры (печать, мигающая стрелка) шли без перерыва, сервер всё время ждал ответа
+     * клиента и выбрасывал нажатия, а обход срабатывал не всегда. Теперь все нажатия этого окна — напрямую.
+     */
+    @Override
+    public boolean takeAllClicks() {
+        return System.currentTimeMillis() - openedAt > 150;
+    }
 }

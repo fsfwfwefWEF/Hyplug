@@ -47,6 +47,14 @@ public final class Settings {
         public boolean bubbles = true;
     }
 
+    /** Сцены навыков в бою (sequences.json): включены, у врагов тоже, замедление (1 — как есть). */
+    public static final class SkillScenes {
+        public boolean enabled = true, enemies = false;
+        public double slow = 1;
+    }
+
+    public final SkillScenes skillScenes = new SkillScenes();
+
     /** Парирование и уклонение: окна в мс относительно момента удара врага. */
     public static final class Reactions {
         /** Не используется: реакции выключены в BattleSession. */
@@ -193,6 +201,13 @@ public final class Settings {
             s.speech.volume = (float) Json.num(v, "volume", s.speech.volume);
             s.speech.soundEvery = (int) Math.max(0, Json.num(v, "soundEvery", s.speech.soundEvery));
             s.speech.bubbles = Json.bool(v, "bubbles", s.speech.bubbles);
+        }
+        Object sk = m.get("skillScenes");
+        if (sk != null) {
+            Map<String, Object> v = Json.obj(sk);
+            s.skillScenes.enabled = Json.bool(v, "enabled", s.skillScenes.enabled);
+            s.skillScenes.enemies = Json.bool(v, "enemies", s.skillScenes.enemies);
+            s.skillScenes.slow = Math.max(1, Json.num(v, "slow", s.skillScenes.slow));
         }
         Object cam = m.get("camera");
         if (cam != null) {

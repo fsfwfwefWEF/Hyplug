@@ -42,7 +42,10 @@ final class CutsceneHud extends CustomUIHud {
     private double bars, fade;
     private long lastFrame;
     private int sentBars = -1, sentFade = -1, sentTitleTop = -1, sentChoices = -1, sentSel = -1;
-    private Boolean sentFlash, sentTitle, sentSub, sentDlg, sentNext;
+    private Boolean sentFlash, sentTitle, sentSub, sentDlg, sentNext, sentTap;
+    /** Кадры в окно реплики не чаще раза в PAGE_FRAME_MS: каждый кадр окна сервер ждёт подтверждения. */
+    private static final long PAGE_FRAME_MS = 120;
+    private long lastPageFrame;
     private String sentTitleText, sentSubText, sentDlgName, sentDlgText, sentHint;
     private final String[] sentChoice = new String[CHOICES];
 
@@ -74,7 +77,7 @@ final class CutsceneHud extends CustomUIHud {
 
     private void resetSent() {
         sentBars = sentFade = sentTitleTop = sentChoices = sentSel = -1;
-        sentFlash = sentTitle = sentSub = sentDlg = sentNext = null;
+        sentFlash = sentTitle = sentSub = sentDlg = sentNext = sentTap = null;
         sentTitleText = sentSubText = sentDlgName = sentDlgText = sentHint = null;
         java.util.Arrays.fill(sentChoice, null);
     }
@@ -90,8 +93,10 @@ final class CutsceneHud extends CustomUIHud {
             sentToPage = toPage;
             resetSent();
         }
+        if (toPage && now - lastPageFrame < PAGE_FRAME_MS) return;
         UICommandBuilder cmd = new UICommandBuilder();
         if (render(cmd, now)) {
+            if (toPage) lastPageFrame = now;
             try {
                 if (toPage) Pages.update(page, pr, cmd);
                 else update(false, cmd);
@@ -225,6 +230,8 @@ final class CutsceneHud extends CustomUIHud {
                 String c = choices.get(i);
                 if (!c.equals(sentChoice[i])) {
                     cmd.set("#Ch" + i + "Text.Text", c);
+                    // В окне реплики ответы — видимые кнопки (подсветка при наведении), текст на самой кнопке.
+                    if (sentToPage) cmd.set("#ChBtn" + i + ".Text", (i + 1) + ".  " + c);
                     sentChoice[i] = c;
                     changed = true;
                 }
@@ -238,8 +245,16 @@ final class CutsceneHud extends CustomUIHud {
                 sentSel = selected;
                 changed = true;
             }
-            // Мигающая стрелка «дальше», когда текст допечатан и выбора нет.
-            boolean next = nextMark && nc == 0 && (now / 450) % 2 == 0;
+            // На выборе «клик в любом месте» убирается: клик должен попасть в ответ, а не в «дальше».
+            if (sentToPage && !Objects.equals(sentTap, nc == 0)) {
+                cmd.set("#Tap.Visible", nc == 0);
+                cmd.set("#TapBox.Visible", nc == 0);
+                sentTap = nc == 0;
+                changed = true;
+            }
+            // Стрелка «дальше», когда текст допечатан и выбора нет: в HUD мигает, в окне стоит (каждый кадр окна
+            // сервер ждёт подтверждения — мигание держало бы его в ожидании всю реплику).
+            boolean next = nextMark && nc == 0 && (sentToPage || (now / 450) % 2 == 0);
             if (!Objects.equals(sentNext, next)) {
                 cmd.set("#DlgNextBox.Visible", next);
                 sentNext = next;

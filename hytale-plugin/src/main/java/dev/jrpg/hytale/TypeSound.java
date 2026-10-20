@@ -21,6 +21,8 @@ final class TypeSound {
     private static final List<String> BAD = List.of("music", "ambient", "amb_", "loop", "explosion", "death", "_vo_",
             "voice", "craft", "error", "deny", "fail", "build", "emit", "fluid", "flamethrower", "hurt", "run",
             "pursuit", "alerted", "bubbling");
+    /** Пользователь просил громче (проверка 0.13.1): вдвое громче и в категории звуков, а не интерфейса. */
+    private static final float LOUDER = 2.0f;
     private static volatile String picked;
     private static volatile boolean resolved;
 
@@ -30,7 +32,7 @@ final class TypeSound {
         String id = resolve(configured);
         if (id == null || player == null) return;
         try {
-            SoundUtil.playSoundEvent2dToPlayer(player, SoundEvent.getAssetMap().getIndex(id), SoundCategory.UI, volume, 1.0f);
+            SoundUtil.playSoundEvent2dToPlayer(player, SoundEvent.getAssetMap().getIndex(id), SoundCategory.SFX, volume * LOUDER, 1.0f);
         } catch (Throwable t) {
             Fx.warnOnce("Звук печати реплик не играет (" + id + ")", t);
         }

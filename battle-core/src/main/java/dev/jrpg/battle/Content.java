@@ -82,6 +82,8 @@ public final class Content {
 
     public StatusDef status(String id) { return require(statuses, id, "статус"); }
     public Ability ability(String id) { return require(abilities, id, "способность"); }
+
+    public boolean hasAbility(String id) { return id != null && abilities.containsKey(id); }
     public Item item(String id) { return require(items, id, "предмет"); }
     public boolean hasItem(String id) { return items.containsKey(id); }
     public java.util.Collection<Item> items() { return items.values(); }

@@ -1127,7 +1127,7 @@ def admin():
 def cutscene_talk():
     """CutsceneTalk.ui — окно реплики катсцены (CutsceneTalkPage): копия Cutscene.ui (HUD, написан вручную)
     с невидимыми кнопками: #Tap на весь экран под окном реплики, #TapBox под текстом реплики, #ChBtn<i> поверх
-    строк ответов. Кнопки окна доходят до сервера всегда (клики мира в катсцене в 0.13.0 не дошли)."""
+    строк ответов (с 0.13.2 — видимые $C.@SecondaryTextButton). Кнопки окна доходят до сервера всегда (клики мира в катсцене в 0.13.0 не дошли)."""
     with open(os.path.join(OUT_DIR, "Cutscene.ui"), encoding="utf-8") as f:
         src = f.read()
     marker = "  Group #DlgRow {"
@@ -1140,7 +1140,9 @@ def cutscene_talk():
         line = f"        Label #Ch{i}Text {{"
         start = src.index(line)
         end = src.index("\n", start)
-        src = src[:end + 1] + f"        Button #ChBtn{i} {{ Anchor: (Left: 0, Top: 0, Width: 640, Height: 30); }}\n" + src[end + 1:]
+        # Видимая кнопка ответа поверх строки (родная подсветка при наведении); текст ставит CutsceneHud.
+        src = src[:end + 1] + (f"        $C.@SecondaryTextButton #ChBtn{i} {{ @Text = \"\"; "
+                               f"Anchor: (Left: 0, Top: 0, Width: 640, Height: 30); }}\n") + src[end + 1:]
     head = ("// Окно реплики катсцены (CutsceneTalkPage). Собрано tools/gen_battle_ui.py из Cutscene.ui:\n"
             "// правь Cutscene.ui и запусти скрипт.\n")
     first, rest = src.split("\n", 1)

@@ -623,6 +623,10 @@ final class Cutscene implements SkillSequence.Ext {
     }
 
     private void handle(Input in, double now) {
+        if (in.key() != Key.WHEEL) {
+            plugin.log("Катсцена " + def.id() + ": ввод " + in.key() + (in.key() == Key.PICK ? " " + (in.arg() + 1) : "")
+                    + (!dialog ? " (реплики нет)" : typing ? " (печать)" : choosing ? " (выбор)" : " (реплика)"));
+        }
         switch (in.key()) {
             case NEXT -> {
                 clicks++;

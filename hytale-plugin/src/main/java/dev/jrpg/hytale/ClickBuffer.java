@@ -50,15 +50,19 @@ final class ClickBuffer {
             if (ref == null || !ref.isValid()) return false;
             Store<EntityStore> store = ref.getStore();
             PageManager pm = Pages.manager(store, ref);
-            if (pm == null || !(pm.getCustomPage() instanceof AnimatedPage anim) || !anim.animatingNow()) return false;
+            if (pm == null || !(pm.getCustomPage() instanceof AnimatedPage anim)) return false;
+            boolean all = anim.takeAllClicks();
+            if (!all && !anim.animatingNow()) return false;
             var page = pm.getCustomPage();
-            if (Pages.pendingAcks(pm) <= 0) return false;
+            if (!all && Pages.pendingAcks(pm) <= 0) return false;
             String data = e.data;
             store.getExternalData().getWorld().execute(() -> {
                 if (!ref.isValid()) return;
                 PageManager now = Pages.manager(store, ref);
                 if (now == null || now.getCustomPage() != page) return;
-                if (!logged) {
+                if (all) {
+                    plugin.log("Клик окна реплики: " + data + " (ждёт ответа клиента: " + Pages.pendingAcks(now) + ")");
+                } else if (!logged) {
                     logged = true;
                     plugin.log("Клик во время анимации окна передан окну напрямую (иначе сервер бы его выбросил)");
                 }

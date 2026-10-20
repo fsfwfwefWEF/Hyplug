@@ -585,3 +585,14 @@ jrpg-mod/
 - Печать реже: обновлять окно кусками (~раз в 100–150 мс), а не каждую букву.
 - На выборе прятать #Tap/#TapBox (.Visible=false), ответы сделать видимыми кнопками ($C TextButton с наведением), чтобы клик попадал именно в ответ; выделение — наведением мыши.
 - Пожелание: звук печати реплик громче — speech.volume 1.0 → ~2.0 по умолчанию, категория SFX вместо UI (или настройка speech.category).
+
+## 0.14.0 (2026-10-20) — сцены навыков в бою, клики в катсценах
+- Бой: `BattleSession.present` сначала пробует `playSequence` — навык играется сценой SkillSequence (камера, замах, свечение, частицы, подход, удар, фигуры Vfx). Шаг `hit` сцены = `showHits` (вынесено из present: цифры, реакция целей, падение, контратака); второй и следующие hit — цели только вздрагивают. Конец сцены — следующий ход. Нет hit в сцене — итог показывается в конце. Бой кончился — `playing.cancel()` в cleanup.
+- Без сцены (как раньше): Атака, Защита, предметы, окно ответа (windup), игрок без двойника, враги (settings.json → skillScenes.enemies=false).
+- `Sequences.forAbility`: своя сцена (ключ = id навыка) → иначе шаблон из `_templates` (выбор в `_skills` или `autoTemplate`: melee, melee_all, stomp, bolt, magic_all, heal, heal_all, buff_self, buff_one, buff_all). Параметры `{color} {charge} {release} {strike} {aura} {fx} {vfx} {lead}`: `_defaults` → авто (цвет по стихии/фигуре, fx = @стихия|@heal|@buff, vfx = Vfx.kindFor, lead = Vfx.leadMs) → `_skills`. Пустой параметр убирает действие. Файл кэшируется по времени изменения.
+- SkillSequence: anim `model:attack|cast|hurt|victory` — общие имена модели из settings.json (для кукол без оружия).
+- sequences.json `_version` 3. Админ-меню «Сцены навыков» = `Sequences.skillScenes` (свои + _skills + все навыки героев); `/jrpg seq <id навыка>` играет и шаблонные.
+- settings.json: `"skillScenes": { "enabled", "enemies", "slow" }` (Settings.SkillScenes).
+- Катсцены (по разбору 0.13.1): `AnimatedPage.takeAllClicks` — ClickBuffer передаёт окну реплики все нажатия напрямую (лог «Клик окна реплики»), Cutscene пишет каждый ввод (лог «ввод NEXT/PICK … (печать/выбор/реплика)»); кадры в окно не чаще 120 мс; стрелка «дальше» в окне не мигает; на выборе #Tap/#TapBox прячутся; #ChBtn0..3 — видимые $C.@SecondaryTextButton, текст «N.  ответ» ставит CutsceneHud (только в окне).
+- TypeSound: категория SFX, громкость × 2.
+- Сервер стартует (462 SEVERE, 29 Exception, как в 0.13.1). В игре не проверено.

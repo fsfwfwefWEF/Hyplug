@@ -184,8 +184,9 @@ public final class AdminPage extends InteractiveCustomUIPage<BattleMenuPage.Clic
                 }
             }
             case 1 -> {
-                for (String id : Sequences.load(plugin).keySet()) {
-                    out.add(new Row(id, "Медленно", "Перед тобой: кастующий и три мишени.",
+                for (Map.Entry<String, String> sc : Sequences.skillScenes(plugin).entrySet()) {
+                    String id = sc.getKey();
+                    out.add(new Row(cut(sc.getValue(), 26), "Медленно", "Перед тобой: кастующий и три мишени (" + id + ").",
                             (r, s) -> command("jrpg seq " + id, true), (r, s) -> command("jrpg seq " + id + ":slow", true)));
                 }
             }

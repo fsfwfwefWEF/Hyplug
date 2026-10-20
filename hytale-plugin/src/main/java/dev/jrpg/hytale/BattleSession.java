@@ -830,6 +830,10 @@ public final class BattleSession implements BattleListener {
 
         Ability ab = abilityOf(r);
         boolean item = r.sequenceId() != null && r.sequenceId().startsWith("item");
+        if (w == null && !item && playSequence(r, actor, ab, actorRef, home, firstTarget)) {
+            refresh();
+            return;
+        }
         Vector3d strikeAt = null;
         long hitAt;
         if (w != null) {
@@ -875,39 +879,7 @@ public final class BattleSession implements BattleListener {
                 }
             });
         }
-        Battle.Reaction reaction = r.reaction();
-        later(hitAt, () -> {
-            for (ActionResult.Hit h : r.hits()) {
-                Vector3d pos = homes.get(h.target().id);
-                Ref<EntityStore> tRef = puppets.get(h.target().id);
-                boolean answeredHit = reaction != Battle.Reaction.NONE && h.target().side == Side.PARTY;
-                boolean thorns = h.combos().contains(Battle.THORNS_NOTE);
-                if (lead == 0 && !vfx.isEmpty() && !thorns && pos != null) {
-                    boolean aoe = ab != null && (ab.target() == TargetType.ALL_ENEMIES || ab.target() == TargetType.ALL_ALLIES);
-                    Vfx.play(plugin, world, vfx, home, pos, aoe || h.crit());
-                }
-                if (h.damage() > 0) Fx.particleAt(impactFx, pos, 1.0, playerEntity, store);
-                else if (h.heal() > 0 || h.mpRestore() > 0) Fx.particleAt(ParticleCatalog.get("heal"), pos, 0.4, playerEntity, store);
-                else if (!h.statusesApplied().isEmpty() && h.target().side == actor.side) {
-                    Fx.particleAt(ParticleCatalog.get("buff"), pos, 0.4, playerEntity, store);
-                }
-                if (h.killed()) {
-                    fallen(h.target(), true);
-                    bark(h.target(), "death", true);
-                } else if (answeredHit) {
-                    showReaction(reaction, h.target(), tRef, pos);
-                } else if (h.statusesApplied().contains(STUN) && tRef != null && h.target().isAlive()) {
-                    knockDown(h.target(), tRef);
-                } else if (h.damage() > 0 && tRef != null && h.target() != actor) {
-                    animateAs(h.target(), tRef, "hurt");
-                    later(450, () -> bark(h.target(), "hurt", false));
-                    if (pos != null && from != null) knockback(h.target(), tRef, pos, from);
-                }
-                if (!(answeredHit && reaction == Battle.Reaction.PARRY)) popHit(h, 0);
-            }
-            if (r.counter() != null) counterAttack(r, actorRef, home);
-            if (r.fleeAttempt()) pop(actor, 0, r.fled() ? "Сбежали!" : "Не вышло", STATUS);
-        });
+        later(hitAt, () -> showHits(r, actor, ab, lead == 0 ? vfx : "", impactFx, true, from, actorRef, home));
         refresh();
         Vector3d back = strikeAt;
         long returnAt = Math.max(plugin.settings().ms(plugin.settings().actionDelayMs), hitAt + 900);
@@ -927,6 +899,123 @@ public final class BattleSession implements BattleListener {
                 refresh();
             });
         });
+    }
+
+    /**
+     * Попадание: эффекты, цифры, реакция целей (вздрогнуть, упасть, отлететь), контратака, итог бегства.
+     * vfx — фигура эффекта в момент удара ("" — нет или уже летит), particles — частицы попадания
+     * (сцена навыка ставит свои).
+     */
+    private void showHits(ActionResult r, Combatant actor, Ability ab, String vfx, String impactFx, boolean particles,
+                          Vector3d from, Ref<EntityStore> actorRef, Vector3d home) {
+        Battle.Reaction reaction = r.reaction();
+        for (ActionResult.Hit h : r.hits()) {
+            Vector3d pos = homes.get(h.target().id);
+            Ref<EntityStore> tRef = puppets.get(h.target().id);
+            boolean answeredHit = reaction != Battle.Reaction.NONE && h.target().side == Side.PARTY;
+            boolean thorns = h.combos().contains(Battle.THORNS_NOTE);
+            if (!vfx.isEmpty() && !thorns && pos != null) {
+                boolean aoe = ab != null && (ab.target() == TargetType.ALL_ENEMIES || ab.target() == TargetType.ALL_ALLIES);
+                Vfx.play(plugin, world, vfx, home, pos, aoe || h.crit());
+            }
+            if (particles) {
+                if (h.damage() > 0) Fx.particleAt(impactFx, pos, 1.0, playerEntity, store);
+                else if (h.heal() > 0 || h.mpRestore() > 0) Fx.particleAt(ParticleCatalog.get("heal"), pos, 0.4, playerEntity, store);
+                else if (!h.statusesApplied().isEmpty() && h.target().side == actor.side) {
+                    Fx.particleAt(ParticleCatalog.get("buff"), pos, 0.4, playerEntity, store);
+                }
+            }
+            if (h.killed()) {
+                fallen(h.target(), true);
+                bark(h.target(), "death", true);
+            } else if (answeredHit) {
+                showReaction(reaction, h.target(), tRef, pos);
+            } else if (h.statusesApplied().contains(STUN) && tRef != null && h.target().isAlive()) {
+                knockDown(h.target(), tRef);
+            } else if (h.damage() > 0 && tRef != null && h.target() != actor) {
+                animateAs(h.target(), tRef, "hurt");
+                later(450, () -> bark(h.target(), "hurt", false));
+                if (pos != null && from != null) knockback(h.target(), tRef, pos, from);
+            }
+            if (!(answeredHit && reaction == Battle.Reaction.PARRY)) popHit(h, 0);
+        }
+        if (r.counter() != null) counterAttack(r, actorRef, home);
+        if (r.fleeAttempt()) pop(actor, 0, r.fled() ? "Сбежали!" : "Не вышло", STATUS);
+    }
+
+    /** Сцена навыка, которая сейчас играет (бой кончился — обрывается). */
+    private SkillSequence playing;
+
+    /**
+     * Навык сценой (Sequences: своя сцена из sequences.json или шаблон): камера, замах, свечение, частицы,
+     * подход, удар, фигуры эффекта. Шаг hit сцены показывает итог хода (цифры, реакция целей), конец сцены —
+     * следующий ход. false — сцены нет (обычная атака, защита, предмет, выключено в settings.json), играть как раньше.
+     */
+    private boolean playSequence(ActionResult r, Combatant actor, Ability ab, Ref<EntityStore> actorRef, Vector3d home,
+                                 Combatant firstTarget) {
+        Settings.SkillScenes cfg = plugin.settings().skillScenes;
+        if (!cfg.enabled || ab == null || actorRef == null || home == null || !actorRef.isValid()) return false;
+        if (actor.side == Side.ENEMY && !cfg.enemies) return false;
+        // Игрок без двойника (кукла не появилась) — его не водит NpcMover: как раньше.
+        if (actorRef == playerEntity) return false;
+        String element = battle.content().element(ab);
+        boolean melee = isMelee(actor, ab, firstTarget, false);
+        String vfx = plugin.settings().vfxShapes ? Vfx.kindFor(ab, element, melee) : "";
+        List<Map<String, Object>> steps = Sequences.forAbility(plugin, ab, element, vfx, Vfx.leadMs(vfx));
+        if (steps == null || steps.isEmpty()) return false;
+
+        List<Ref<EntityStore>> targets = new java.util.ArrayList<>();
+        for (ActionResult.Hit h : r.hits()) {
+            Ref<EntityStore> t = puppets.get(h.target().id);
+            if (t == null && "hero".equals(h.target().id)) t = playerEntity;
+            if (t != null && t.isValid() && !targets.contains(t)) targets.add(t);
+        }
+        if (targets.isEmpty()) targets.add(actorRef);
+        Ref<EntityStore> main = firstTarget == null ? targets.get(0) : puppets.getOrDefault(firstTarget.id, targets.get(0));
+        java.util.concurrent.atomic.AtomicBoolean hitShown = new java.util.concurrent.atomic.AtomicBoolean();
+        Runnable showOnce = () -> {
+            if (!hitShown.getAndSet(true)) showHits(r, actor, ab, "", "", false, Fx.position(store, actorRef), actorRef, home);
+        };
+        SkillSequence seq = new SkillSequence(plugin, ab.id(), steps, player, playerEntity, store, world, camera,
+                new SkillSequence.Cast(actorRef, main, List.copyOf(targets), home, yawOf(actor), ownAnims(actor, "weapon")),
+                cfg.slow, new SkillSequence.Hooks() {
+                    @Override
+                    public void hit(List<Ref<EntityStore>> on) {
+                        if (closed) return;
+                        if (!hitShown.get()) {
+                            showOnce.run();
+                            return;
+                        }
+                        // Второй и дальше удары сцены (серия): цели только вздрагивают.
+                        for (ActionResult.Hit h : r.hits()) {
+                            Ref<EntityStore> t = puppets.get(h.target().id);
+                            if (t != null && on.contains(t) && h.target().isAlive() && h.damage() > 0) animateAs(h.target(), t, "hurt");
+                        }
+                    }
+
+                    @Override
+                    public void done(SkillSequence q) {
+                        later(0, () -> {
+                            if (playing == q) playing = null;
+                            showOnce.run(); // в сцене не было шага hit — итог всё равно показать
+                            if (actor.isAlive() && !downed.contains(actor.id)) {
+                                Fx.stopAnimation(store, actorRef, com.hypixel.hytale.protocol.AnimationSlot.Action);
+                            }
+                            banner = "";
+                            bannerSub = "";
+                            later(Math.max(0, plugin.settings().ms(plugin.settings().actionDelayMs) - 1500), () -> {
+                                presenting = false;
+                                runAfterPresent();
+                                if (battle.phase() == Battle.Phase.PRESENTING) battle.acknowledge();
+                                refresh();
+                            });
+                        });
+                    }
+                });
+        if (actor.side == Side.PARTY) bark(actor, isBasicAttack(actor, ab) ? "attack" : "skill", false);
+        playing = seq;
+        seq.start(0);
+        return true;
     }
 
     private static boolean isMelee(Combatant actor, Ability ab, Combatant firstTarget, boolean item) {
@@ -1567,6 +1656,9 @@ public final class BattleSession implements BattleListener {
     /** closeMenu = false — меню сейчас заменит другое окно, закрывать его отдельно не надо. */
     private void cleanup(boolean closeMenu) {
         closed = true;
+        SkillSequence seq = playing;
+        playing = null;
+        if (seq != null) seq.cancel();
         plugin.sessions().remove(player.getUuid(), this);
         plugin.markBattleEnded(player.getUuid());
         // Игрок мог «лежать» (повержен или оглушён) — вернуть обычную позу.

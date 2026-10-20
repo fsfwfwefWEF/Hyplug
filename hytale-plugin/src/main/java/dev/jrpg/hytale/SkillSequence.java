@@ -836,6 +836,18 @@ final class SkillSequence {
             List<String> hints = ref == cast.caster() ? cast.weaponHints() : List.of();
             return WeaponAnims.play(store, ref, hints, List.of(name.substring(7)));
         }
+        if (name.startsWith("model:")) {
+            // Общие имена модели из settings.json (animations.attack/cast/hurt…): для кукол без оружия в руке.
+            Settings.Animations an = plugin.settings().anim;
+            List<String> common = switch (name.substring(6)) {
+                case "attack" -> an.attack;
+                case "cast" -> an.cast;
+                case "hurt" -> an.hurt;
+                case "victory" -> an.victory;
+                default -> List.of(name.substring(6));
+            };
+            return Fx.animate(store, ref, List.of(), common);
+        }
         if (name.startsWith("emote:")) {
             String e = Fx.pickEmote(List.of(name.substring(6)), Set.of());
             return e != null && Fx.emote(store, ref, e);

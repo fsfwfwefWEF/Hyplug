@@ -1,31 +1,178 @@
 {
-  "_version": 2,
-  "_casters": { "meteor": "lyra", "bleeding_cut": "bram" },
-  "_about": "Тестовые таймлайны на ванильных ассетах. Ключ = sequenceId способности (Content.java: meteor, bleeding_cut). Имена с @ — ключи ParticleCatalog (подбор по словам из ассетов), anim с префиксом weapon: — анимация из набора оружия в руке (как WeaponAnims), emote: — эмоция игры. t в мс от начала навыка, '+N' — от предыдущего шага. wait ждёт событие. Неизвестное имя = предупреждение в лог, шаг пропускается.",
+  "_version": 3,
+
+  "_casters": {"meteor": "lyra", "bleeding_cut": "bram", "fire_slash": "hero", "whirlwind": "hero", "fireball": "lyra", "mass_cure": "lyra", "ground_slam": "bram", "war_cry": "bram"},
+
+  "_about": "Сцены навыков. Ключ = id способности (полная сцена, как meteor и bleeding_cut). Остальные навыки играются по шаблонам (_templates): шаблон и его параметры задаются в _skills, иначе подбираются сами по навыку (ближний/по всем/снаряд/лечение/усиление). Параметры в шаблоне пишутся {имя}: color, charge (замах-зарядка), release (выпуск магии), strike (удар), aura (частицы на оружии), fx (частицы попадания), vfx (фигура эффекта: flame, fireball, ice, lightning, water, earth, poison, acid, heal, buff, haste, guard, taunt, slash, shadow, meteor), lead (мс полёта фигуры). Пустой параметр убирает действие. anim: weapon:Имя — анимация оружия в руке, model:attack|cast|hurt — общие имена модели из settings.json, emote:Имя — эмоция. Имена с @ — частицы ParticleCatalog. t в мс, '+N' — от предыдущего шага.",
+
+  "_defaults": {"color": "#ffd27a", "charge": "weapon:CastLeftCharged", "release": "weapon:CastSummon", "strike": "weapon:SwingDownStrong", "aura": "@cast"},
+
+  "_templates": {
+    "melee": [
+      {"t": 0, "camera": "focus", "on": "caster", "dist": 3.0, "height": 1.5, "side": 35, "ms": 500},
+      {"t": 80, "anim": "{charge}", "fallback": ["weapon:CastLeftCharged", "weapon:CastEnrage", "weapon:CastSummonCharged", "weapon:CastEnchant", "model:cast"], "on": "caster"},
+      {"t": 150, "glow": {"color": "{color}", "thickness": 0.8, "bloom": true}, "on": "caster", "ms": 900},
+      {"t": 200, "particles": "{aura}", "fallback": ["@cast"], "on": "caster", "attach": "PrimaryItem", "offset": [0, 0.8, 0], "color": "{color}"},
+      {"t": 800, "camera": "follow", "on": "caster", "dist": 4, "height": 2, "ms": 0},
+      {"t": 800, "move": "run", "to": "target", "stopAt": 1.6},
+      {"wait": "arrived"},
+      {"anim": "{strike}", "fallback": ["weapon:SwingDownStrong", "weapon:SwingDown", "weapon:SwingLeft", "model:attack"], "on": "caster"},
+      {"t": "+350", "hit": true, "shake": 0.35, "shape": "{vfx}", "particles": "{fx}", "fallback": ["@physical"], "on": "target", "color": "{color}"},
+      {"t": "+700", "camera": "battle", "ms": 500},
+      {"move": "back"}
+    ],
+    "melee_all": [
+      {"t": 0, "camera": "focus", "on": "caster", "dist": 3.0, "height": 1.5, "side": 35, "ms": 500},
+      {"t": 80, "anim": "{charge}", "fallback": ["weapon:CastLeftCharged", "weapon:CastEnrage", "weapon:CastSummonCharged", "weapon:CastEnchant", "model:cast"], "on": "caster"},
+      {"t": 150, "glow": {"color": "{color}", "thickness": 0.8, "bloom": true}, "on": "caster", "ms": 1000},
+      {"t": 200, "particles": "{aura}", "fallback": ["@cast"], "on": "caster", "attach": "PrimaryItem", "offset": [0, 0.8, 0], "color": "{color}"},
+      {"t": 800, "camera": "orbit", "on": "targets", "dist": 9, "height": 3.5, "look": 2, "from": -25, "to": 10, "ms": 2200},
+      {"t": 800, "move": "run", "to": "targets", "stopAt": 2.2},
+      {"wait": "arrived"},
+      {"anim": "{strike}", "fallback": ["weapon:Whirlwind", "weapon:SwingLeftSpinSwingLeftSpinSwingRight", "weapon:Sweep", "weapon:SwingLeft", "model:attack"], "on": "caster"},
+      {"t": "+400", "hit": true, "shake": 0.45, "shape": "{vfx}", "particles": "{fx}", "fallback": ["@physical"], "on": "targets", "color": "{color}"},
+      {"t": "+800", "camera": "battle", "ms": 500},
+      {"move": "back"}
+    ],
+    "stomp": [
+      {"t": 0, "camera": "focus", "on": "caster", "dist": 3.4, "height": 1.6, "side": 30, "ms": 500},
+      {"t": 80, "anim": "{charge}", "fallback": ["weapon:CastLeftCharged", "weapon:CastEnrage", "weapon:CastSummonCharged", "weapon:CastEnchant", "model:cast"], "on": "caster"},
+      {"t": 150, "glow": {"color": "{color}", "thickness": 0.8, "bloom": true}, "on": "caster", "ms": 1000},
+      {"t": 250, "shape": "ring", "on": "caster", "color": "{color}", "radius": 1.4, "ms": 1000},
+      {"t": 900, "anim": "{strike}", "fallback": ["weapon:DownstrikeLeap", "weapon:SwingDownStrong", "weapon:SwingDown", "model:attack"], "on": "caster"},
+      {"t": 1100, "camera": "orbit", "on": "targets", "dist": 10, "height": 4, "look": 2, "from": -15, "to": 15, "ms": 1800},
+      {"t": 1200, "shake": 0.6, "shape": "{vfx}", "on": "targets"},
+      {"t": "+{lead}", "hit": true, "particles": "{fx}", "on": "targets", "color": "{color}"},
+      {"t": "+1000", "camera": "battle", "ms": 500}
+    ],
+    "bolt": [
+      {"t": 0, "camera": "focus", "on": "caster", "dist": 3.2, "height": 1.5, "side": 35, "ms": 600},
+      {"t": 100, "anim": "{charge}", "fallback": ["weapon:CastLeftCharged", "weapon:CastEnrage", "weapon:CastSummonCharged", "weapon:CastEnchant", "model:cast"], "on": "caster"},
+      {"t": 150, "glow": {"color": "{color}", "thickness": 0.8, "bloom": true}, "on": "caster", "ms": 1000},
+      {"t": 200, "particles": "{aura}", "fallback": ["@cast"], "on": "caster", "attach": "PrimaryItem", "offset": [0, 0.8, 0], "color": "{color}"},
+      {"t": 250, "shape": "ring", "on": "caster", "color": "{color}", "radius": 1.1, "ms": 1100},
+      {"t": 1000, "camera": "battle", "ms": 400},
+      {"t": 1100, "anim": "{release}", "fallback": ["weapon:CastSummon", "weapon:CastLeft", "weapon:CastEnchant", "model:cast"], "on": "caster"},
+      {"t": 1150, "shape": "{vfx}", "on": "target"},
+      {"t": "+{lead}", "hit": true, "shake": 0.3, "particles": "{fx}", "on": "target", "color": "{color}"}
+    ],
+    "magic_all": [
+      {"t": 0, "camera": "focus", "on": "caster", "dist": 3.2, "height": 1.5, "side": 35, "ms": 600},
+      {"t": 100, "anim": "{charge}", "fallback": ["weapon:CastLeftCharged", "weapon:CastEnrage", "weapon:CastSummonCharged", "weapon:CastEnchant", "model:cast"], "on": "caster"},
+      {"t": 150, "glow": {"color": "{color}", "thickness": 0.8, "bloom": true}, "on": "caster", "ms": 1300},
+      {"t": 200, "particles": "{aura}", "fallback": ["@cast"], "on": "caster", "attach": "PrimaryItem", "offset": [0, 0.8, 0], "color": "{color}"},
+      {"t": 250, "shape": "ring", "on": "caster", "color": "{color}", "radius": 1.3, "ms": 1400},
+      {"t": 1100, "camera": "orbit", "on": "targets", "dist": 10, "height": 3.5, "look": 2, "from": -20, "to": 15, "ms": 2000},
+      {"t": 1200, "anim": "{release}", "fallback": ["weapon:CastSummon", "weapon:CastLeft", "weapon:CastEnchant", "model:cast"], "on": "caster"},
+      {"t": 1250, "shape": "{vfx}", "on": "targets"},
+      {"t": "+{lead}", "hit": true, "shake": 0.5, "particles": "{fx}", "on": "targets", "color": "{color}"},
+      {"t": "+1000", "camera": "battle", "ms": 500}
+    ],
+    "heal": [
+      {"t": 0, "camera": "focus", "on": "caster", "dist": 3.2, "height": 1.5, "side": 35, "ms": 600},
+      {"t": 100, "anim": "{charge}", "fallback": ["weapon:CastLeftCharged", "weapon:CastEnrage", "weapon:CastSummonCharged", "weapon:CastEnchant", "model:cast"], "on": "caster"},
+      {"t": 150, "glow": {"color": "{color}", "thickness": 0.8, "bloom": true}, "on": "caster", "ms": 900},
+      {"t": 200, "particles": "{aura}", "fallback": ["@cast"], "on": "caster", "attach": "PrimaryItem", "offset": [0, 0.8, 0], "color": "{color}"},
+      {"t": 900, "camera": "focus", "on": "target", "dist": 3.6, "height": 1.6, "side": -30, "ms": 500},
+      {"t": 950, "anim": "{release}", "fallback": ["weapon:CastSummon", "weapon:CastLeft", "weapon:CastEnchant", "model:cast"], "on": "caster"},
+      {"t": 1000, "shape": "{vfx}", "on": "target"},
+      {"t": 1350, "hit": true, "particles": "{fx}", "on": "target", "color": "{color}"},
+      {"t": "+900", "camera": "battle", "ms": 500}
+    ],
+    "heal_all": [
+      {"t": 0, "camera": "focus", "on": "caster", "dist": 3.2, "height": 1.5, "side": 35, "ms": 600},
+      {"t": 100, "anim": "{charge}", "fallback": ["weapon:CastLeftCharged", "weapon:CastEnrage", "weapon:CastSummonCharged", "weapon:CastEnchant", "model:cast"], "on": "caster"},
+      {"t": 150, "glow": {"color": "{color}", "thickness": 0.8, "bloom": true}, "on": "caster", "ms": 1000},
+      {"t": 200, "particles": "{aura}", "fallback": ["@cast"], "on": "caster", "attach": "PrimaryItem", "offset": [0, 0.8, 0], "color": "{color}"},
+      {"t": 250, "shape": "ring", "on": "caster", "color": "{color}", "radius": 1.3, "ms": 1200},
+      {"t": 1000, "camera": "focus", "on": "targets", "dist": 7, "height": 3, "side": -20, "ms": 600},
+      {"t": 1050, "anim": "{release}", "fallback": ["weapon:CastSummon", "weapon:CastLeft", "weapon:CastEnchant", "model:cast"], "on": "caster"},
+      {"t": 1100, "shape": "{vfx}", "on": "targets"},
+      {"t": 1450, "hit": true, "particles": "{fx}", "on": "targets", "color": "{color}"},
+      {"t": "+1000", "camera": "battle", "ms": 500}
+    ],
+    "buff_self": [
+      {"t": 0, "camera": "focus", "on": "caster", "dist": 3.0, "height": 1.4, "side": 30, "ms": 500},
+      {"t": 80, "anim": "{charge}", "fallback": ["weapon:CastLeftCharged", "weapon:CastEnrage", "weapon:CastSummonCharged", "weapon:CastEnchant", "model:cast"], "on": "caster"},
+      {"t": 150, "glow": {"color": "{color}", "thickness": 0.8, "bloom": true}, "on": "caster", "ms": 1100},
+      {"t": 200, "particles": "{aura}", "fallback": ["@cast"], "on": "caster", "attach": "PrimaryItem", "offset": [0, 0.8, 0], "color": "{color}"},
+      {"t": 500, "shape": "{vfx}", "on": "caster"},
+      {"t": 900, "hit": true, "particles": "{fx}", "on": "caster", "color": "{color}"},
+      {"t": "+900", "camera": "battle", "ms": 500}
+    ],
+    "buff_one": [
+      {"t": 0, "camera": "focus", "on": "caster", "dist": 3.2, "height": 1.5, "side": 35, "ms": 600},
+      {"t": 100, "anim": "{charge}", "fallback": ["weapon:CastLeftCharged", "weapon:CastEnrage", "weapon:CastSummonCharged", "weapon:CastEnchant", "model:cast"], "on": "caster"},
+      {"t": 150, "glow": {"color": "{color}", "thickness": 0.8, "bloom": true}, "on": "caster", "ms": 900},
+      {"t": 200, "particles": "{aura}", "fallback": ["@cast"], "on": "caster", "attach": "PrimaryItem", "offset": [0, 0.8, 0], "color": "{color}"},
+      {"t": 900, "camera": "focus", "on": "target", "dist": 3.6, "height": 1.6, "side": -30, "ms": 500},
+      {"t": 950, "anim": "{release}", "fallback": ["weapon:CastSummon", "weapon:CastLeft", "weapon:CastEnchant", "model:cast"], "on": "caster"},
+      {"t": 1000, "shape": "{vfx}", "on": "target"},
+      {"t": 1350, "hit": true, "particles": "{fx}", "on": "target", "color": "{color}"},
+      {"t": "+900", "camera": "battle", "ms": 500}
+    ],
+    "buff_all": [
+      {"t": 0, "camera": "focus", "on": "caster", "dist": 3.2, "height": 1.5, "side": 35, "ms": 600},
+      {"t": 100, "anim": "{charge}", "fallback": ["weapon:CastLeftCharged", "weapon:CastEnrage", "weapon:CastSummonCharged", "weapon:CastEnchant", "model:cast"], "on": "caster"},
+      {"t": 150, "glow": {"color": "{color}", "thickness": 0.8, "bloom": true}, "on": "caster", "ms": 1000},
+      {"t": 200, "particles": "{aura}", "fallback": ["@cast"], "on": "caster", "attach": "PrimaryItem", "offset": [0, 0.8, 0], "color": "{color}"},
+      {"t": 250, "shape": "ring", "on": "caster", "color": "{color}", "radius": 1.3, "ms": 1200},
+      {"t": 1000, "camera": "focus", "on": "targets", "dist": 7, "height": 3, "side": -20, "ms": 600},
+      {"t": 1050, "anim": "{release}", "fallback": ["weapon:CastSummon", "weapon:CastLeft", "weapon:CastEnchant", "model:cast"], "on": "caster"},
+      {"t": 1100, "shape": "{vfx}", "on": "targets"},
+      {"t": 1450, "hit": true, "particles": "{fx}", "on": "targets", "color": "{color}"},
+      {"t": "+1000", "camera": "battle", "ms": 500}
+    ]
+  },
+
+  "_skills": {
+    "fire_slash": {"template": "melee", "strike": "weapon:SwingDownStrong", "vfx": "flame"},
+    "shield_bash": {"template": "melee", "strike": "weapon:GuardBash"},
+    "blade_rush": {"template": "melee", "strike": "weapon:StabDashCharged", "charge": "weapon:StabDashCharging"},
+    "piercing_lunge": {"template": "melee", "strike": "weapon:Stab"},
+    "armor_split": {"template": "melee", "strike": "weapon:SwingDownStrong"},
+    "armor_pierce": {"template": "melee", "strike": "weapon:Stab"},
+    "dawn_strike": {"template": "melee", "strike": "weapon:SwingLeftSpinSwingLeftSpinSwingRight", "color": "#ffcf6a", "vfx": "flame"},
+    "venom_edge": {"template": "melee", "strike": "weapon:SwingLeft"},
+    "execute": {"template": "melee", "strike": "weapon:DownstrikeLeap", "color": "#b0102a"},
+    "storm_blade": {"template": "melee", "strike": "weapon:SpinRightStabDashCharged", "vfx": "lightning"},
+    "shadow_strike": {"template": "melee", "strike": "weapon:SpinRightStabDashCharged", "color": "#7a3cff"},
+    "ground_slam": {"template": "melee", "strike": "weapon:DownstrikeLeap", "vfx": "earth"},
+    "earth_spike": {"template": "stomp", "strike": "weapon:SwingDownStrong"},
+    "whirlwind": {"template": "melee_all", "strike": "weapon:Whirlwind"},
+    "cleave": {"template": "melee_all", "strike": "weapon:Sweep"},
+    "sunder": {"template": "melee_all", "strike": "weapon:Sweep"},
+    "earthquake": {"template": "stomp"},
+    "provoke": {"template": "buff_self", "charge": "weapon:GuardBash"},
+    "bulwark": {"template": "buff_self", "charge": "weapon:Guard"},
+    "rally": {"template": "buff_all", "charge": "weapon:CastEnrage"},
+    "war_cry": {"template": "buff_all", "charge": "weapon:CastEnrage"},
+    "shield_wall": {"template": "buff_all", "charge": "weapon:Guard"}
+  },
 
   "meteor": [
-    { "t": 0,      "camera": "focus", "on": "caster", "dist": 3.2, "height": 1.5, "side": 35, "ms": 700, "ease": "InOutQuad" },
-    { "t": 150,    "anim": "weapon:CastEnrage", "fallback": ["weapon:CastEnchant", "weapon:CastLeft"], "on": "caster" },
-    { "t": 200,    "particles": "@cast", "on": "caster", "attach": "PrimaryItem", "offset": [0, 0.8, 0] },
-    { "t": 200,    "shape": "ring", "on": "caster", "color": "#ff8a2a", "radius": 1.2, "ms": 1600 },
-    { "t": 300,    "glow": { "color": "#ff8a2a", "thickness": 1.0, "bloom": true }, "on": "caster", "ms": 1200 },
-    { "t": 1200,   "camera": "orbit", "on": "targets", "dist": 12, "height": 3.5, "look": 3, "from": -20, "to": 20, "ms": 1800, "ease": "InOutQuad" },
-    { "t": 1300,   "shape": "meteor", "on": "targets", "fallMs": 900 },
-    { "t": "+900", "hit": true, "shake": 0.6, "particles": "@fire", "on": "targets" },
-    { "t": "+1200","camera": "battle", "ms": 600 }
+    {"t": 0, "camera": "focus", "on": "caster", "dist": 3.2, "height": 1.5, "side": 35, "ms": 700, "ease": "InOutQuad"},
+    {"t": 150, "anim": "weapon:CastEnrage", "fallback": ["weapon:CastEnchant", "weapon:CastLeft"], "on": "caster"},
+    {"t": 200, "particles": "@cast", "on": "caster", "attach": "PrimaryItem", "offset": [0, 0.8, 0]},
+    {"t": 200, "shape": "ring", "on": "caster", "color": "#ff8a2a", "radius": 1.2, "ms": 1600},
+    {"t": 300, "glow": {"color": "#ff8a2a", "thickness": 1.0, "bloom": true}, "on": "caster", "ms": 1200},
+    {"t": 1200, "camera": "orbit", "on": "targets", "dist": 12, "height": 3.5, "look": 3, "from": -20, "to": 20, "ms": 1800, "ease": "InOutQuad"},
+    {"t": 1300, "shape": "meteor", "on": "targets", "fallMs": 900},
+    {"t": "+900", "hit": true, "shake": 0.6, "particles": "@fire", "on": "targets"},
+    {"t": "+1200", "camera": "battle", "ms": 600}
   ],
 
   "bleeding_cut": [
-    { "t": 0,      "camera": "focus", "on": "caster", "dist": 2.8, "height": 1.4, "side": 40, "ms": 600, "ease": "InOutQuad" },
-    { "t": 100,    "anim": "weapon:CastEnchant", "fallback": ["weapon:CastLeft", "weapon:GuardBash"], "on": "caster" },
-    { "t": 300,    "glow": { "color": "#b0102a", "thickness": 0.8, "bloom": true }, "on": "caster", "ms": 900 },
-    { "t": 400,    "particles": "@poison", "fallback": ["Impact_Poison"], "on": "caster", "attach": "PrimaryItem", "offset": [0, 0.9, 0], "color": "#b0102a" },
-    { "t": 1200,   "camera": "follow", "on": "caster", "dist": 4, "height": 2, "ms": 0 },
-    { "t": 1200,   "move": "run", "to": "target", "stopAt": 1.6 },
-    { "wait": "arrived" },
-    { "anim": "weapon:DownstrikeLeap", "fallback": ["weapon:SwingDownStrong", "weapon:SwingDown"], "on": "caster" },
-    { "t": "+450", "hit": true, "shake": 0.4, "particles": "@physical", "fallback": ["Impact_Poison"], "on": "target", "color": "#b0102a" },
-    { "t": "+900", "camera": "battle", "ms": 600 },
-    { "move": "back" }
+    {"t": 0, "camera": "focus", "on": "caster", "dist": 2.8, "height": 1.4, "side": 40, "ms": 600, "ease": "InOutQuad"},
+    {"t": 100, "anim": "weapon:CastEnchant", "fallback": ["weapon:CastLeft", "weapon:GuardBash"], "on": "caster"},
+    {"t": 300, "glow": {"color": "#b0102a", "thickness": 0.8, "bloom": true}, "on": "caster", "ms": 900},
+    {"t": 400, "particles": "@poison", "fallback": ["Impact_Poison"], "on": "caster", "attach": "PrimaryItem", "offset": [0, 0.9, 0], "color": "#b0102a"},
+    {"t": 1200, "camera": "follow", "on": "caster", "dist": 4, "height": 2, "ms": 0},
+    {"t": 1200, "move": "run", "to": "target", "stopAt": 1.6},
+    {"wait": "arrived"},
+    {"anim": "weapon:DownstrikeLeap", "fallback": ["weapon:SwingDownStrong", "weapon:SwingDown"], "on": "caster"},
+    {"t": "+450", "hit": true, "shake": 0.4, "particles": "@physical", "fallback": ["Impact_Poison"], "on": "target", "color": "#b0102a"},
+    {"t": "+900", "camera": "battle", "ms": 600},
+    {"move": "back"}
   ]
 }

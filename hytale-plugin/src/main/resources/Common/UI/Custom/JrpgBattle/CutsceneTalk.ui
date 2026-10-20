@@ -99,7 +99,7 @@ Group {
         Group #Ch0Sel { Anchor: (Left: 0, Top: 2, Width: 640, Height: 26); Visible: false; Background: #e8c46a(0.22); }
         Label #Ch0Mark { Text: ""; Anchor: (Left: 8, Top: 3, Width: 24, Height: 24); Style: (FontSize: 18, TextColor: #e8c46a, RenderBold: true); }
         Label #Ch0Text { Text: ""; Anchor: (Left: 34, Top: 4, Width: 600, Height: 24); Style: (FontSize: 17, TextColor: #e9eef6); }
-        Button #ChBtn0 { Anchor: (Left: 0, Top: 0, Width: 640, Height: 30); }
+        $C.@SecondaryTextButton #ChBtn0 { @Text = ""; Anchor: (Left: 0, Top: 0, Width: 640, Height: 30); }
       }
       Group #Ch1 {
         Anchor: (Height: 30);
@@ -107,7 +107,7 @@ Group {
         Group #Ch1Sel { Anchor: (Left: 0, Top: 2, Width: 640, Height: 26); Visible: false; Background: #e8c46a(0.22); }
         Label #Ch1Mark { Text: ""; Anchor: (Left: 8, Top: 3, Width: 24, Height: 24); Style: (FontSize: 18, TextColor: #e8c46a, RenderBold: true); }
         Label #Ch1Text { Text: ""; Anchor: (Left: 34, Top: 4, Width: 600, Height: 24); Style: (FontSize: 17, TextColor: #e9eef6); }
-        Button #ChBtn1 { Anchor: (Left: 0, Top: 0, Width: 640, Height: 30); }
+        $C.@SecondaryTextButton #ChBtn1 { @Text = ""; Anchor: (Left: 0, Top: 0, Width: 640, Height: 30); }
       }
       Group #Ch2 {
         Anchor: (Height: 30);
@@ -115,7 +115,7 @@ Group {
         Group #Ch2Sel { Anchor: (Left: 0, Top: 2, Width: 640, Height: 26); Visible: false; Background: #e8c46a(0.22); }
         Label #Ch2Mark { Text: ""; Anchor: (Left: 8, Top: 3, Width: 24, Height: 24); Style: (FontSize: 18, TextColor: #e8c46a, RenderBold: true); }
         Label #Ch2Text { Text: ""; Anchor: (Left: 34, Top: 4, Width: 600, Height: 24); Style: (FontSize: 17, TextColor: #e9eef6); }
-        Button #ChBtn2 { Anchor: (Left: 0, Top: 0, Width: 640, Height: 30); }
+        $C.@SecondaryTextButton #ChBtn2 { @Text = ""; Anchor: (Left: 0, Top: 0, Width: 640, Height: 30); }
       }
       Group #Ch3 {
         Anchor: (Height: 30);
@@ -123,7 +123,7 @@ Group {
         Group #Ch3Sel { Anchor: (Left: 0, Top: 2, Width: 640, Height: 26); Visible: false; Background: #e8c46a(0.22); }
         Label #Ch3Mark { Text: ""; Anchor: (Left: 8, Top: 3, Width: 24, Height: 24); Style: (FontSize: 18, TextColor: #e8c46a, RenderBold: true); }
         Label #Ch3Text { Text: ""; Anchor: (Left: 34, Top: 4, Width: 600, Height: 24); Style: (FontSize: 17, TextColor: #e9eef6); }
-        Button #ChBtn3 { Anchor: (Left: 0, Top: 0, Width: 640, Height: 30); }
+        $C.@SecondaryTextButton #ChBtn3 { @Text = ""; Anchor: (Left: 0, Top: 0, Width: 640, Height: 30); }
       }
       }
       Group #DlgNextBox {

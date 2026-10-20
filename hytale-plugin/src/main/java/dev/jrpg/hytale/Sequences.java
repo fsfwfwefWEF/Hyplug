@@ -7,9 +7,12 @@ import com.hypixel.hytale.server.core.modules.entity.component.HeadRotation;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.hypixel.hytale.server.core.universe.world.World;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
+import dev.jrpg.battle.Ability;
+import dev.jrpg.battle.Content;
 import dev.jrpg.battle.GameData;
 import dev.jrpg.battle.Json;
 import dev.jrpg.battle.Progression;
+import dev.jrpg.battle.TargetType;
 import org.joml.Vector3d;
 
 import java.nio.file.Files;
@@ -37,15 +40,185 @@ final class Sequences {
 
     /** Все сцены из файла: id → шаги; ключи с «_» — служебные. */
     static Map<String, List<Map<String, Object>>> load(JrpgPlugin plugin) throws Exception {
-        Map<String, Object> root = Json.obj(Json.parse(read(plugin)));
+        Map<String, Object> root = root(plugin);
         Map<String, List<Map<String, Object>>> out = new LinkedHashMap<>();
         for (Map.Entry<String, Object> e : root.entrySet()) {
             if (e.getKey().startsWith("_") || !(e.getValue() instanceof List<?> l)) continue;
-            List<Map<String, Object>> steps = new ArrayList<>();
-            for (Object o : l) if (o instanceof Map<?, ?>) steps.add(Json.obj(o));
-            out.put(e.getKey(), steps);
+            out.put(e.getKey(), steps(l));
         }
         return out;
+    }
+
+    private static List<Map<String, Object>> steps(List<?> l) {
+        List<Map<String, Object>> steps = new ArrayList<>();
+        for (Object o : l) if (o instanceof Map<?, ?>) steps.add(Json.obj(o));
+        return steps;
+    }
+
+    // ---------- навыки в бою ----------
+
+    private static volatile Map<String, Object> cached;
+    private static volatile long cachedStamp = Long.MIN_VALUE;
+
+    /** Разобранный файл; перечитывается, когда файл в папке мода изменился. */
+    private static Map<String, Object> root(JrpgPlugin plugin) throws Exception {
+        Path f = plugin.dataDir().resolve(FILE);
+        long stamp = Files.exists(f) ? Files.getLastModifiedTime(f).toMillis() : -1;
+        Map<String, Object> r = cached;
+        if (r != null && stamp == cachedStamp) return r;
+        r = Json.obj(Json.parse(read(plugin)));
+        cached = r;
+        cachedStamp = Files.exists(f) ? Files.getLastModifiedTime(f).toMillis() : -1;
+        return r;
+    }
+
+    /** Цвета стихий и смыслов для шаблонов (свечение, кольца, частицы). */
+    private static final Map<String, String> COLORS = Map.ofEntries(
+            Map.entry("fire", "#ff7a2a"), Map.entry("flame", "#ff7a2a"), Map.entry("fireball", "#ff7a2a"),
+            Map.entry("meteor", "#ff7a2a"), Map.entry("ice", "#8fd8ff"), Map.entry("thunder", "#ffe45a"),
+            Map.entry("lightning", "#ffe45a"), Map.entry("water", "#4aa8ff"), Map.entry("earth", "#c09a62"),
+            Map.entry("poison", "#8ee04a"), Map.entry("acid", "#8ee04a"), Map.entry("heal", "#7dff9a"),
+            Map.entry("buff", "#ffd27a"), Map.entry("guard", "#8fb8ff"), Map.entry("taunt", "#ff5a3a"),
+            Map.entry("haste", "#9affea"), Map.entry("shadow", "#b0102a"), Map.entry("slash", "#e8ecf4"),
+            Map.entry("physical", "#e8ecf4"));
+
+    /**
+     * Сцена навыка для боя: своя (ключ = id навыка), иначе шаблон из _templates — заданный в _skills или
+     * подобранный по навыку. null — играть навык как раньше (обычная атака, защита, предметы, файл сломан).
+     * vfx — фигура эффекта (Vfx.kindFor), lead — её полёт в мс.
+     */
+    static List<Map<String, Object>> forAbility(JrpgPlugin plugin, Ability ab, String element, String vfx, long lead) {
+        if (ab == null || ab.id().equals(Content.ATTACK) || ab.id().equals(Content.DEFEND) || ab.id().startsWith("item")) {
+            return null;
+        }
+        Map<String, Object> root;
+        try {
+            root = root(plugin);
+        } catch (Exception e) {
+            Fx.warnOnce("Ошибка в " + FILE + " — навыки играются без сцен", e);
+            return null;
+        }
+        String id = ab.id();
+        if (root.get(id) instanceof List<?> own) return steps(own);
+        Map<String, Object> templates = root.get("_templates") instanceof Map<?, ?> m ? Json.obj(m) : Map.of();
+        Map<String, Object> skill = root.get("_skills") instanceof Map<?, ?> m && m.get(id) instanceof Map<?, ?> s
+                ? Json.obj(s) : Map.of();
+        String name = Json.str(skill, "template", autoTemplate(ab));
+        if (!(templates.get(name) instanceof List<?> tpl)) {
+            Fx.warnOnce("Нет шаблона сцены «" + name + "» (" + FILE + " → _templates)", null);
+            return null;
+        }
+        Map<String, Object> params = new java.util.HashMap<>();
+        if (root.get("_defaults") instanceof Map<?, ?> d) params.putAll(Json.obj(d));
+        String key = element == null || element.isEmpty() ? vfx : element;
+        params.put("color", COLORS.getOrDefault(vfx, COLORS.getOrDefault(key, String.valueOf(params.getOrDefault("color", "#ffd27a")))));
+        params.put("vfx", vfx == null ? "" : vfx);
+        params.put("lead", Math.max(150, lead));
+        params.put("fx", fxFor(ab, element));
+        params.putAll(skill);
+        String v = String.valueOf(params.get("vfx"));
+        if (!skill.containsKey("lead")) params.put("lead", Math.max(150, Vfx.leadMs(v)));
+        if (!skill.containsKey("color") && COLORS.containsKey(v) && (element == null || element.isEmpty()
+                || element.equals(dev.jrpg.battle.Element.PHYSICAL))) params.put("color", COLORS.get(v));
+        List<Map<String, Object>> out = new ArrayList<>();
+        for (Object o : tpl) {
+            if (o instanceof Map<?, ?> st) out.add(Json.obj(fill(st, params)));
+        }
+        return out;
+    }
+
+    /** Шаблон по навыку: ближний удар, удар по всем, снаряд, магия по всем, лечение, усиление. */
+    static String autoTemplate(Ability ab) {
+        TargetType t = ab.target();
+        boolean dmg = ab.damagePower() > 0;
+        boolean heal = ab.healPower() > 0 || ab.mpRestore() > 0 || !ab.cures().isEmpty();
+        return switch (t) {
+            case ALL_ENEMIES -> dmg && !ab.magical() ? "melee_all" : "magic_all";
+            case SINGLE_ENEMY -> dmg && !ab.magical() ? "melee" : "bolt";
+            case SINGLE_ALLY -> heal ? "heal" : "buff_one";
+            case ALL_ALLIES -> heal ? "heal_all" : "buff_all";
+            default -> "buff_self";
+        };
+    }
+
+    private static String fxFor(Ability ab, String element) {
+        if (ab.damagePower() > 0) {
+            return element == null || element.isEmpty() ? "@physical" : "@" + element;
+        }
+        if (ab.healPower() > 0 || ab.mpRestore() > 0 || !ab.cures().isEmpty()) return "@heal";
+        return "@buff";
+    }
+
+    /** Подстановка {имя}: строка целиком — значение как есть (число, список), внутри строки — текстом. */
+    private static Object fill(Object o, Map<String, Object> params) {
+        if (o instanceof String s) {
+            if (s.length() > 2 && s.startsWith("{") && s.endsWith("}") && s.indexOf('{', 1) < 0) {
+                String k = s.substring(1, s.length() - 1);
+                if (params.containsKey(k)) return params.get(k);
+            }
+            String r = s;
+            for (Map.Entry<String, Object> e : params.entrySet()) {
+                if (r.indexOf('{') < 0) break;
+                Object v = e.getValue();
+                String text = v instanceof Number n && n.doubleValue() == Math.rint(n.doubleValue())
+                        ? String.valueOf(n.longValue()) : String.valueOf(v);
+                r = r.replace("{" + e.getKey() + "}", text);
+            }
+            return r;
+        }
+        if (o instanceof Map<?, ?> m) {
+            Map<String, Object> out = new LinkedHashMap<>();
+            for (Map.Entry<?, ?> e : m.entrySet()) {
+                Object v = fill(e.getValue(), params);
+                // Пустой параметр убирает действие (нет частиц, нет фигуры).
+                if (v instanceof String s && s.isEmpty() && e.getValue() instanceof String raw && raw.contains("{")) continue;
+                out.put(String.valueOf(e.getKey()), v);
+            }
+            return out;
+        }
+        if (o instanceof List<?> l) {
+            List<Object> out = new ArrayList<>();
+            for (Object x : l) out.add(fill(x, params));
+            return out;
+        }
+        return o;
+    }
+
+    /** Для админ-меню: свои сцены и все навыки героев (их сцены — по шаблонам). id → подпись. */
+    static Map<String, String> skillScenes(JrpgPlugin plugin) {
+        Map<String, String> out = new LinkedHashMap<>();
+        try {
+            for (String id : load(plugin).keySet()) out.put(id, label(plugin, id) + "  ·  своя сцена");
+        } catch (Exception e) {
+            Fx.warnOnce("Ошибка в " + FILE, e);
+        }
+        try {
+            if (root(plugin).get("_skills") instanceof Map<?, ?> m) {
+                for (Object k : m.keySet()) {
+                    String a = String.valueOf(k);
+                    if (plugin.content().hasAbility(a)) out.putIfAbsent(a, label(plugin, a) + "  ·  шаблон");
+                }
+            }
+        } catch (Exception ignored) {
+            // файл сломан — выше уже предупредили
+        }
+        for (Progression.HeroDef h : plugin.content().heroes()) {
+            for (String a : h.startAbilities()) out.putIfAbsent(a, label(plugin, a) + "  ·  " + h.name());
+            for (Progression.GridNode n : h.grid()) {
+                if (n.ref() != null && plugin.content().hasAbility(n.ref())) {
+                    out.putIfAbsent(n.ref(), label(plugin, n.ref()) + "  ·  " + h.name());
+                }
+            }
+        }
+        return out;
+    }
+
+    private static String label(JrpgPlugin plugin, String id) {
+        try {
+            return plugin.content().ability(id).name();
+        } catch (Exception e) {
+            return id;
+        }
     }
 
     private static String read(JrpgPlugin plugin) throws Exception {
@@ -107,6 +280,14 @@ final class Sequences {
         }
         String[] parts = arg.split(":");
         String id = parts[0];
+        // Навык без своей сцены — по шаблону (как в бою).
+        if (!all.containsKey(id) && plugin.content().hasAbility(id)) {
+            Ability ab = plugin.content().ability(id);
+            String element = plugin.content().element(ab);
+            String vfx = Vfx.kindFor(ab, element, ab.damagePower() > 0 && !ab.magical());
+            List<Map<String, Object>> st = forAbility(plugin, ab, element, vfx, Vfx.leadMs(vfx));
+            if (st != null) all.put(id, st);
+        }
         if (id.equals("list") || !all.containsKey(id)) {
             return (id.equals("list") ? "" : "Нет сцены «" + id + "». ") + "Сцены: " + String.join(", ", all.keySet())
                     + ". Запуск: /jrpg seq meteor, герой и замедление: /jrpg seq meteor:lyra:slow";
