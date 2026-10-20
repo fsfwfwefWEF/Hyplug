@@ -125,6 +125,7 @@ public final class JrpgPlugin extends JavaPlugin {
             BattleSession s = sessions.get(id);
             if (s != null) s.abort("игрок вышел");
             followers.forget(id);
+            Sequences.cancel(id);
             savePlayerNow(id);
         } catch (Throwable t) {
             warn("Ошибка при выходе игрока", t);
@@ -345,6 +346,9 @@ public final class JrpgPlugin extends JavaPlugin {
     public Content content() { return content; }
     public GameData data() { return data; }
     public Settings settings() { return settings; }
+
+    /** Папка мода с файлами данных и сохранениями. */
+    Path dataDir() { return getDataDirectory(); }
     public WorldProgress progress() { return progress; }
     public ConcurrentHashMap<UUID, BattleSession> sessions() { return sessions; }
     public ScheduledExecutorService scheduler() { return scheduler; }

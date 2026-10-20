@@ -189,6 +189,16 @@ public final class BattleCamera {
 
     public String lastShot() { return lastShot; }
 
+    /** Кадр сцены навыка: камера ровно в cam, взгляд на look (позицию считает сам таймлайн, см. SkillSequence). */
+    public void aim(String id, Vector3d cam, Vector3d look, float lerp) {
+        place(id, cam, look, lerp);
+    }
+
+    /** Где камера стоит и куда смотрит по последнему кадру (null — кадров ещё не было). */
+    public Vector3d lastCam() { return lastCam == null ? null : new Vector3d(lastCam); }
+
+    public Vector3d lastLook() { return lastLook == null ? null : new Vector3d(lastLook); }
+
     /**
      * Где точка мира на экране: {x, y} от 0 до 1 (0,0 — левый верх), null — позади камеры.
      * Считается по последнему кадру камеры и углу обзора fov (16:9); пока камера плавно едет, чуть отстаёт.

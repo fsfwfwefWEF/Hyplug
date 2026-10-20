@@ -543,3 +543,10 @@ jrpg-mod/
 - 0.10.11 не пускала в мир: клиент отключал на GameLoading «Failed to parse file JrpgBattle/Progression.ui (1776:26) – Expected {, found _».
 - Причина: id групп бегущего сигнала `#EdgeP<k>_<фаза>`. Подчёркивание в id элемента .ui клиент не разбирает.
 - Переименовано в `#EdgeP<k>x<фаза>` (tools/gen_battle_ui.py, ProgressionPage). Правило: id элементов .ui только буквы и цифры.
+
+## 0.11.0 (2026-10-20) — набросок кинематографичных навыков
+- План: /mnt/project-files/cinematic-skills/PLAN.md (что реально), ASSETS.md (что готовит пользователь).
+- `data/sequences.json` (battle-core resources; копия для правки в папке мода, перечитывается при каждом `/jrpg seq`): id сцены → список шагов. `_casters` — кто кастует сцену при проверке.
+- `SkillSequence` — проигрыватель таймлайна: тик 50 мс в потоке мира. t (мс от начала или от последнего wait), "+N" (от предыдущего шага), без t — сразу. Шаги: camera (focus/follow/orbit/battle, ease), move (run/walk to target/targets/home, back), anim (weapon:Имя — набор оружия в руке, emote:Имя, Набор/Анимация — свой ItemPlayerAnimations, иначе анимация модели; fallback), glow (ближайшая по цвету ванильная подсветка EntityEffect+ModelVFX, без урона), particles (@ключ ParticleCatalog или id; attach PrimaryItem/SecondaryItem/Self/кость → пакет SpawnModelParticles), shape (ring = бублик, иначе вид Vfx: meteor…), sound (SoundEvent), shake (ванильный CameraEffect с тряской), hit (Hooks.hit), wait (arrived / мс). Неизвестное → в missing, в лог и в чат.
+- `Sequences.test` — /jrpg seq <id>[:герой][:slow]: кукла героя со снаряжением в 3 блоках перед игроком, 3 мишени-гоблина в 7 блоках дальше, своя BattleCamera (добавлены aim, lastCam, lastLook), удар = цифры + Hurt; в конце всё убирается.
+- В бою пока не подключено (следующий шаг: BattleSession проигрывает сцену по ActionResult.sequenceId, hit = показ урона).

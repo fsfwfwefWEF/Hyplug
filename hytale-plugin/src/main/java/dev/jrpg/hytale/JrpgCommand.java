@@ -32,6 +32,7 @@ import javax.annotation.Nonnull;
  * /jrpg particles <часть имени> — какие системы частиц есть в игре (для settings.json)
  * /jrpg gmkey — клавиша режима открывает меню героя / снова переключает режим
  * /jrpg music <id|off> — включить трек боя (проверка) / выключить
+ * /jrpg seq <id>[:герой][:slow] — сцена навыка из sequences.json перед тобой (list — список)
  */
 public final class JrpgCommand extends AbstractCommandCollection {
 
@@ -53,6 +54,23 @@ public final class JrpgCommand extends AbstractCommandCollection {
         addSubCommand(new Particles(plugin));
         addSubCommand(new GameMenuKey.Toggle(plugin));
         addSubCommand(new GameMenuKey.MusicCmd(plugin));
+        addSubCommand(new Seq(plugin));
+    }
+
+    static final class Seq extends Sub {
+        private final RequiredArg<String> idArg =
+                withRequiredArg("id", "сцена из sequences.json (list — список), можно meteor:lyra:slow", ArgTypes.STRING);
+
+        Seq(JrpgPlugin plugin) {
+            super(plugin, "seq", "Сцена навыка вне боя (проверка таймлайна)");
+        }
+
+        @Override
+        protected void execute(@Nonnull CommandContext ctx, @Nonnull Store<EntityStore> store,
+                               @Nonnull Ref<EntityStore> ref, @Nonnull PlayerRef playerRef, @Nonnull World world) {
+            String err = Sequences.test(plugin, playerRef, ref, store, world, idArg.get(ctx));
+            if (err != null) ctx.sendMessage(Message.raw(err));
+        }
     }
 
     static final class Bag extends Sub {
