@@ -56,10 +56,12 @@ Group {
           Group { Anchor: (Width: 6); }
           $C.@SecondaryTextButton #Tab2 { @Text = ""; Anchor: (Width: 190, Height: 32); }
           Group { Anchor: (Width: 6); }
+          $C.@SecondaryTextButton #Mode { @Text = ""; Anchor: (Width: 180, Height: 32); }
+          Group { Anchor: (Width: 8); }
           Group { FlexWeight: 1; }
           Label #Hint {
             Text: "";
-            Anchor: (Width: 430, Height: 34);
+            Anchor: (Width: 380, Height: 34);
             Style: (FontSize: 12, TextColor: #b4c2d6, Wrap: true);
           }
         }

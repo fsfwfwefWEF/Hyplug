@@ -50,6 +50,15 @@ public final class HeroPage extends InteractiveCustomUIPage<BattleMenuPage.Click
     private Equipment.Slot pickSlot;
     private String message = "";
     private List<Backpack.Entry> shown = List.of();
+    /** Перетаскивание сетками предметов игры (иначе только клики). Флаг игрока «gearclicks» — выключить. */
+    private final boolean drag;
+    static final String CLICKS_FLAG = "gearclicks";
+    /** Слоты куклы в сетках перетаскивания: левая — броня, правая — оружие и аксессуары. */
+    private static final Equipment.Slot[] DOLL_L = {Equipment.Slot.HEAD, Equipment.Slot.CHEST, Equipment.Slot.HANDS, Equipment.Slot.LEGS};
+    private static final Equipment.Slot[] DOLL_R = {Equipment.Slot.WEAPON, Equipment.Slot.OFFHAND, Equipment.Slot.ACC1, Equipment.Slot.ACC2};
+    private static final int CELL = 86, DOLL_MID = 116;
+    /** Что показано в сетках сейчас: id вещей и id предметов игры (чтобы понять, откуда тащили). */
+    private final String[] bagIds = new String[CELLS], bagHy = new String[CELLS];
 
     public HeroPage(@Nonnull PlayerRef playerRef, JrpgPlugin plugin, String heroId) {
         super(playerRef, CustomPageLifetime.CanDismiss, BattleMenuPage.Click.CODEC);
@@ -59,6 +68,7 @@ public final class HeroPage extends InteractiveCustomUIPage<BattleMenuPage.Click
         this.inventory = plugin.inventoryOf(playerRef.getUuid());
         List<Progression.Hero> heroes = party.heroes();
         for (int i = 0; heroId != null && i < heroes.size(); i++) if (heroes.get(i).def.id().equals(heroId)) tab = i;
+        this.drag = !plugin.flag(playerRef.getUuid(), CLICKS_FLAG, false);
     }
 
     @Override
@@ -76,8 +86,147 @@ public final class HeroPage extends InteractiveCustomUIPage<BattleMenuPage.Click
         bind(evt, "#Cancel", "cancel", -1);
         bind(evt, "#Back", "back", -1);
         bind(evt, "#Close", "close", -1);
+        bind(evt, "#Mode", "mode", -1);
+        if (drag) addGrids(cmd, evt);
         fill(cmd);
         WindowIntro.play(this, playerRef, plugin, store, cmd, LAYOUT);
+    }
+
+    /**
+     * Сетки предметов игры поверх ячеек куклы и рюкзака (вставляются при открытии, а не в Hero.ui: если клиент
+     * не примет разметку, вход в мир не сломается). События: Dropped — на что бросили, SlotClicking — клик.
+     */
+    private static void addGrids(UICommandBuilder cmd, UIEventBuilder evt) {
+        String style = "Style: (SlotSize: 76, SlotIconSize: 56, SlotSpacing: 10);";
+        cmd.appendInline("#Doll", "ItemGrid #DollL { Anchor: (Left: 2, Top: 2, Width: 76, Height: " + (4 * CELL - 10)
+                + "); SlotsPerRow: 1; AreItemsDraggable: true; " + style + " }");
+        cmd.appendInline("#Doll", "ItemGrid #DollR { Anchor: (Left: " + (CELL + DOLL_MID + 2) + ", Top: 2, Width: 76, Height: "
+                + (4 * CELL - 10) + "); SlotsPerRow: 1; AreItemsDraggable: true; " + style + " }");
+        cmd.appendInline("#Grid", "ItemGrid #BagGrid { Anchor: (Left: 2, Top: 2, Width: " + (6 * CELL - 10) + ", Height: "
+                + (4 * CELL - 10) + "); SlotsPerRow: 6; AreItemsDraggable: true; " + style + " }");
+        for (String g : new String[]{"DollL", "DollR", "BagGrid"}) {
+            evt.addEventBinding(CustomUIEventBindingType.Dropped, "#" + g, new EventData().append("Action", "drop").append("Grid", g), false);
+            evt.addEventBinding(CustomUIEventBindingType.SlotClicking, "#" + g, new EventData().append("Action", "slotclick").append("Grid", g), false);
+            evt.addEventBinding(CustomUIEventBindingType.SlotMouseDragCompleted, "#" + g,
+                    new EventData().append("Action", "dragdone").append("Grid", g), false);
+        }
+    }
+
+    /** События сеток приходят с полями SlotIndex, SourceSlotId, ItemStackId… — их кодек кнопок не знает, разбираем сами. */
+    @Override
+    public void handleDataEvent(@Nonnull Ref<EntityStore> ref, @Nonnull Store<EntityStore> store, String raw) {
+        Map<String, Object> m;
+        try {
+            m = dev.jrpg.battle.Json.obj(dev.jrpg.battle.Json.parse(raw));
+        } catch (Exception e) {
+            super.handleDataEvent(ref, store, raw);
+            return;
+        }
+        String action = String.valueOf(m.get("Action"));
+        if (!action.equals("drop") && !action.equals("slotclick") && !action.equals("dragdone")) {
+            super.handleDataEvent(ref, store, raw);
+            return;
+        }
+        plugin.log("Перетаскивание (" + playerRef.getUsername() + "): " + raw);
+        if (action.equals("dragdone")) return; // источник перетаскивания; всё делаем по Dropped у цели
+        message = "";
+        String grid = String.valueOf(m.get("Grid"));
+        int slot = num(m.get("SlotIndex"));
+        if (action.equals("slotclick")) {
+            if (grid.equals("BagGrid")) {
+                int at = pageNo * CELLS + slot;
+                if (slot >= 0 && at < shown.size()) clickCell(shown.get(at).item().id());
+            } else {
+                Equipment.Slot s = dollSlot(grid, slot);
+                if (s != null) clickSlot(s);
+            }
+        } else {
+            dropped(grid, slot, num(m.get("SourceSlotId")), m.get("ItemStackId") == null ? null : String.valueOf(m.get("ItemStackId")));
+        }
+        UICommandBuilder cmd = new UICommandBuilder();
+        fill(cmd);
+        Pages.update(this, playerRef, cmd);
+    }
+
+    private static int num(Object o) {
+        if (o instanceof Number n) return n.intValue();
+        try {
+            return o == null ? -1 : Integer.parseInt(String.valueOf(o).trim());
+        } catch (NumberFormatException e) {
+            return -1;
+        }
+    }
+
+    private static Equipment.Slot dollSlot(String grid, int i) {
+        Equipment.Slot[] a = grid.equals("DollL") ? DOLL_L : grid.equals("DollR") ? DOLL_R : null;
+        return a == null || i < 0 || i >= a.length ? null : a[i];
+    }
+
+    /**
+     * Бросили предмет на ячейку target сетки grid. Откуда — ячейка src: ищем, в какой сетке на этом месте
+     * лежит предмет игры itemStackId (сначала в других сетках: внутри одной перетаскивать нечего).
+     */
+    private void dropped(String grid, int target, int src, String itemStackId) {
+        if (busy()) return;
+        Progression.Hero h = hero();
+        String srcGrid = null;
+        for (String g : new String[]{"BagGrid", "DollL", "DollR"}) {
+            if (g.equals(grid) || !holds(h, g, src, itemStackId)) continue;
+            srcGrid = g;
+            break;
+        }
+        if (srcGrid == null && holds(h, grid, src, itemStackId)) srcGrid = grid;
+        if (srcGrid == null) {
+            message = "Не понял, откуда вещь (ячейка " + src + ").";
+            return;
+        }
+        if (srcGrid.equals("BagGrid")) {
+            String id = bagIds[src];
+            if (grid.equals("BagGrid")) {
+                // камень на вещь в рюкзаке — вставить
+                String to = target >= 0 && target < CELLS ? bagIds[target] : null;
+                if (isGem(id) && to != null && content.hasGear(to)) {
+                    Forge.Result r = Forge.insert(content, inventory, Forge.Place.bag(to), id, -1);
+                    message = r.error() != null ? "Нельзя: " + r.error() : r.message();
+                    if (r.error() == null) saved();
+                }
+                return;
+            }
+            Equipment.Slot s = dollSlot(grid, target);
+            if (s == null) return;
+            pickBag = id;
+            pickSlot = null;
+            clickSlot(s);
+            return;
+        }
+        Equipment.Slot from = dollSlot(srcGrid, src);
+        if (from == null) return;
+        if (grid.equals("BagGrid")) {
+            pickSlot = from;
+            pickBag = null;
+            act(); // снять
+            return;
+        }
+        Equipment.Slot to = dollSlot(grid, target);
+        if (to != null && to != from && from.name().startsWith("ACC") && to.name().startsWith("ACC")) {
+            String a = h.equipped.remove(from), b = h.equipped.remove(to);
+            if (a != null) h.equipped.put(to, a);
+            if (b != null) h.equipped.put(from, b);
+            message = "Аксессуары поменялись местами.";
+            saved();
+        }
+    }
+
+    private boolean holds(Progression.Hero h, String grid, int i, String itemStackId) {
+        if (i < 0) return false;
+        String id;
+        if (grid.equals("BagGrid")) id = i < CELLS ? bagIds[i] : null;
+        else {
+            Equipment.Slot s = dollSlot(grid, i);
+            id = s == null ? null : h.equipped.get(s);
+        }
+        if (id == null) return false;
+        return itemStackId == null || itemStackId.equals(DragItems.hytaleItem(content, id));
     }
 
     static void bind(UIEventBuilder evt, String selector, String action, int index) {
@@ -115,6 +264,11 @@ public final class HeroPage extends InteractiveCustomUIPage<BattleMenuPage.Click
                 if (i >= 0 && at < shown.size()) clickCell(shown.get(at).item().id());
             }
             case "act" -> act();
+            case "mode" -> {
+                plugin.setFlag(playerRef.getUuid(), CLICKS_FLAG, drag);
+                Pages.open(plugin, playerRef, ref, store, new HeroPage(playerRef, plugin, hero().def.id()));
+                return;
+            }
             case "cancel" -> {
                 pickBag = null;
                 pickSlot = null;
@@ -266,7 +420,9 @@ public final class HeroPage extends InteractiveCustomUIPage<BattleMenuPage.Click
         if (pickBag != null && inventory.getOrDefault(pickBag, 0) <= 0) pickBag = null;
         boolean gemPicked = isGem(pickBag);
         Equipment.Gear gearPicked = pickBag != null && content.hasGear(pickBag) ? content.gear(pickBag) : null;
-        cmd.set("#Hint.Text", gemPicked ? "Нажми на подсвеченную вещь с пустым гнездом — камень встанет в неё."
+        cmd.set("#Mode.Text", drag ? "Режим: перетаскивание" : "Режим: клики");
+        cmd.set("#Hint.Text", drag && pickBag == null && pickSlot == null
+                ? "Перетащи вещь из рюкзака на куклу (или обратно). Камень — на вещь. Клики тоже работают." : gemPicked ? "Нажми на подсвеченную вещь с пустым гнездом — камень встанет в неё."
                 : gearPicked != null ? "Нажми на подсвеченный слот куклы (или «Надеть»)."
                 : "Нажми на вещь в рюкзаке, потом на слот куклы. Камень — на вещь с гнездом.");
 
@@ -291,7 +447,14 @@ public final class HeroPage extends InteractiveCustomUIPage<BattleMenuPage.Click
             boolean glow = gearPicked != null ? gearPicked.fits(s) : gemPicked && g != null && g.freeSocket() >= 0;
             cmd.set(d + "Glow.Visible", glow);
             cmd.set(d + "Count.Text", g != null && g.sockets() > 0 ? g.gemCount() + "/" + g.sockets() : "");
-            icon(cmd, d + "Icon", g == null ? "" : BattleMenuPage.iconKey(Describe.gearIcon(g)), "g", g == null ? 0 : Describe.gearTier(g));
+            icon(cmd, d + "Icon", g == null || drag ? "" : BattleMenuPage.iconKey(Describe.gearIcon(g)), "g", g == null || drag ? 0 : Describe.gearTier(g));
+        }
+        if (drag) {
+            List<com.hypixel.hytale.server.core.ui.ItemGridSlot> l = new ArrayList<>(), r = new ArrayList<>();
+            for (Equipment.Slot s : DOLL_L) l.add(DragItems.slot(content, h.equipped.get(s), 1));
+            for (Equipment.Slot s : DOLL_R) r.add(DragItems.slot(content, h.equipped.get(s), 1));
+            cmd.set("#DollL.Slots", l);
+            cmd.set("#DollR.Slots", r);
         }
 
         // Рюкзак
@@ -304,19 +467,33 @@ public final class HeroPage extends InteractiveCustomUIPage<BattleMenuPage.Click
         cmd.set("#Page.Text", pages > 1 ? "Страница " + (pageNo + 1) + " из " + pages : shown.isEmpty() ? "Пусто" : "");
         cmd.set("#PrevPage.Visible", pages > 1);
         cmd.set("#NextPage.Visible", pages > 1);
+        List<com.hypixel.hytale.server.core.ui.ItemGridSlot> bagSlots = new ArrayList<>();
         for (int i = 0; i < CELLS; i++) {
             int at = pageNo * CELLS + i;
             String s = "#S" + i;
             boolean has = at < shown.size();
-            cmd.set(s + ".Visible", has);
-            if (!has) continue;
+            bagIds[i] = has ? shown.get(at).item().id() : null;
+            bagHy[i] = has && drag ? DragItems.hytaleItem(content, bagIds[i]) : null;
+            if (drag) bagSlots.add(DragItems.slot(content, bagIds[i], has ? shown.get(at).count() : 0));
+            // в режиме перетаскивания ячейки — только подложка (видна всегда, предметы рисует сетка)
+            cmd.set(s + ".Visible", has || drag);
+            if (!has) {
+                if (drag) {
+                    cmd.set(s + "Sel.Visible", false);
+                    cmd.set(s + "Glow.Visible", false);
+                    cmd.set(s + "Count.Text", "");
+                    icon(cmd, s + "Icon", "", "g", 0);
+                }
+                continue;
+            }
             Backpack.Entry e = shown.get(at);
             String id = e.item().id();
             cmd.set(s + "Sel.Visible", id.equals(pickBag));
             cmd.set(s + "Glow.Visible", gemPicked && content.hasGear(id) && content.gear(id).freeSocket() >= 0);
-            cmd.set(s + "Count.Text", e.count() > 1 ? "x" + e.count() : "");
-            icon(cmd, s + "Icon", BattleMenuPage.iconKey(Describe.itemIcon(content, e.item())), "g", tier(content, id));
+            cmd.set(s + "Count.Text", drag ? "" : e.count() > 1 ? "x" + e.count() : "");
+            icon(cmd, s + "Icon", drag ? "" : BattleMenuPage.iconKey(Describe.itemIcon(content, e.item())), "g", drag ? 0 : tier(content, id));
         }
+        if (drag) cmd.set("#BagGrid.Slots", bagSlots);
 
         // Карточка
         String cardId = pickBag != null ? pickBag : pickSlot != null ? h.equipped.get(pickSlot) : null;

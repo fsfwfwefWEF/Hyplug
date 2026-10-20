@@ -625,3 +625,16 @@ jrpg-mod/
   /jrpg smithremove, /jrpg forge.
 - Иконки камней gem_* и фиолетовая рамка tier_t4/tier_c4 (эпическое); `Describe.gearTier`: 0,1,2,4,3.
 - Рюкзак: вкладка «Камни». Тесты: GemsForgeTest.
+
+## 0.15.1 (2026-10-20) — перетаскивание в меню героя (опыт, в игре не проверено)
+
+- В меню героя поверх ячеек куклы и рюкзака — сетки предметов игры `ItemGrid` (#DollL, #DollR, #BagGrid). Разметка
+  вставляется при открытии (`cmd.appendInline`), а не в Hero.ui: если клиент её не примет, ломается только окно, не вход в мир.
+  Свойства сетки (SlotsPerRow, AreItemsDraggable, Style: SlotSize/SlotIconSize/SlotSpacing) и поля событий взяты из
+  библиотеки HyUI (Elliesaur/HyUI: ItemGridBuilder, DroppedEventData): SlotIndex, SourceSlotId, SourceItemGridIndex,
+  ItemStackId, ItemStackQuantity. Сырые события разбирает `HeroPage.handleDataEvent(ref, store, String)`.
+- Тащить клиент умеет только настоящие предметы Hytale: `DragItems` подбирает каждой вещи похожий предмет игры
+  (оружие/броня — GearVisuals, камни — по названию, прочее — по словам id), имя и описание в подсказке — наши.
+- Dropped на сетке-цели: откуда тащили, ищется по SourceSlotId + ItemStackId среди других сеток. Рюкзак → кукла = надеть,
+  кукла → рюкзак = снять, камень → вещь = вставить, аксессуар ↔ аксессуар = поменять местами.
+- Клики остаются. Кнопка #Mode и `/jrpg gearmode` (флаг игрока gearclicks) — только клики. Лог «Перетаскивание (…)».

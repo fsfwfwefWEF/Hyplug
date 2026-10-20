@@ -179,6 +179,7 @@ public final class JrpgPlugin extends JavaPlugin {
             data.setDifficulty(settings.difficulty);
             ParticleCatalog.reset();
             GearVisuals.reset();
+            DragItems.reset();
             return "Данные загружены из " + dir.toAbsolutePath();
         } catch (Exception e) {
             getLogger().at(Level.SEVERE).log("JRPG: ошибка в файлах данных (" + dir + "): " + e.getMessage()

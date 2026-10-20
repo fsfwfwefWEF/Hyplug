@@ -61,6 +61,7 @@ public final class JrpgCommand extends AbstractCommandCollection {
         addSubCommand(new SmithCmd(plugin));
         addSubCommand(new SmithRemove(plugin));
         addSubCommand(new ForgeCmd(plugin));
+        addSubCommand(new GearMode(plugin));
     }
 
     /** /jrpg cut &lt;id|list|next|skip|1..4|reset&gt; — катсцены из cutscenes.json. */
@@ -231,6 +232,20 @@ public final class JrpgCommand extends AbstractCommandCollection {
         protected void execute(@Nonnull CommandContext ctx, @Nonnull Store<EntityStore> store,
                                @Nonnull Ref<EntityStore> ref, @Nonnull PlayerRef playerRef, @Nonnull World world) {
             plugin.smiths().open(playerRef, ref, store);
+        }
+    }
+
+    static final class GearMode extends Sub {
+        GearMode(JrpgPlugin plugin) {
+            super(plugin, "gearmode", "Меню героя: перетаскивание / только клики");
+        }
+
+        @Override
+        protected void execute(@Nonnull CommandContext ctx, @Nonnull Store<EntityStore> store,
+                               @Nonnull Ref<EntityStore> ref, @Nonnull PlayerRef playerRef, @Nonnull World world) {
+            boolean clicks = !plugin.flag(playerRef.getUuid(), HeroPage.CLICKS_FLAG, false);
+            plugin.setFlag(playerRef.getUuid(), HeroPage.CLICKS_FLAG, clicks);
+            ctx.sendMessage(Message.raw(clicks ? "Меню героя: только клики." : "Меню героя: перетаскивание."));
         }
     }
 

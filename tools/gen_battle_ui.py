@@ -1088,7 +1088,7 @@ def card(width, buttons, sockets_button=None, extra=None):
 def hero():
     tabs = group("Tabs", ["Anchor: (Height: 34);", "LayoutMode: Left;"],
                  sum(([button(f"Tab{i}", "", 190, 32), spacer(w=6)] for i in range(PARTY)), [])
-                 + [spacer(flex=True), label("Hint", "", 12, SUB, width=430, height=34, wrap=True)])
+                 + [button("Mode", "", 180, 32), spacer(w=8), spacer(flex=True), label("Hint", "", 12, SUB, width=380, height=34, wrap=True)])
     doll_w = 2 * CELL + DOLL_MID
     doll = group("Doll", [f"Anchor: (Width: {doll_w}, Height: {4 * CELL});"],
                  [cell(f"D{i}", (0 if c == 0 else CELL + DOLL_MID) , r * CELL, glow=True, name=True) for i, (c, r) in DOLL.items()]
