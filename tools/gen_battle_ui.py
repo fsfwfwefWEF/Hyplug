@@ -1052,6 +1052,14 @@ def cell(id_, left, top, glow=False, name=False):
     return group(id_, [f"Anchor: (Left: {left}, Top: {top}, Width: {CELL - 6}, Height: {CELL - 6});"], kids)
 
 
+def item_grid(id_, section, per_row, left, top, w, h, slot=76, icon=56, spacing=10):
+    """Сетка предметов игры для перетаскивания (как в CustomInventory): свой отрицательный InventorySectionId —
+    по нему клиент сообщает в Dropped, из какой сетки тащили. Фон ячеек прозрачный: под сеткой наши ячейки."""
+    return (f"ItemGrid #{id_} {{ Anchor: (Left: {left}, Top: {top}, Width: {w}, Height: {h}); SlotsPerRow: {per_row}; "
+            f"InventorySectionId: {section}; AreItemsDraggable: true; RenderItemQualityBackground: false; InfoDisplay: Tooltip; "
+            f'Style: (SlotSize: {slot}, SlotIconSize: {icon}, SlotSpacing: {spacing}, SlotBackground: "jr_clear.png"); }}')
+
+
 def info_lines(n, width):
     return [label(f"Info{i}", "", 13, TEXT, height=18, width=width) for i in range(n)]
 
@@ -1066,7 +1074,7 @@ def socket_row(i, width, button_text=None):
     return group(f"Sock{i}Box", [f"Anchor: (Height: 34);"], kids)
 
 
-def card(width, buttons, sockets_button=None, extra=None):
+def card(width, buttons, sockets_button=None, extra=None, before_sockets=None):
     kids = [
         group("", ["Anchor: (Height: 68);", "LayoutMode: Left;"], [
             group("", ["Anchor: (Width: 68, Height: 68);", skin("jr_cell", 26)], [
@@ -1078,7 +1086,7 @@ def card(width, buttons, sockets_button=None, extra=None):
             ]),
         ]),
         spacer(h=4), divider(), spacer(h=4),
-    ] + info_lines(HERO_INFO, width - 24) + [spacer(h=4)]
+    ] + info_lines(HERO_INFO, width - 24) + [spacer(h=4)] + (before_sockets or [])
     for i in range(SOCKETS):
         kids += [socket_row(i, width - 24, sockets_button), spacer(h=3)]
     kids += (extra or []) + [label("Message", "", 12, "#ffd27a", height=34, wrap=True)] + buttons
@@ -1096,7 +1104,9 @@ def hero():
                     f'Label #DollLvl {{ Text: ""; Anchor: (Left: {CELL}, Top: 124, Width: {DOLL_MID}, Height: 20); '
                     f"Style: (FontSize: 13, TextColor: {GOLD}, RenderBold: true, HorizontalAlignment: Center); }}",
                     f'Label #DollStats {{ Text: ""; Anchor: (Left: {CELL}, Top: 150, Width: {DOLL_MID}, Height: 190); '
-                    f"Style: (FontSize: 12, TextColor: {TEXT}, Wrap: true, HorizontalAlignment: Center); }}"])
+                    f"Style: (FontSize: 12, TextColor: {TEXT}, Wrap: true, HorizontalAlignment: Center); }}",
+                    item_grid("DollL", -1101, 1, 2, 2, 76, 4 * CELL - 10),
+                    item_grid("DollR", -1102, 1, CELL + DOLL_MID + 2, 2, 76, 4 * CELL - 10)])
     left = column("DollCol", [f"Anchor: (Width: {doll_w + 20});"], [
         label("HeroName", "", 18, PARTY_NAME, True, height=24),
         label("HeroSub", "", 12, SUB, height=18),
@@ -1112,7 +1122,8 @@ def hero():
         btabs,
         spacer(h=6),
         group("Grid", [f"Anchor: (Width: {grid_w}, Height: {grid_h});"],
-              [cell(f"S{i}", (i % BAG_COLS) * CELL, (i // BAG_COLS) * CELL, glow=True) for i in range(BAG_COLS * BAG_ROWS)]),
+              [cell(f"S{i}", (i % BAG_COLS) * CELL, (i // BAG_COLS) * CELL, glow=True) for i in range(BAG_COLS * BAG_ROWS)]
+              + [item_grid("BagGrid", -1103, BAG_COLS, 2, 2, grid_w - 10, grid_h - 10)]),
         spacer(h=6),
         group("", ["Anchor: (Height: 30);", "LayoutMode: Left;"], [
             button("PrevPage", "<", 60, 28), spacer(w=6),
@@ -1143,7 +1154,7 @@ def hero():
 
 
 SMITH_ROWS = 9
-SMITH_GEMS = 8
+SMITH_GEMS = 16
 
 
 def smith():
@@ -1160,13 +1171,18 @@ def smith():
             button("LNext", ">", 50, 28),
         ]),
     ])
-    gems = []
-    for i in range(SMITH_GEMS):
-        gems += [sel_row(f"G{i}", 300, EQ_ROW, 220, extra=True), spacer(h=2)]
+    gw = 4 * 76 - 4
+    gem_cells = [f"Group {{ Anchor: (Left: {(i % 4) * 76}, Top: {(i // 4) * 76}, Width: 72, Height: 72); {skin('jr_cell', 26)} }}"
+                 for i in range(SMITH_GEMS)]
     right = column("GemCol", ["Anchor: (Width: 320);"], [
         label("", "Камни в рюкзаке", 15, GOLD, True, height=22),
+        label("GemHint", "Перетащи камень в гнездо вещи", 11, SUB, height=16),
         spacer(h=4),
-    ] + gems + [
+        group("GemBox", [f"Anchor: (Width: {gw}, Height: {(SMITH_GEMS // 4) * 76 - 4});"],
+              gem_cells + [item_grid("GemGrid", -1112, 4, 0, 0, gw, (SMITH_GEMS // 4) * 76 - 4, slot=72, icon=52, spacing=4)]),
+        spacer(h=4),
+        label("GemSel", "", 13, TEXT, height=36, wrap=True),
+    ] + [
         group("", ["Anchor: (Height: 30);", "LayoutMode: Left;"], [
             button("GPrev", "<", 50, 28), spacer(w=6),
             label("GPage", "", 12, SUB, height=28, flex=True, center=True),
@@ -1184,8 +1200,13 @@ def smith():
         spacer(h=4),
     ]
     buttons = [button("Close", "Закрыть", 300, 32, cancel=True)]
-    middle = card(400, buttons, sockets_button="Достать", extra=upgrade)
-    body_h = 22 + 4 + SMITH_ROWS * (EQ_ROW + 2) + 30 + 22
+    sock_grid = [label("", "Гнёзда (перетащи камень сюда, обратно — достать):", 11, SUB, height=16),
+                 group("SockBox", ["Anchor: (Width: 216, Height: 64);"],
+                       [f"Group {{ Anchor: (Left: {i * 76}, Top: 0, Width: 64, Height: 64); {skin('jr_cell', 24)} }}" for i in range(3)]
+                       + [item_grid("SockGrid", -1111, 3, 0, 0, 216, 64, slot=64, icon=48, spacing=12)]),
+                 spacer(h=4)]
+    middle = card(400, buttons, sockets_button="Достать", extra=upgrade, before_sockets=sock_grid)
+    body_h = max(22 + 4 + SMITH_ROWS * (EQ_ROW + 2) + 30 + 22, 600)
     window = menu_window(1180, [
         menu_title("КУЗНИЦА", "Total", sub="улучшение вещей и камни"),
         group("", ["Anchor: (Height: 22);", "LayoutMode: Left;"], [label("Hint", "", 12, SUB, flex=True, height=22)]),
@@ -1194,7 +1215,8 @@ def smith():
     ])
     write("Smith.ui", '$C = "../Common.ui";\n\n'
           "// Кузница: вещи #L0..8 (#L<n>Btn/#L<n>Icon/#L<n>Q/#L<n>Sel), карточка (#SelIcon, #SelName, #SelKind, #Info0..7,\n"
-          "// гнёзда #Sock0..2 с кнопками #Ext0..2), улучшение #UpCost/#Upgrade, камни #G0..7, #Insert, #Merge, #Close.\n"
+          "// гнёзда #Sock0..2 с кнопками #Ext0..2 и сетка #SockGrid), улучшение #UpCost/#Upgrade, камни — сетка #GemGrid,\n"
+          "// #GemSel, #Insert, #Merge, #Close.\n"
           "// Собрано tools/gen_battle_ui.py — правь скрипт.\n\n"
           + centered(body_h + 120, window) + "\n")
 

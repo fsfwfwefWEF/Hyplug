@@ -26,11 +26,14 @@ import java.util.Map;
 /**
  * Кузница (Common/UI/Custom/JrpgBattle/Smith.ui): слева все вещи (надетые на героев и из рюкзака), в центре
  * карточка с гнёздами («Достать» — камень вернётся в рюкзак целым) и улучшение качества за материалы и камни,
- * справа камни из рюкзака: «Вставить в вещь» и «Слить 3 в 1».
+ * справа камни из рюкзака: «Вставить в вещь» и «Слить 3 в 1». Камни и гнёзда — сетки предметов игры: камень
+ * перетаскивается в гнездо, из гнезда обратно в камни (достать); клик по камню выбирает его.
  */
 public final class SmithPage extends InteractiveCustomUIPage<BattleMenuPage.Click> {
     public static final String LAYOUT = "JrpgBattle/Smith.ui";
-    private static final int ROWS = 9, GEMS = 8;
+    private static final int ROWS = 9, GEMS = 16;
+    /** Номера секций сеток в Smith.ui: гнёзда выбранной вещи и камни рюкзака. */
+    static final int SEC_SOCKETS = -1111, SEC_GEMS = -1112;
 
     /** Вещь в списке: где лежит. */
     private record Entry(Forge.Place place, Equipment.Gear gear, String owner, int count) {}
@@ -49,6 +52,8 @@ public final class SmithPage extends InteractiveCustomUIPage<BattleMenuPage.Clic
     private String message = "";
     private List<Entry> items = List.of();
     private List<Backpack.Entry> gems = List.of();
+    /** Что сейчас нарисовано в сетках (чтобы не слать .Slots без изменений и не сбивать перетаскивание). */
+    private String gemKey, sockKey;
 
     public SmithPage(@Nonnull PlayerRef playerRef, JrpgPlugin plugin) {
         super(playerRef, CustomPageLifetime.CanDismiss, BattleMenuPage.Click.CODEC);
@@ -64,7 +69,12 @@ public final class SmithPage extends InteractiveCustomUIPage<BattleMenuPage.Clic
         cmd.append(LAYOUT);
         shownIcons.clear();
         for (int i = 0; i < ROWS; i++) HeroPage.bind(evt, "#L" + i + "Btn", "item", i);
-        for (int i = 0; i < GEMS; i++) HeroPage.bind(evt, "#G" + i + "Btn", "gem", i);
+        for (String g : new String[]{"GemGrid", "SockGrid"}) {
+            evt.addEventBinding(com.hypixel.hytale.protocol.packets.interface_.CustomUIEventBindingType.Dropped, "#" + g,
+                    new com.hypixel.hytale.server.core.ui.builder.EventData().append("Action", "drop").append("Grid", g), false);
+            evt.addEventBinding(com.hypixel.hytale.protocol.packets.interface_.CustomUIEventBindingType.SlotClicking, "#" + g,
+                    new com.hypixel.hytale.server.core.ui.builder.EventData().append("Action", "slotclick").append("Grid", g), false);
+        }
         for (int i = 0; i < HeroPage.SOCKETS; i++) HeroPage.bind(evt, "#Ext" + i, "extract", i);
         HeroPage.bind(evt, "#LPrev", "lpage", -1);
         HeroPage.bind(evt, "#LNext", "lpage", 1);
@@ -76,6 +86,64 @@ public final class SmithPage extends InteractiveCustomUIPage<BattleMenuPage.Clic
         HeroPage.bind(evt, "#Close", "close", -1);
         fill(cmd);
         WindowIntro.play(this, playerRef, plugin, store, cmd, LAYOUT);
+    }
+
+    /** События сеток (SlotIndex, SourceInventorySectionId, SourceSlotId…) разбираем сами, остальное — кодеку кнопок. */
+    @Override
+    public void handleDataEvent(@Nonnull Ref<EntityStore> ref, @Nonnull Store<EntityStore> store, String raw) {
+        Map<String, Object> m;
+        try {
+            m = dev.jrpg.battle.Json.obj(dev.jrpg.battle.Json.parse(raw));
+        } catch (Exception e) {
+            super.handleDataEvent(ref, store, raw);
+            return;
+        }
+        String action = String.valueOf(m.get("Action"));
+        if (!action.equals("drop") && !action.equals("slotclick")) {
+            super.handleDataEvent(ref, store, raw);
+            return;
+        }
+        plugin.log("Кузница, сетка (" + playerRef.getUsername() + "): " + raw);
+        message = "";
+        String grid = String.valueOf(m.get("Grid"));
+        int slot = num(m.get("SlotIndex"));
+        if (action.equals("slotclick")) {
+            if (grid.equals("GemGrid")) {
+                int at = gemPage * GEMS + slot;
+                if (slot >= 0 && at < gems.size()) pickGem = gems.get(at).item().id();
+            } else if (grid.equals("SockGrid") && pickGem != null && place() != null) {
+                Equipment.Gear g = content.gear(pickId);
+                if (slot >= 0 && slot < g.sockets() && g.gem(slot) == null) run(Forge.insert(content, inventory, place(), pickGem, slot));
+            }
+        } else {
+            gemKey = sockKey = null; // после броска сетки перерисовать всегда: клиент мог сдвинуть предмет у себя
+            int section = num(m.get("SourceInventorySectionId")), src = num(m.get("SourceSlotId"));
+            if (grid.equals("SockGrid") && section != SEC_SOCKETS) {
+                // камень из рюкзака в гнездо
+                int at = gemPage * GEMS + src;
+                String gem = src >= 0 && at < gems.size() ? gems.get(at).item().id() : pickGem;
+                if (gem == null) message = "Не понял, какой камень.";
+                else {
+                    pickGem = gem;
+                    run(place() == null ? null : Forge.insert(content, inventory, place(), gem, slot));
+                }
+            } else if (grid.equals("GemGrid") && section == SEC_SOCKETS) {
+                // камень из гнезда обратно — достать
+                if (src >= 0) run(place() == null ? null : Forge.extract(content, inventory, place(), src));
+            }
+        }
+        UICommandBuilder cmd = new UICommandBuilder();
+        fill(cmd);
+        Pages.update(this, playerRef, cmd);
+    }
+
+    private static int num(Object o) {
+        if (o instanceof Number n) return n.intValue();
+        try {
+            return o == null ? -1 : Integer.parseInt(String.valueOf(o).trim());
+        } catch (NumberFormatException e) {
+            return -1;
+        }
     }
 
     @Override
@@ -97,10 +165,6 @@ public final class SmithPage extends InteractiveCustomUIPage<BattleMenuPage.Clic
                     pickSlot = e.place().slot();
                     pickId = e.gear().id();
                 }
-            }
-            case "gem" -> {
-                int at = gemPage * GEMS + i;
-                if (i >= 0 && at < gems.size()) pickGem = gems.get(at).item().id();
             }
             case "lpage" -> listPage += i;
             case "gpage" -> gemPage += i;
@@ -206,20 +270,23 @@ public final class SmithPage extends InteractiveCustomUIPage<BattleMenuPage.Clic
         if (pickGem != null && inventory.getOrDefault(pickGem, 0) <= 0) pickGem = null;
         int gpages = Math.max(1, (gems.size() + GEMS - 1) / GEMS);
         gemPage = Math.max(0, Math.min(gemPage, gpages - 1));
+        List<com.hypixel.hytale.server.core.ui.ItemGridSlot> gemSlots = new ArrayList<>();
+        StringBuilder gk = new StringBuilder();
         for (int i = 0; i < GEMS; i++) {
             int at = gemPage * GEMS + i;
-            String r = "#G" + i;
-            boolean has = at < gems.size();
-            cmd.set(r + ".Visible", has);
-            if (!has) continue;
-            Backpack.Entry e = gems.get(at);
-            Gems.Gem gem = Gems.parse(content, e.item().id());
-            cmd.set(r + "Sel.Visible", e.item().id().equals(pickGem));
-            cmd.set(r + "Btn.Text", e.item().name());
-            cmd.set(r + "Q.Text", "x" + e.count());
-            cmd.set(r + "Q.Style.TextColor", gem == null ? HeroPage.DIM : gem.type().color());
-            icon(cmd, r + "Icon", BattleMenuPage.iconKey(Describe.itemIcon(content, e.item())), "r", HeroPage.tier(content, e.item().id()));
+            String id = at < gems.size() ? gems.get(at).item().id() : null;
+            int n = id == null ? 0 : gems.get(at).count();
+            gemSlots.add(DragItems.slot(content, id, n));
+            gk.append(id).append('x').append(n).append('|');
         }
+        if (!gk.toString().equals(gemKey)) {
+            gemKey = gk.toString();
+            cmd.set("#GemGrid.Slots", gemSlots);
+        }
+        Gems.Gem sel = pickGem == null ? null : Gems.parse(content, pickGem);
+        cmd.set("#GemSel.Text", sel == null ? "" : sel.name() + " x" + inventory.getOrDefault(pickGem, 0) + ": "
+                + Gems.text(content, sel.in(pickId == null ? Equipment.Slot.WEAPON : Forge.slotOf(content.gear(pickId)))));
+        cmd.set("#GemSel.Style.TextColor", sel == null ? HeroPage.DIM : sel.type().color());
         cmd.set("#GPage.Text", gems.isEmpty() ? "Камней нет. Они падают с сильных групп (Элита) и боссов." : gpages > 1 ? (gemPage + 1) + " / " + gpages : "");
         cmd.set("#GPrev.Visible", gpages > 1);
         cmd.set("#GNext.Visible", gpages > 1);
@@ -232,9 +299,22 @@ public final class SmithPage extends InteractiveCustomUIPage<BattleMenuPage.Clic
             for (Progression.Hero h : party.heroes()) if (h.def.id().equals(pickHero)) extra.add(new String[]{"Надето: " + h.def.name(), HeroPage.GOLD});
         }
         HeroPage.card(plugin, content, cmd, shownIcons, pickId, pickHero == null && pickId != null ? inventory.getOrDefault(pickId, 0) : 0, extra, true);
+        Equipment.Gear pg = pickId == null ? null : content.gear(pickId);
+        List<com.hypixel.hytale.server.core.ui.ItemGridSlot> sockSlots = new ArrayList<>();
+        StringBuilder sk = new StringBuilder();
+        for (int i = 0; i < HeroPage.SOCKETS; i++) {
+            String gem = pg == null || i >= pg.sockets() ? null : pg.gem(i);
+            sockSlots.add(DragItems.slot(content, gem, 1));
+            sk.append(gem).append('|');
+        }
+        if (!sk.toString().equals(sockKey)) {
+            sockKey = sk.toString();
+            cmd.set("#SockGrid.Slots", sockSlots);
+        }
+        cmd.set("#SockBox.Visible", pg != null && pg.sockets() > 0);
         int[] stock = Forge.stock(content, inventory);
         cmd.set("#Total.Text", "Материалов: " + stock[0] + "   камней: " + stock[1]);
-        cmd.set("#Hint.Text", "Выбери вещь слева. Камень справа → «Вставить». «Достать» возвращает камень в рюкзак целым.");
+        cmd.set("#Hint.Text", "Выбери вещь слева. Камень справа перетащи в гнездо (или выбери и «Вставить»). Из гнезда обратно — достать целым.");
         Equipment.Gear g = pickId == null ? null : content.gear(pickId);
         Equipment.Cost cost = g == null ? null : Forge.upgradeCost(content, g);
         if (g == null) cmd.set("#UpCost.Text", "");

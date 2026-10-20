@@ -1,7 +1,8 @@
 $C = "../Common.ui";
 
 // Кузница: вещи #L0..8 (#L<n>Btn/#L<n>Icon/#L<n>Q/#L<n>Sel), карточка (#SelIcon, #SelName, #SelKind, #Info0..7,
-// гнёзда #Sock0..2 с кнопками #Ext0..2), улучшение #UpCost/#Upgrade, камни #G0..7, #Insert, #Merge, #Close.
+// гнёзда #Sock0..2 с кнопками #Ext0..2 и сетка #SockGrid), улучшение #UpCost/#Upgrade, камни — сетка #GemGrid,
+// #GemSel, #Insert, #Merge, #Close.
 // Собрано tools/gen_battle_ui.py — правь скрипт.
 
 Group {
@@ -9,7 +10,7 @@ Group {
 
   Group { FlexWeight: 1; }
   Group {
-    Anchor: (Height: 592);
+    Anchor: (Height: 736);
     LayoutMode: Left;
 
     Group { FlexWeight: 1; }
@@ -17,7 +18,7 @@ Group {
       Anchor: (Width: 1180);
 
       Group #Window {
-        Anchor: (Left: 0, Top: 0, Width: 1180, Height: 592);
+        Anchor: (Left: 0, Top: 0, Width: 1180, Height: 736);
         LayoutMode: Top;
         Background: (TexturePath: "jr_window.png", Border: 86);
         Padding: (Left: 24, Right: 24, Top: 16, Bottom: 24);
@@ -59,7 +60,7 @@ Group {
         }
         Group { Anchor: (Height: 6); }
         Group {
-          Anchor: (Height: 456);
+          Anchor: (Height: 600);
           LayoutMode: Left;
 
           Group #ListCol {
@@ -258,6 +259,20 @@ Group {
               Style: (FontSize: 13, TextColor: #e9eef6);
             }
             Group { Anchor: (Height: 4); }
+            Label {
+              Text: "Гнёзда (перетащи камень сюда, обратно — достать):";
+              Anchor: (Height: 16);
+              Style: (FontSize: 11, TextColor: #b4c2d6);
+            }
+            Group #SockBox {
+              Anchor: (Width: 216, Height: 64);
+
+              Group { Anchor: (Left: 0, Top: 0, Width: 64, Height: 64); Background: (TexturePath: "jr_cell.png", Border: 24); }
+              Group { Anchor: (Left: 76, Top: 0, Width: 64, Height: 64); Background: (TexturePath: "jr_cell.png", Border: 24); }
+              Group { Anchor: (Left: 152, Top: 0, Width: 64, Height: 64); Background: (TexturePath: "jr_cell.png", Border: 24); }
+              ItemGrid #SockGrid { Anchor: (Left: 0, Top: 0, Width: 216, Height: 64); SlotsPerRow: 3; InventorySectionId: -1111; AreItemsDraggable: true; RenderItemQualityBackground: false; InfoDisplay: Tooltip; Style: (SlotSize: 64, SlotIconSize: 48, SlotSpacing: 12, SlotBackground: "jr_clear.png"); }
+            }
+            Group { Anchor: (Height: 4); }
             Group #Sock0Box {
               Anchor: (Height: 34);
 
@@ -314,87 +329,39 @@ Group {
               Anchor: (Height: 22);
               Style: (FontSize: 15, TextColor: #e8c46a, RenderBold: true);
             }
+            Label #GemHint {
+              Text: "Перетащи камень в гнездо вещи";
+              Anchor: (Height: 16);
+              Style: (FontSize: 11, TextColor: #b4c2d6);
+            }
             Group { Anchor: (Height: 4); }
-            Group #G0 {
-              Anchor: (Width: 300, Height: 40);
+            Group #GemBox {
+              Anchor: (Width: 300, Height: 300);
 
-              Group { Anchor: (Left: 0, Top: 0, Width: 300, Height: 40); Background: (TexturePath: "jr_slot.png", Border: 8); }
-              Group #G0Sel { Anchor: (Left: 0, Top: 0, Width: 300, Height: 40); Background: (TexturePath: "jr_panel_gold.png", Border: 12); }
-              Group #G0Icon { Anchor: (Left: 6, Top: 5, Width: 30, Height: 30); }
-              $C.@SecondaryTextButton #G0Btn { @Text = ""; Anchor: (Left: 40, Top: 4, Width: 180, Height: 32); }
-              Label #G0Q { Text: ""; Anchor: (Left: 228, Top: 10, Width: 68, Height: 20); Style: (FontSize: 12, TextColor: #9fb0c6, RenderBold: true); }
+              Group { Anchor: (Left: 0, Top: 0, Width: 72, Height: 72); Background: (TexturePath: "jr_cell.png", Border: 26); }
+              Group { Anchor: (Left: 76, Top: 0, Width: 72, Height: 72); Background: (TexturePath: "jr_cell.png", Border: 26); }
+              Group { Anchor: (Left: 152, Top: 0, Width: 72, Height: 72); Background: (TexturePath: "jr_cell.png", Border: 26); }
+              Group { Anchor: (Left: 228, Top: 0, Width: 72, Height: 72); Background: (TexturePath: "jr_cell.png", Border: 26); }
+              Group { Anchor: (Left: 0, Top: 76, Width: 72, Height: 72); Background: (TexturePath: "jr_cell.png", Border: 26); }
+              Group { Anchor: (Left: 76, Top: 76, Width: 72, Height: 72); Background: (TexturePath: "jr_cell.png", Border: 26); }
+              Group { Anchor: (Left: 152, Top: 76, Width: 72, Height: 72); Background: (TexturePath: "jr_cell.png", Border: 26); }
+              Group { Anchor: (Left: 228, Top: 76, Width: 72, Height: 72); Background: (TexturePath: "jr_cell.png", Border: 26); }
+              Group { Anchor: (Left: 0, Top: 152, Width: 72, Height: 72); Background: (TexturePath: "jr_cell.png", Border: 26); }
+              Group { Anchor: (Left: 76, Top: 152, Width: 72, Height: 72); Background: (TexturePath: "jr_cell.png", Border: 26); }
+              Group { Anchor: (Left: 152, Top: 152, Width: 72, Height: 72); Background: (TexturePath: "jr_cell.png", Border: 26); }
+              Group { Anchor: (Left: 228, Top: 152, Width: 72, Height: 72); Background: (TexturePath: "jr_cell.png", Border: 26); }
+              Group { Anchor: (Left: 0, Top: 228, Width: 72, Height: 72); Background: (TexturePath: "jr_cell.png", Border: 26); }
+              Group { Anchor: (Left: 76, Top: 228, Width: 72, Height: 72); Background: (TexturePath: "jr_cell.png", Border: 26); }
+              Group { Anchor: (Left: 152, Top: 228, Width: 72, Height: 72); Background: (TexturePath: "jr_cell.png", Border: 26); }
+              Group { Anchor: (Left: 228, Top: 228, Width: 72, Height: 72); Background: (TexturePath: "jr_cell.png", Border: 26); }
+              ItemGrid #GemGrid { Anchor: (Left: 0, Top: 0, Width: 300, Height: 300); SlotsPerRow: 4; InventorySectionId: -1112; AreItemsDraggable: true; RenderItemQualityBackground: false; InfoDisplay: Tooltip; Style: (SlotSize: 72, SlotIconSize: 52, SlotSpacing: 4, SlotBackground: "jr_clear.png"); }
             }
-            Group { Anchor: (Height: 2); }
-            Group #G1 {
-              Anchor: (Width: 300, Height: 40);
-
-              Group { Anchor: (Left: 0, Top: 0, Width: 300, Height: 40); Background: (TexturePath: "jr_slot.png", Border: 8); }
-              Group #G1Sel { Anchor: (Left: 0, Top: 0, Width: 300, Height: 40); Background: (TexturePath: "jr_panel_gold.png", Border: 12); }
-              Group #G1Icon { Anchor: (Left: 6, Top: 5, Width: 30, Height: 30); }
-              $C.@SecondaryTextButton #G1Btn { @Text = ""; Anchor: (Left: 40, Top: 4, Width: 180, Height: 32); }
-              Label #G1Q { Text: ""; Anchor: (Left: 228, Top: 10, Width: 68, Height: 20); Style: (FontSize: 12, TextColor: #9fb0c6, RenderBold: true); }
+            Group { Anchor: (Height: 4); }
+            Label #GemSel {
+              Text: "";
+              Anchor: (Height: 36);
+              Style: (FontSize: 13, TextColor: #e9eef6, Wrap: true);
             }
-            Group { Anchor: (Height: 2); }
-            Group #G2 {
-              Anchor: (Width: 300, Height: 40);
-
-              Group { Anchor: (Left: 0, Top: 0, Width: 300, Height: 40); Background: (TexturePath: "jr_slot.png", Border: 8); }
-              Group #G2Sel { Anchor: (Left: 0, Top: 0, Width: 300, Height: 40); Background: (TexturePath: "jr_panel_gold.png", Border: 12); }
-              Group #G2Icon { Anchor: (Left: 6, Top: 5, Width: 30, Height: 30); }
-              $C.@SecondaryTextButton #G2Btn { @Text = ""; Anchor: (Left: 40, Top: 4, Width: 180, Height: 32); }
-              Label #G2Q { Text: ""; Anchor: (Left: 228, Top: 10, Width: 68, Height: 20); Style: (FontSize: 12, TextColor: #9fb0c6, RenderBold: true); }
-            }
-            Group { Anchor: (Height: 2); }
-            Group #G3 {
-              Anchor: (Width: 300, Height: 40);
-
-              Group { Anchor: (Left: 0, Top: 0, Width: 300, Height: 40); Background: (TexturePath: "jr_slot.png", Border: 8); }
-              Group #G3Sel { Anchor: (Left: 0, Top: 0, Width: 300, Height: 40); Background: (TexturePath: "jr_panel_gold.png", Border: 12); }
-              Group #G3Icon { Anchor: (Left: 6, Top: 5, Width: 30, Height: 30); }
-              $C.@SecondaryTextButton #G3Btn { @Text = ""; Anchor: (Left: 40, Top: 4, Width: 180, Height: 32); }
-              Label #G3Q { Text: ""; Anchor: (Left: 228, Top: 10, Width: 68, Height: 20); Style: (FontSize: 12, TextColor: #9fb0c6, RenderBold: true); }
-            }
-            Group { Anchor: (Height: 2); }
-            Group #G4 {
-              Anchor: (Width: 300, Height: 40);
-
-              Group { Anchor: (Left: 0, Top: 0, Width: 300, Height: 40); Background: (TexturePath: "jr_slot.png", Border: 8); }
-              Group #G4Sel { Anchor: (Left: 0, Top: 0, Width: 300, Height: 40); Background: (TexturePath: "jr_panel_gold.png", Border: 12); }
-              Group #G4Icon { Anchor: (Left: 6, Top: 5, Width: 30, Height: 30); }
-              $C.@SecondaryTextButton #G4Btn { @Text = ""; Anchor: (Left: 40, Top: 4, Width: 180, Height: 32); }
-              Label #G4Q { Text: ""; Anchor: (Left: 228, Top: 10, Width: 68, Height: 20); Style: (FontSize: 12, TextColor: #9fb0c6, RenderBold: true); }
-            }
-            Group { Anchor: (Height: 2); }
-            Group #G5 {
-              Anchor: (Width: 300, Height: 40);
-
-              Group { Anchor: (Left: 0, Top: 0, Width: 300, Height: 40); Background: (TexturePath: "jr_slot.png", Border: 8); }
-              Group #G5Sel { Anchor: (Left: 0, Top: 0, Width: 300, Height: 40); Background: (TexturePath: "jr_panel_gold.png", Border: 12); }
-              Group #G5Icon { Anchor: (Left: 6, Top: 5, Width: 30, Height: 30); }
-              $C.@SecondaryTextButton #G5Btn { @Text = ""; Anchor: (Left: 40, Top: 4, Width: 180, Height: 32); }
-              Label #G5Q { Text: ""; Anchor: (Left: 228, Top: 10, Width: 68, Height: 20); Style: (FontSize: 12, TextColor: #9fb0c6, RenderBold: true); }
-            }
-            Group { Anchor: (Height: 2); }
-            Group #G6 {
-              Anchor: (Width: 300, Height: 40);
-
-              Group { Anchor: (Left: 0, Top: 0, Width: 300, Height: 40); Background: (TexturePath: "jr_slot.png", Border: 8); }
-              Group #G6Sel { Anchor: (Left: 0, Top: 0, Width: 300, Height: 40); Background: (TexturePath: "jr_panel_gold.png", Border: 12); }
-              Group #G6Icon { Anchor: (Left: 6, Top: 5, Width: 30, Height: 30); }
-              $C.@SecondaryTextButton #G6Btn { @Text = ""; Anchor: (Left: 40, Top: 4, Width: 180, Height: 32); }
-              Label #G6Q { Text: ""; Anchor: (Left: 228, Top: 10, Width: 68, Height: 20); Style: (FontSize: 12, TextColor: #9fb0c6, RenderBold: true); }
-            }
-            Group { Anchor: (Height: 2); }
-            Group #G7 {
-              Anchor: (Width: 300, Height: 40);
-
-              Group { Anchor: (Left: 0, Top: 0, Width: 300, Height: 40); Background: (TexturePath: "jr_slot.png", Border: 8); }
-              Group #G7Sel { Anchor: (Left: 0, Top: 0, Width: 300, Height: 40); Background: (TexturePath: "jr_panel_gold.png", Border: 12); }
-              Group #G7Icon { Anchor: (Left: 6, Top: 5, Width: 30, Height: 30); }
-              $C.@SecondaryTextButton #G7Btn { @Text = ""; Anchor: (Left: 40, Top: 4, Width: 180, Height: 32); }
-              Label #G7Q { Text: ""; Anchor: (Left: 228, Top: 10, Width: 68, Height: 20); Style: (FontSize: 12, TextColor: #9fb0c6, RenderBold: true); }
-            }
-            Group { Anchor: (Height: 2); }
             Group {
               Anchor: (Height: 30);
               LayoutMode: Left;

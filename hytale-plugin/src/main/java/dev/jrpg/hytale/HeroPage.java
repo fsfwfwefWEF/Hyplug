@@ -59,6 +59,8 @@ public final class HeroPage extends InteractiveCustomUIPage<BattleMenuPage.Click
     private static final int CELL = 86, DOLL_MID = 116;
     /** Что показано в сетках сейчас: id вещей и id предметов игры (чтобы понять, откуда тащили). */
     private final String[] bagIds = new String[CELLS], bagHy = new String[CELLS];
+    /** Что сейчас нарисовано в сетках (чтобы не слать .Slots без изменений). */
+    private String dollKey, bagKey;
 
     public HeroPage(@Nonnull PlayerRef playerRef, JrpgPlugin plugin, String heroId) {
         super(playerRef, CustomPageLifetime.CanDismiss, BattleMenuPage.Click.CODEC);
@@ -87,29 +89,27 @@ public final class HeroPage extends InteractiveCustomUIPage<BattleMenuPage.Click
         bind(evt, "#Back", "back", -1);
         bind(evt, "#Close", "close", -1);
         bind(evt, "#Mode", "mode", -1);
-        if (drag) addGrids(cmd, evt);
+        if (drag) bindGrids(evt);
         fill(cmd);
         WindowIntro.play(this, playerRef, plugin, store, cmd, LAYOUT);
     }
 
+    /** Номера секций сеток в Hero.ui (InventorySectionId): по ним Dropped говорит, откуда тащили. */
+    static final int SEC_DOLL_L = -1101, SEC_DOLL_R = -1102, SEC_BAG = -1103;
+
     /**
-     * Сетки предметов игры поверх ячеек куклы и рюкзака (вставляются при открытии, а не в Hero.ui: если клиент
-     * не примет разметку, вход в мир не сломается). События: Dropped — на что бросили, SlotClicking — клик.
+     * События сеток предметов игры (сами сетки в Hero.ui, у каждой свой номер секции, как в CustomInventory):
+     * Dropped — на цель бросили предмет (SourceInventorySectionId/SourceSlotId — откуда), SlotClicking — клик.
      */
-    private static void addGrids(UICommandBuilder cmd, UIEventBuilder evt) {
-        String style = "Style: (SlotSize: 76, SlotIconSize: 56, SlotSpacing: 10);";
-        cmd.appendInline("#Doll", "ItemGrid #DollL { Anchor: (Left: 2, Top: 2, Width: 76, Height: " + (4 * CELL - 10)
-                + "); SlotsPerRow: 1; AreItemsDraggable: true; " + style + " }");
-        cmd.appendInline("#Doll", "ItemGrid #DollR { Anchor: (Left: " + (CELL + DOLL_MID + 2) + ", Top: 2, Width: 76, Height: "
-                + (4 * CELL - 10) + "); SlotsPerRow: 1; AreItemsDraggable: true; " + style + " }");
-        cmd.appendInline("#Grid", "ItemGrid #BagGrid { Anchor: (Left: 2, Top: 2, Width: " + (6 * CELL - 10) + ", Height: "
-                + (4 * CELL - 10) + "); SlotsPerRow: 6; AreItemsDraggable: true; " + style + " }");
+    private static void bindGrids(UIEventBuilder evt) {
         for (String g : new String[]{"DollL", "DollR", "BagGrid"}) {
             evt.addEventBinding(CustomUIEventBindingType.Dropped, "#" + g, new EventData().append("Action", "drop").append("Grid", g), false);
             evt.addEventBinding(CustomUIEventBindingType.SlotClicking, "#" + g, new EventData().append("Action", "slotclick").append("Grid", g), false);
-            evt.addEventBinding(CustomUIEventBindingType.SlotMouseDragCompleted, "#" + g,
-                    new EventData().append("Action", "dragdone").append("Grid", g), false);
         }
+    }
+
+    static String gridOfSection(int section) {
+        return section == SEC_DOLL_L ? "DollL" : section == SEC_DOLL_R ? "DollR" : section == SEC_BAG ? "BagGrid" : null;
     }
 
     /** События сеток приходят с полями SlotIndex, SourceSlotId, ItemStackId… — их кодек кнопок не знает, разбираем сами. */
@@ -123,12 +123,11 @@ public final class HeroPage extends InteractiveCustomUIPage<BattleMenuPage.Click
             return;
         }
         String action = String.valueOf(m.get("Action"));
-        if (!action.equals("drop") && !action.equals("slotclick") && !action.equals("dragdone")) {
+        if (!action.equals("drop") && !action.equals("slotclick")) {
             super.handleDataEvent(ref, store, raw);
             return;
         }
         plugin.log("Перетаскивание (" + playerRef.getUsername() + "): " + raw);
-        if (action.equals("dragdone")) return; // источник перетаскивания; всё делаем по Dropped у цели
         message = "";
         String grid = String.valueOf(m.get("Grid"));
         int slot = num(m.get("SlotIndex"));
@@ -141,7 +140,9 @@ public final class HeroPage extends InteractiveCustomUIPage<BattleMenuPage.Click
                 if (s != null) clickSlot(s);
             }
         } else {
-            dropped(grid, slot, num(m.get("SourceSlotId")), m.get("ItemStackId") == null ? null : String.valueOf(m.get("ItemStackId")));
+            dollKey = bagKey = null; // после броска сетки перерисовать всегда: клиент мог сдвинуть предмет у себя
+            dropped(grid, slot, gridOfSection(num(m.get("SourceInventorySectionId"))), num(m.get("SourceSlotId")),
+                    m.get("ItemStackId") == null ? null : String.valueOf(m.get("ItemStackId")));
         }
         UICommandBuilder cmd = new UICommandBuilder();
         fill(cmd);
@@ -163,19 +164,20 @@ public final class HeroPage extends InteractiveCustomUIPage<BattleMenuPage.Click
     }
 
     /**
-     * Бросили предмет на ячейку target сетки grid. Откуда — ячейка src: ищем, в какой сетке на этом месте
-     * лежит предмет игры itemStackId (сначала в других сетках: внутри одной перетаскивать нечего).
+     * Бросили предмет на ячейку target сетки grid. Откуда — сетка srcGrid (по номеру секции) и ячейка src;
+     * если клиент номер секции не прислал — ищем, в какой сетке на этом месте лежит предмет игры itemStackId.
      */
-    private void dropped(String grid, int target, int src, String itemStackId) {
+    private void dropped(String grid, int target, String srcGrid, int src, String itemStackId) {
         if (busy()) return;
         Progression.Hero h = hero();
-        String srcGrid = null;
-        for (String g : new String[]{"BagGrid", "DollL", "DollR"}) {
+        if (srcGrid != null && !holds(h, srcGrid, src, null)) srcGrid = null;
+        if (srcGrid == null) for (String g : new String[]{"BagGrid", "DollL", "DollR"}) {
             if (g.equals(grid) || !holds(h, g, src, itemStackId)) continue;
             srcGrid = g;
             break;
         }
         if (srcGrid == null && holds(h, grid, src, itemStackId)) srcGrid = grid;
+        if (srcGrid != null && srcGrid.equals(grid) && src == target) return; // бросили на то же место
         if (srcGrid == null) {
             message = "Не понял, откуда вещь (ячейка " + src + ").";
             return;
@@ -449,12 +451,20 @@ public final class HeroPage extends InteractiveCustomUIPage<BattleMenuPage.Click
             cmd.set(d + "Count.Text", g != null && g.sockets() > 0 ? g.gemCount() + "/" + g.sockets() : "");
             icon(cmd, d + "Icon", g == null || drag ? "" : BattleMenuPage.iconKey(Describe.gearIcon(g)), "g", g == null || drag ? 0 : Describe.gearTier(g));
         }
+        for (String g : new String[]{"#DollL", "#DollR", "#BagGrid"}) cmd.set(g + ".Visible", drag);
         if (drag) {
-            List<com.hypixel.hytale.server.core.ui.ItemGridSlot> l = new ArrayList<>(), r = new ArrayList<>();
-            for (Equipment.Slot s : DOLL_L) l.add(DragItems.slot(content, h.equipped.get(s), 1));
-            for (Equipment.Slot s : DOLL_R) r.add(DragItems.slot(content, h.equipped.get(s), 1));
-            cmd.set("#DollL.Slots", l);
-            cmd.set("#DollR.Slots", r);
+            // сетку перерисовываем, только когда в ней что-то поменялось: иначе клик сбивает начатое перетаскивание
+            StringBuilder key = new StringBuilder();
+            for (Equipment.Slot s : DOLL_L) key.append(h.equipped.get(s)).append('|');
+            for (Equipment.Slot s : DOLL_R) key.append(h.equipped.get(s)).append('|');
+            if (!key.toString().equals(dollKey)) {
+                dollKey = key.toString();
+                List<com.hypixel.hytale.server.core.ui.ItemGridSlot> l = new ArrayList<>(), r = new ArrayList<>();
+                for (Equipment.Slot s : DOLL_L) l.add(DragItems.slot(content, h.equipped.get(s), 1));
+                for (Equipment.Slot s : DOLL_R) r.add(DragItems.slot(content, h.equipped.get(s), 1));
+                cmd.set("#DollL.Slots", l);
+                cmd.set("#DollR.Slots", r);
+            }
         }
 
         // Рюкзак
@@ -468,13 +478,18 @@ public final class HeroPage extends InteractiveCustomUIPage<BattleMenuPage.Click
         cmd.set("#PrevPage.Visible", pages > 1);
         cmd.set("#NextPage.Visible", pages > 1);
         List<com.hypixel.hytale.server.core.ui.ItemGridSlot> bagSlots = new ArrayList<>();
+        StringBuilder bagKey = new StringBuilder();
         for (int i = 0; i < CELLS; i++) {
             int at = pageNo * CELLS + i;
             String s = "#S" + i;
             boolean has = at < shown.size();
             bagIds[i] = has ? shown.get(at).item().id() : null;
             bagHy[i] = has && drag ? DragItems.hytaleItem(content, bagIds[i]) : null;
-            if (drag) bagSlots.add(DragItems.slot(content, bagIds[i], has ? shown.get(at).count() : 0));
+            if (drag) {
+                int n = has ? shown.get(at).count() : 0;
+                bagSlots.add(DragItems.slot(content, bagIds[i], n));
+                bagKey.append(bagIds[i]).append('x').append(n).append('|');
+            }
             // в режиме перетаскивания ячейки — только подложка (видна всегда, предметы рисует сетка)
             cmd.set(s + ".Visible", has || drag);
             if (!has) {
@@ -493,7 +508,10 @@ public final class HeroPage extends InteractiveCustomUIPage<BattleMenuPage.Click
             cmd.set(s + "Count.Text", drag ? "" : e.count() > 1 ? "x" + e.count() : "");
             icon(cmd, s + "Icon", drag ? "" : BattleMenuPage.iconKey(Describe.itemIcon(content, e.item())), "g", drag ? 0 : tier(content, id));
         }
-        if (drag) cmd.set("#BagGrid.Slots", bagSlots);
+        if (drag && !bagKey.toString().equals(this.bagKey)) {
+            this.bagKey = bagKey.toString();
+            cmd.set("#BagGrid.Slots", bagSlots);
+        }
 
         // Карточка
         String cardId = pickBag != null ? pickBag : pickSlot != null ? h.equipped.get(pickSlot) : null;
