@@ -1,0 +1,143 @@
+$C = "../Common.ui";
+
+// Окно реплики катсцены (CutsceneTalkPage). Собрано tools/gen_battle_ui.py из Cutscene.ui:
+// правь Cutscene.ui и запусти скрипт.
+
+// HUD катсцены (Cutscene.java / CutsceneHud.java): полосы кино #BarTop/#BarBot (высота меняется шагами),
+// затемнение #Fade1..#Fade10 (виден один слой: 0.1..1.0 черноты), вспышка #Flash, титры #TitleBox,
+// субтитры #SubBox, окно реплики #DlgBox с вариантами ответа #Ch0..#Ch3, подсказка управления #Hint.
+// ID элементов только буквы и цифры.
+
+Group {
+  Anchor: (Full: 0);
+
+  Group #Fade1 { Anchor: (Full: 0); Visible: false; Background: #000000(0.1); }
+  Group #Fade2 { Anchor: (Full: 0); Visible: false; Background: #000000(0.2); }
+  Group #Fade3 { Anchor: (Full: 0); Visible: false; Background: #000000(0.3); }
+  Group #Fade4 { Anchor: (Full: 0); Visible: false; Background: #000000(0.4); }
+  Group #Fade5 { Anchor: (Full: 0); Visible: false; Background: #000000(0.5); }
+  Group #Fade6 { Anchor: (Full: 0); Visible: false; Background: #000000(0.6); }
+  Group #Fade7 { Anchor: (Full: 0); Visible: false; Background: #000000(0.7); }
+  Group #Fade8 { Anchor: (Full: 0); Visible: false; Background: #000000(0.8); }
+  Group #Fade9 { Anchor: (Full: 0); Visible: false; Background: #000000(0.9); }
+  Group #Fade10 { Anchor: (Full: 0); Visible: false; Background: #000000(1.0); }
+  Group #Flash { Anchor: (Full: 0); Visible: false; Background: #ffffff(0.75); }
+
+  Group #BarTop { Anchor: (Left: 0, Right: 0, Top: 0, Height: 0); Background: #000000(1.0); }
+  Group #BarBot { Anchor: (Left: 0, Right: 0, Bottom: 0, Height: 0); Background: #000000(1.0); }
+
+  Group #TitleBox {
+    Anchor: (Left: 0, Right: 0, Top: 380, Height: 120);
+    Visible: false;
+    LayoutMode: Top;
+
+    Label #Title {
+      Text: "";
+      Anchor: (Height: 58);
+      Style: (FontSize: 44, TextColor: #e8c46a, RenderBold: true, HorizontalAlignment: Center);
+    }
+    Group {
+      Anchor: (Height: 14);
+      LayoutMode: Left;
+      Group { FlexWeight: 1; }
+      Group #TitleLine { Anchor: (Width: 360, Height: 2, Top: 6); Background: #e8c46a(0.7); }
+      Group { FlexWeight: 1; }
+    }
+    Label #TitleSub {
+      Text: "";
+      Anchor: (Height: 30);
+      Style: (FontSize: 20, TextColor: #e9eef6, HorizontalAlignment: Center);
+    }
+  }
+
+  Group #SubBox {
+    Anchor: (Left: 220, Right: 220, Bottom: 26, Height: 70);
+    Visible: false;
+    LayoutMode: Top;
+
+    Label #SubWho {
+      Text: "";
+      Anchor: (Height: 24);
+      Style: (FontSize: 18, TextColor: #e8c46a, RenderBold: true, HorizontalAlignment: Center);
+    }
+    Label #SubText {
+      Text: "";
+      Anchor: (Height: 44);
+      Style: (FontSize: 20, TextColor: #f7ecd4, RenderBold: true, Wrap: true, HorizontalAlignment: Center);
+    }
+  }
+
+  Button #Tap { Anchor: (Full: 0); }
+
+  Group #DlgRow {
+    Anchor: (Left: 0, Right: 0, Bottom: 34, Height: 230);
+    Visible: false;
+    LayoutMode: Left;
+
+    Group { FlexWeight: 1; }
+    Group #DlgBox {
+      Anchor: (Width: 920, Height: 230);
+      Background: (TexturePath: "jr_panel_gold.png", Border: 22);
+      Button #TapBox { Anchor: (Left: 0, Top: 0, Width: 920, Height: 230); }
+
+      Group #DlgNameBox {
+        Anchor: (Left: 28, Top: 14, Width: 360, Height: 30);
+        Label #DlgName { Text: ""; Anchor: (Full: 0); Style: (FontSize: 20, TextColor: #e8c46a, RenderBold: true); }
+      }
+      Group { Anchor: (Left: 28, Top: 46, Width: 864, Height: 1); Background: #e8c46a(0.35); }
+      Label #DlgText {
+        Text: "";
+        Anchor: (Left: 30, Top: 56, Width: 860, Height: 80);
+        Style: (FontSize: 18, TextColor: #f2f4f8, Wrap: true);
+      }
+      Group #DlgChoices {
+        Anchor: (Left: 26, Top: 96, Width: 660, Height: 124);
+        LayoutMode: Top;
+      Group #Ch0 {
+        Anchor: (Height: 30);
+        Visible: false;
+        Group #Ch0Sel { Anchor: (Left: 0, Top: 2, Width: 640, Height: 26); Visible: false; Background: #e8c46a(0.22); }
+        Label #Ch0Mark { Text: ""; Anchor: (Left: 8, Top: 3, Width: 24, Height: 24); Style: (FontSize: 18, TextColor: #e8c46a, RenderBold: true); }
+        Label #Ch0Text { Text: ""; Anchor: (Left: 34, Top: 4, Width: 600, Height: 24); Style: (FontSize: 17, TextColor: #e9eef6); }
+        Button #ChBtn0 { Anchor: (Left: 0, Top: 0, Width: 640, Height: 30); }
+      }
+      Group #Ch1 {
+        Anchor: (Height: 30);
+        Visible: false;
+        Group #Ch1Sel { Anchor: (Left: 0, Top: 2, Width: 640, Height: 26); Visible: false; Background: #e8c46a(0.22); }
+        Label #Ch1Mark { Text: ""; Anchor: (Left: 8, Top: 3, Width: 24, Height: 24); Style: (FontSize: 18, TextColor: #e8c46a, RenderBold: true); }
+        Label #Ch1Text { Text: ""; Anchor: (Left: 34, Top: 4, Width: 600, Height: 24); Style: (FontSize: 17, TextColor: #e9eef6); }
+        Button #ChBtn1 { Anchor: (Left: 0, Top: 0, Width: 640, Height: 30); }
+      }
+      Group #Ch2 {
+        Anchor: (Height: 30);
+        Visible: false;
+        Group #Ch2Sel { Anchor: (Left: 0, Top: 2, Width: 640, Height: 26); Visible: false; Background: #e8c46a(0.22); }
+        Label #Ch2Mark { Text: ""; Anchor: (Left: 8, Top: 3, Width: 24, Height: 24); Style: (FontSize: 18, TextColor: #e8c46a, RenderBold: true); }
+        Label #Ch2Text { Text: ""; Anchor: (Left: 34, Top: 4, Width: 600, Height: 24); Style: (FontSize: 17, TextColor: #e9eef6); }
+        Button #ChBtn2 { Anchor: (Left: 0, Top: 0, Width: 640, Height: 30); }
+      }
+      Group #Ch3 {
+        Anchor: (Height: 30);
+        Visible: false;
+        Group #Ch3Sel { Anchor: (Left: 0, Top: 2, Width: 640, Height: 26); Visible: false; Background: #e8c46a(0.22); }
+        Label #Ch3Mark { Text: ""; Anchor: (Left: 8, Top: 3, Width: 24, Height: 24); Style: (FontSize: 18, TextColor: #e8c46a, RenderBold: true); }
+        Label #Ch3Text { Text: ""; Anchor: (Left: 34, Top: 4, Width: 600, Height: 24); Style: (FontSize: 17, TextColor: #e9eef6); }
+        Button #ChBtn3 { Anchor: (Left: 0, Top: 0, Width: 640, Height: 30); }
+      }
+      }
+      Group #DlgNextBox {
+        Anchor: (Left: 874, Top: 196, Width: 24, Height: 22);
+        Visible: false;
+        Label #DlgNext { Text: ">"; Anchor: (Full: 0); Style: (FontSize: 16, TextColor: #e8c46a, RenderBold: true); }
+      }
+    }
+    Group { FlexWeight: 1; }
+  }
+
+  Label #Hint {
+    Text: "";
+    Anchor: (Right: 24, Top: 14, Width: 520, Height: 20);
+    Style: (FontSize: 13, TextColor: #c9d1dc, HorizontalAlignment: Center);
+  }
+}

@@ -62,7 +62,7 @@ final class Cutscene implements SkillSequence.Ext {
         boolean freezePlayer = true, hidePlayer = true, skippable = true;
         int barsHeight = 96;
         long clickTimeoutMs = 30000, autoHoldMs = 1600;
-        String hint = "ЛКМ — дальше   ·   колесо / 1-4 — ответ   ·   ПКМ x2 — пропустить";
+        String hint = "Клик — дальше   ·   клик по ответу — выбор   ·   ПКМ x2 — пропустить";
     }
 
     /** Описание сцены из файла. */
@@ -278,6 +278,10 @@ final class Cutscene implements SkillSequence.Ext {
     // пропуск
     private long skipArmedUntil, fadeSetAt;
     private double skipAt = -1;
+    // окно реплики (клики): открыто, пока идёт реплика, и ещё чуть-чуть между репликами
+    private CutsceneTalkPage talk;
+    private double dialogOffAt = -1;
+    private long talkTriedAt;
 
     private Cutscene(JrpgPlugin plugin, PlayerRef player, Ref<EntityStore> me, Store<EntityStore> store, World world,
                      Def def, Place place, Runnable after) {
@@ -604,7 +608,16 @@ final class Cutscene implements SkillSequence.Ext {
                 closeLine();
             } else if (!choosing && now - lineStart > config.clickTimeoutMs + 60.0 * hud.dlgText.length()) {
                 closeLine(); // никто не нажал — сцена не должна висеть вечно
+            } else if (choosing && now - lineDoneAt > config.clickTimeoutMs) {
+                choose(hud.selected); // на выборе тоже: через clickTimeoutMs — выделенный ответ (в 0.13.0 сцена вставала)
             }
+        }
+        if (dialog) {
+            dialogOffAt = -1;
+            ensureTalk(real);
+        } else if (talk != null) {
+            if (dialogOffAt < 0) dialogOffAt = now;
+            else if (now - dialogOffAt > 400) closeTalk(); // следующая реплика сразу — окно не мигает
         }
         hud.frame(real);
     }
@@ -654,6 +667,30 @@ final class Cutscene implements SkillSequence.Ext {
                 }
             }
         }
+    }
+
+    // ---------- окно реплики ----------
+
+    /** Открыть окно реплики, если его нет (повтор не чаще раза в 1.5 с: открытие может ждать ответа клиента). */
+    private void ensureTalk(long real) {
+        if (talk != null && Pages.isOpen(talk, player)) return;
+        if (real - talkTriedAt < 1500) return;
+        talkTriedAt = real;
+        if (talk != null) talk.closing = true;
+        talk = new CutsceneTalkPage(player, hud);
+        hud.talk = talk;
+        CutsceneTalkPage page = talk;
+        Pages.open(plugin, player, me, store, page, () -> dialog && !cleaned && talk == page, null);
+    }
+
+    private void closeTalk() {
+        CutsceneTalkPage page = talk;
+        talk = null;
+        hud.talk = null;
+        dialogOffAt = -1;
+        if (page == null) return;
+        page.closing = true;
+        Pages.close(page, player);
     }
 
     // ---------- реплики ----------
@@ -801,6 +838,11 @@ final class Cutscene implements SkillSequence.Ext {
         if (cleaned) return;
         cleaned = true;
         UUID uuid = player.getUuid();
+        try {
+            closeTalk();
+        } catch (Throwable t) {
+            Fx.warnOnce("Окно реплики не закрылось", t);
+        }
         try {
             for (Ref<EntityStore> r : actors.values()) {
                 plugin.mover().forget(r);

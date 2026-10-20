@@ -561,3 +561,9 @@ jrpg-mod/
 - `AdminPage` + `Admin.ui` (tools/gen_battle_ui.py → admin()): окно 1000 px на jr_window, слева 7 разделов (#Tab<i>, метка #Tab<i>Mark), справа 10 строк (#Row<i>: #Act<i>, #Alt<i> в #AltBox<i>, #Hint<i>), листание #Prev/#Page/#Next, #Status, #Close.
 - Строки раздела строятся заново при каждом показе (Row: подпись, вторая кнопка, подсказка, действия). Катсцены и сцены навыков идут командой /jrpg cut|seq после закрытия окна (окно прячет HUD); бой — BattleSession.start (бой сам меняет окно); остальное прямо в окне с итогом в #Status.
 - Открытие: `/jrpg admin`, кнопка #Admin в меню героя (MainMenu.ui выше на 52 px).
+
+## 0.13.1 (2026-10-20) — сцены навыков и клики в катсценах
+- Сцены навыков: кукла кастующего с подписью «Лира»/«Брам» попадала под CompanionFollowers.sweep («Убраны лишние копии компаньонов») → Invalid entity reference на всех шагах. Подпись куклы теперь пустая.
+- sequences.json: поле _version (2); старая копия в папке мода переименовывается в sequences.v<N>.json. Метеор: orbit dist 12, height 3.5, look 3 (новый параметр look — высота точки взгляда). Брам: CastEnchant→CastLeft→GuardBash, удар DownstrikeLeap→SwingDownStrong→SwingDown.
+- Подсветка: сначала «чистые» эффекты (без своих частиц, звуков, эффекта экрана).
+- Катсцены: клики мира (InteractionChainStartEvent, PlayerMouseButtonEvent) в игре не пришли — реплики шли по таймеру, выбор вставал. Теперь на время реплики открывается CutsceneTalkPage (CutsceneTalk.ui = Cutscene.ui + невидимые кнопки #Tap, #TapBox, #ChBtn0..3; собирает gen_battle_ui.py cutscene_talk()). CutsceneHud шлёт кадры в окно, пока оно открыто (HUD скрыт клиентом), при смене получателя — всё заново. AnimatedPage + ClickBuffer: клики во время печати текста не теряются. Esc (onDismiss) = ПКМ. Окно закрывается через 400 мс без реплики. Выбор без клика — через clickTimeoutMs выделенный ответ.

@@ -1124,6 +1124,29 @@ def admin():
           + centered(52 + 6 + body_h + 8 + 40 + 40, window) + "\n")
 
 
+def cutscene_talk():
+    """CutsceneTalk.ui — окно реплики катсцены (CutsceneTalkPage): копия Cutscene.ui (HUD, написан вручную)
+    с невидимыми кнопками: #Tap на весь экран под окном реплики, #TapBox под текстом реплики, #ChBtn<i> поверх
+    строк ответов. Кнопки окна доходят до сервера всегда (клики мира в катсцене в 0.13.0 не дошли)."""
+    with open(os.path.join(OUT_DIR, "Cutscene.ui"), encoding="utf-8") as f:
+        src = f.read()
+    marker = "  Group #DlgRow {"
+    assert marker in src
+    src = src.replace(marker, "  Button #Tap { Anchor: (Full: 0); }\n\n" + marker, 1)
+    box = "      Background: (TexturePath: \"jr_panel_gold.png\", Border: 22);\n"
+    assert box in src
+    src = src.replace(box, box + "      Button #TapBox { Anchor: (Left: 0, Top: 0, Width: 920, Height: 230); }\n", 1)
+    for i in range(4):
+        line = f"        Label #Ch{i}Text {{"
+        start = src.index(line)
+        end = src.index("\n", start)
+        src = src[:end + 1] + f"        Button #ChBtn{i} {{ Anchor: (Left: 0, Top: 0, Width: 640, Height: 30); }}\n" + src[end + 1:]
+    head = ("// Окно реплики катсцены (CutsceneTalkPage). Собрано tools/gen_battle_ui.py из Cutscene.ui:\n"
+            "// правь Cutscene.ui и запусти скрипт.\n")
+    first, rest = src.split("\n", 1)
+    write("CutsceneTalk.ui", first + "\n\n" + head + rest)
+
+
 def ring_dots(r):
     radius = RADII[r]
     n = int(2 * math.pi * radius / 18)
@@ -1152,3 +1175,4 @@ if __name__ == "__main__":
     equipment()
     mainmenu()
     admin()
+    cutscene_talk()

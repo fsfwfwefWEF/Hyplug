@@ -46,27 +46,55 @@ final class CutsceneHud extends CustomUIHud {
     private String sentTitleText, sentSubText, sentDlgName, sentDlgText, sentHint;
     private final String[] sentChoice = new String[CHOICES];
 
+    private final PlayerRef pr;
+    /** Окно реплики (CutsceneTalkPage): пока оно открыто, HUD скрыт клиентом и кадры идут в окно. */
+    volatile CutsceneTalkPage talk;
+    private boolean sentToPage;
+
     CutsceneHud(@Nonnull PlayerRef playerRef) {
         super(playerRef, KEY);
+        this.pr = playerRef;
     }
 
     @Override
     protected void build(@Nonnull UICommandBuilder cmd) {
         cmd.append(LAYOUT);
+        sentToPage = false;
         // После (пере)сборки всё отправить заново.
+        resetSent();
+        render(cmd, System.currentTimeMillis());
+    }
+
+    /** Всё состояние целиком (окно реплики при сборке шлёт его в себя). */
+    void renderAll(UICommandBuilder cmd) {
+        sentToPage = true;
+        resetSent();
+        render(cmd, System.currentTimeMillis());
+    }
+
+    private void resetSent() {
         sentBars = sentFade = sentTitleTop = sentChoices = sentSel = -1;
         sentFlash = sentTitle = sentSub = sentDlg = sentNext = null;
         sentTitleText = sentSubText = sentDlgName = sentDlgText = sentHint = null;
         java.util.Arrays.fill(sentChoice, null);
-        render(cmd, System.currentTimeMillis());
     }
 
-    /** Кадр: плавно довести полосы и затемнение до цели и отправить изменения. */
+    /**
+     * Кадр: плавно довести полосы и затемнение до цели и отправить изменения — в окно реплики, если оно открыто,
+     * иначе в HUD. При смене получателя отправляется всё заново (HUD, пока окно было открыто, кадров не получал).
+     */
     void frame(long now) {
+        CutsceneTalkPage page = talk;
+        boolean toPage = page != null && Pages.isOpen(page, pr);
+        if (toPage != sentToPage) {
+            sentToPage = toPage;
+            resetSent();
+        }
         UICommandBuilder cmd = new UICommandBuilder();
         if (render(cmd, now)) {
             try {
-                update(false, cmd);
+                if (toPage) Pages.update(page, pr, cmd);
+                else update(false, cmd);
             } catch (Throwable t) {
                 Fx.warnOnce("HUD катсцены не обновляется", t);
             }

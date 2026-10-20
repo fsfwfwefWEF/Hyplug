@@ -50,11 +50,31 @@ final class Sequences {
 
     private static String read(JrpgPlugin plugin) throws Exception {
         Path f = plugin.dataDir().resolve(FILE);
+        String builtin = GameData.builtin(FILE);
         if (!Files.exists(f)) {
             Files.createDirectories(f.getParent());
-            Files.writeString(f, GameData.builtin(FILE));
+            Files.writeString(f, builtin);
+            return builtin;
         }
-        return Files.readString(f);
+        String text = Files.readString(f);
+        // Встроенный файл новее (поле _version): старую копию — в sequences.v<N>.json, на её место новую.
+        int have = version(text), want = version(builtin);
+        if (have < want) {
+            Files.move(f, f.resolveSibling("sequences.v" + have + ".json"), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+            Files.writeString(f, builtin);
+            plugin.log("sequences.json обновлён до версии " + want + ", старый сохранён как sequences.v" + have + ".json");
+            return builtin;
+        }
+        return text;
+    }
+
+    private static int version(String json) {
+        try {
+            Object v = Json.obj(Json.parse(json)).get("_version");
+            return v instanceof Number n ? n.intValue() : 1;
+        } catch (Exception e) {
+            return 1;
+        }
     }
 
     /** Кто кастует сцену по умолчанию (_casters в файле), иначе герой, у которого есть навык с таким id. */
@@ -124,7 +144,8 @@ final class Sequences {
         HumanLook.Look look = isHero ? HumanLook.ofPlayer(store, me) : HumanLook.of(who, s.companionLooks.get(who));
         String role = s.companionRoles.getOrDefault(who, s.companionRoles.getOrDefault("bram", s.fallbackRole));
         String name = hero != null ? hero.def.name() : who;
-        Ref<EntityStore> caster = Fx.spawnPuppet(store, role, name, home, casterYaw, name, look);
+        // Подпись пустая: с именем компаньона кукла попадает под уборку лишних копий (CompanionFollowers.sweep).
+        Ref<EntityStore> caster = Fx.spawnPuppet(store, role, name, home, casterYaw, "", look);
         if (caster == null) return "Кастующий не появился (роль " + role + "), см. лог.";
         if (hero != null) GearVisuals.dressNpc(store, caster, hero, plugin.content());
 

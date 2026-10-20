@@ -1,4 +1,5 @@
 {
+  "_version": 2,
   "_casters": { "meteor": "lyra", "bleeding_cut": "bram" },
   "_about": "Тестовые таймлайны на ванильных ассетах. Ключ = sequenceId способности (Content.java: meteor, bleeding_cut). Имена с @ — ключи ParticleCatalog (подбор по словам из ассетов), anim с префиксом weapon: — анимация из набора оружия в руке (как WeaponAnims), emote: — эмоция игры. t в мс от начала навыка, '+N' — от предыдущего шага. wait ждёт событие. Неизвестное имя = предупреждение в лог, шаг пропускается.",
 
@@ -8,7 +9,7 @@
     { "t": 200,    "particles": "@cast", "on": "caster", "attach": "PrimaryItem", "offset": [0, 0.8, 0] },
     { "t": 200,    "shape": "ring", "on": "caster", "color": "#ff8a2a", "radius": 1.2, "ms": 1600 },
     { "t": 300,    "glow": { "color": "#ff8a2a", "thickness": 1.0, "bloom": true }, "on": "caster", "ms": 1200 },
-    { "t": 1200,   "camera": "orbit", "on": "targets", "dist": 9, "height": 5, "from": -20, "to": 20, "ms": 1800, "ease": "InOutQuad" },
+    { "t": 1200,   "camera": "orbit", "on": "targets", "dist": 12, "height": 3.5, "look": 3, "from": -20, "to": 20, "ms": 1800, "ease": "InOutQuad" },
     { "t": 1300,   "shape": "meteor", "on": "targets", "fallMs": 900 },
     { "t": "+900", "hit": true, "shake": 0.6, "particles": "@fire", "on": "targets" },
     { "t": "+1200","camera": "battle", "ms": 600 }
@@ -16,13 +17,13 @@
 
   "bleeding_cut": [
     { "t": 0,      "camera": "focus", "on": "caster", "dist": 2.8, "height": 1.4, "side": 40, "ms": 600, "ease": "InOutQuad" },
-    { "t": 100,    "anim": "weapon:CastEnchant", "fallback": ["weapon:GuardBash"], "on": "caster" },
+    { "t": 100,    "anim": "weapon:CastEnchant", "fallback": ["weapon:CastLeft", "weapon:GuardBash"], "on": "caster" },
     { "t": 300,    "glow": { "color": "#b0102a", "thickness": 0.8, "bloom": true }, "on": "caster", "ms": 900 },
     { "t": 400,    "particles": "@poison", "fallback": ["Impact_Poison"], "on": "caster", "attach": "PrimaryItem", "offset": [0, 0.9, 0], "color": "#b0102a" },
     { "t": 1200,   "camera": "follow", "on": "caster", "dist": 4, "height": 2, "ms": 0 },
     { "t": 1200,   "move": "run", "to": "target", "stopAt": 1.6 },
     { "wait": "arrived" },
-    { "anim": "weapon:SwingDownStrong", "fallback": ["weapon:SwingDown"], "on": "caster" },
+    { "anim": "weapon:DownstrikeLeap", "fallback": ["weapon:SwingDownStrong", "weapon:SwingDown"], "on": "caster" },
     { "t": "+450", "hit": true, "shake": 0.4, "particles": "@physical", "fallback": ["Impact_Poison"], "on": "target", "color": "#b0102a" },
     { "t": "+900", "camera": "battle", "ms": 600 },
     { "move": "back" }

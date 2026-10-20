@@ -530,7 +530,8 @@ final class SkillSequence {
                 double bx = cast.casterHome().x - center.x, bz = cast.casterHome().z - center.z;
                 double len = Math.max(1e-6, Math.hypot(bx, bz));
                 double ux = bx / len, uz = bz / len;
-                Vector3d look = new Vector3d(center.x, center.y + 0.8, center.z);
+                // look — высота точки взгляда над целями (метеор падает сверху: смотрим выше, чтобы он был в кадре).
+                Vector3d look = new Vector3d(center.x, center.y + Json.num(st, "look", 0.8), center.z);
                 cam = now -> {
                     double t = ms <= 0 ? 1 : Math.min(1, Math.max(0, (now - when) / ms));
                     double a = Math.toRadians(from + (to - from) * ease(ease, t));
@@ -883,7 +884,8 @@ final class SkillSequence {
      * Эффекты с уроном (горение, яд), сменой модели и неуязвимостью не берутся.
      */
     static final class Glow {
-        private record Option(String id, EntityEffect effect, int rgb) {}
+        /** clean — только подсветка: без своих частиц, звуков и эффекта экрана (бочка гоблина и т.п. — запасные). */
+        private record Option(String id, EntityEffect effect, int rgb, boolean clean) {}
 
         private static volatile List<Option> options;
 
@@ -903,7 +905,9 @@ final class SkillSequence {
         private static Option nearest(int want) {
             Option best = null;
             long bestD = Long.MAX_VALUE;
+            boolean anyClean = options().stream().anyMatch(Option::clean);
             for (Option o : options()) {
+                if (anyClean && !o.clean()) continue;
                 int dr = ((o.rgb() >> 16) & 255) - ((want >> 16) & 255);
                 int dg = ((o.rgb() >> 8) & 255) - ((want >> 8) & 255);
                 int db = (o.rgb() & 255) - (want & 255);
@@ -925,12 +929,15 @@ final class SkillSequence {
                     EntityEffect ef = e.getValue();
                     if (ef == null || ef.getApplicationEffects() == null) continue;
                     if (ef.getDamageCalculator() != null || ef.getModelChange() != null || ef.isInvulnerable()) continue;
-                    String vfx = ef.getApplicationEffects().toPacket().modelVFXId;
+                    var ap = ef.getApplicationEffects().toPacket();
+                    String vfx = ap.modelVFXId;
+                    boolean clean = (ap.particles == null || ap.particles.length == 0) && ap.soundEventIndexLocal <= 0
+                            && ap.soundEventIndexWorld <= 0 && (ap.screenEffect == null || ap.screenEffect.isBlank());
                     if (vfx == null || vfx.isBlank()) continue;
                     ModelVFX mv = ModelVFX.getAssetMap().getAssetMap().get(vfx);
                     if (mv == null || mv.getHighlightColor() == null) continue;
                     Color c = mv.getHighlightColor();
-                    out.add(new Option(e.getKey(), ef, ((c.red & 255) << 16) | ((c.green & 255) << 8) | (c.blue & 255)));
+                    out.add(new Option(e.getKey(), ef, ((c.red & 255) << 16) | ((c.green & 255) << 8) | (c.blue & 255), clean));
                 }
             } catch (Throwable t) {
                 Fx.warnOnce("Список эффектов с подсветкой не прочитать", t);
